@@ -4,7 +4,9 @@ setup(
     name="ohre",
     version="0.0.1",
     packages=find_packages(),
-    install_requires=[],
+    install_requires=[
+        "yara-python",
+    ],
     author="kokifish",
     author_email="k0k1fish@outlook.com",
     description="open harmony hap package reverse tool",
