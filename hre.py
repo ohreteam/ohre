@@ -3,7 +3,7 @@ import sys
 import time
 import yara
 import zipfile
-from ohre import h_app
+from ohre import oh_app
 
 
 def yara_local_test():
@@ -28,7 +28,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 hre.py native_tmp
         sys.exit(0)
     app_path = sys.argv[1]
     print(f"[hre] START: {app_path}")
-    ha = h_app(app_path)
+    ha = oh_app(app_path)
     os.system("rm -rf tmp_extract")
     ha.extract_all_to("tmp_extract")
     print(ha.get_files())

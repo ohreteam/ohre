@@ -29,9 +29,9 @@ def cal_sha1(file_path) -> str:
     return hash_sha1.hexdigest()
 
 
-class h_app(object):
+class oh_app(object):
     def __init__(self, path: str):
-        Log.info(f"h_app init {path}")
+        Log.info(f"oh_app init {path}")
         self.file_path = path
         self.app = zipfile.ZipFile(path, "r")
         self.files = self.app.namelist()
