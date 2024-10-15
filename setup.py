@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="ohre",
-    version="0.0.1alpha",
+    version="0.0.1",
     packages=find_packages(),
     install_requires=[],
     author="kokifish",
@@ -12,6 +12,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/kokifish/ohre",
     classifiers=[
+        "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: AGPL-3.0 License",
         "Operating System :: OS Independent",

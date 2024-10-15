@@ -21,7 +21,7 @@ def yara_local_test():
         print(f"Rule: {match.rule} {type(match)} {match.tags} {match.meta} {match.strings}")
 
 
-if __name__ == "__main__":  # clear; python3 hre.py native_tmpl.hap
+if __name__ == "__main__":  # clear; pip install -e .; python3 hre.py native_tmpl.hap
     start_time = time.time()
     if (len(sys.argv) < 2):
         print("python hre.py app_path")

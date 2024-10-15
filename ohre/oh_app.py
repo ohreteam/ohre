@@ -1,9 +1,9 @@
 import zipfile
 import hashlib
 import json
-import .Log as Log
 import yara
 
+from . import Log
 
 class FileNotPresent(Exception):
     pass
@@ -90,7 +90,7 @@ class h_app(object):
         for fname in self.files:
             if (fname.endswith("pack.info")):
                 json_string = self.get_file(fname).decode("utf-8", errors="ignore")
-                Log.info(f"{fname} {json_string}")
+                Log.info(f"pack.info: {fname} {json_string}", False)
                 json_data = json.loads(json_string)
                 ret[fname] = json_data
         if (self.pack_info is None):
@@ -104,7 +104,7 @@ class h_app(object):
             self, rule_str: str = "", rule_path: str = "", file_post_fix: str = "", file_filter: str = "", file_list: list = []):
         all_files = file_list if (len(file_list)) else self.get_files()
         # === yara rule
-        Log.info(f"apply_yara_rule: rule_str/rule_path len {len(rule_str)}/{len(rule_path)}")
+        Log.info(f"apply_yara_rule: rule_str/rule_path len {len(rule_str)}/{len(rule_path)}", False)
         if (len(rule_str)):
             rules = yara.compile(source=rule_str)
         elif (len(rule_path)):
