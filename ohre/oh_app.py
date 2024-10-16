@@ -3,6 +3,7 @@ import zipfile
 import hashlib
 import json
 import yara
+from io import BytesIO
 
 from . import Log
 from . import oh_common
@@ -10,12 +11,18 @@ from . import oh_hap
 
 
 class oh_app(oh_common.oh_package):
-    def __init__(self, path: str):
-        Log.info(f"oh_app init {path}")
-        if (not path.endswith(".app")):
-            raise oh_common.ParaNotValid("Not a valid app type, must .app")
-        super().__init__(path)
+    def __init__(self, value):
+        Log.info(f"oh_app init {type(value)}")
+        if (isinstance(value, str)):
+            if (not value.endswith(".app")):
+                raise oh_common.ParaNotValid("Not a valid app type, must .app")
+        super().__init__(value)
         self.haps = dict()
+        for fname in self.package.namelist():
+            if fname.endswith(".hap"):
+                zfiledata = BytesIO(self.package.read(fname))
+                hap = oh_hap(zfiledata)
+                self.haps[fname] = hap
 
     def extract_all_to(self, unzip_folder: str, unzip_sub_hap=True):
         try:

@@ -41,13 +41,20 @@ def extract_local_zip_to(zip_path: str, unzip_folder: str):
 
 
 class oh_package(object):
-    def __init__(self, path: str):
-        Log.info(f"oh_package init {path}")
-        self.file_path = path
-        self.package = zipfile.ZipFile(path, "r")
+    def __init__(self, value):
+        Log.info(f"oh_package init {type(value)} {value}")
+        self.file_path = ""
+        if (isinstance(value, str)):
+            self.file_path = value
+            self.package = zipfile.ZipFile(value, "r")
+        elif (isinstance(value, zipfile.ZipFile)):
+            self.package = value
+        else:
+            Log.error(f"ERROR! init oh_package failed, value type {
+                      type(value)} NOT supported")
         self.files = self.package.namelist()
-        self.md5 = cal_md5(path)
-        self.sha1 = cal_sha1(path)
+        self.md5 = hashlib.md5(self.package.read())
+        self.sha1 = hashlib.sha1(self.package.read())
         self.pack_info = None
         self.get_pack_info()
 
@@ -55,7 +62,7 @@ class oh_package(object):
         try:
             self.package.extractall(unzip_folder)
         except zipfile.BadZipFile:
-            Log.warn(f"{self.sha1} {self.md5} Bad ZIP file, {self.file_path}")
+            Log.warn(f"{self.sha1} Bad ZIP file, {self.file_path}")
             return False
 
     def get_files(self) -> list[str]:
@@ -95,7 +102,7 @@ class oh_package(object):
 
     def get_version_name(self) -> str:
         return str(self.pack_info["summary"]["app"]["version"]["name"])
-    
+
     def get_version_code(self) -> str:
         return str(self.pack_info["summary"]["app"]["version"]["code"])
 
@@ -106,7 +113,8 @@ class oh_package(object):
         for fname in self.files:
             Log.debug(f"get_pack_info fname {fname}")
             if (fname == "pack.info"):
-                json_string = self.get_file(fname).decode("utf-8", errors="ignore")
+                json_string = self.get_file(fname).decode(
+                    "utf-8", errors="ignore")
                 Log.info(f"pack.info: {fname} {json_string}", False)
                 ret = json.loads(json_string)
                 self.pack_info = ret
@@ -118,7 +126,8 @@ class oh_package(object):
             self, rule_str: str = "", rule_path: str = "", file_post_fix: str = "", file_filter: str = "", file_list: list = []):
         all_files = file_list if (len(file_list)) else self.get_files()
         # === yara rule
-        Log.info(f"apply_yara_rule: rule_str/rule_path len {len(rule_str)}/{len(rule_path)}", False)
+        Log.info(
+            f"apply_yara_rule: rule_str/rule_path len {len(rule_str)}/{len(rule_path)}", False)
         if (len(rule_str)):
             rules = yara.compile(source=rule_str)
         elif (len(rule_path)):
