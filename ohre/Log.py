@@ -36,7 +36,7 @@ def init_log(log_name: str):
     log_file = os.path.join(LOG_DIR, log_name + ".log")
     handle = RotatingFileHandler(log_file, mode="a", maxBytes=10 * 1024 * 1024,
                                  backupCount=10, encoding="utf-8", delay=0)
-    g_log.setLevel(logging.INFO)
+    g_log.setLevel(logging.DEBUG)
     formatter = logging.Formatter("%(asctime)s %(levelname)s %(message)s")
     handle.setFormatter(formatter)
     g_log.addHandler(handle)
