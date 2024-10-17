@@ -24,7 +24,7 @@ class oh_app(oh_common.oh_package):
                 hap = oh_hap(zfiledata)
                 self.haps[fname] = hap
 
-    def extract_all_to(self, unzip_folder: str, unzip_sub_hap=True):
+    def extract_all_to(self, unzip_folder: str, unzip_sub_hap=True) -> bool:
         try:
             self.package.extractall(unzip_folder)
             if (unzip_sub_hap):
@@ -35,6 +35,7 @@ class oh_app(oh_common.oh_package):
                             oh_common.extract_local_zip_to(
                                 os.path.join(unzip_folder, fname),
                                 os.path.join(unzip_folder, f"hap_extract_{fname[: -4]}"))
+            return True
         except zipfile.BadZipFile:
             Log.warn(f"{self.sha1} Bad ZIP file, {self.file_path}")
             return False
@@ -53,3 +54,23 @@ class oh_app(oh_common.oh_package):
             return self.haps[name]
         else:
             return None
+
+    def filters_postfix_white_all_haps(self, rules: dict) -> dict:
+        not_white_files_dict = dict()
+        for fname, hap in self.haps.items():
+            not_white_files_dict[fname] = hap.filters_postfix_white(rules)
+        return not_white_files_dict
+
+    def filters_postfix_black_all_haps(self, rules: dict) -> dict:
+        not_black_files_dict = dict()
+        for fname, hap in self.haps.items():
+            not_black_files_dict[fname] = hap.filters_postfix_black(rules)
+        return not_black_files_dict
+
+    def filters_postfix_white_app_level(self, rules) -> list:
+        # not filter files in haps, only scan app
+        pass
+
+    def filters_postfix_black_app_level(self, rules) -> list:
+        # not filter files in haps, only scan app
+        pass

@@ -18,10 +18,11 @@ class oh_hap(oh_common.oh_package):
 
     def filter_postfix_white(self, path: str, file_post_fix_list) -> list:
         # path: a path prefix to specify the dir to be scanned
+        # ".": level 1 files(NOT in a sub folder), "*": all files include sub folders
         # file_post_fix_list: postfix that are allowed in the path
         not_white_files = []
         for fname in self.files:
-            if (fname.startswith(path)):
+            if (fname.startswith(path) or path == "*"):
                 IS_WHILE = False
                 for post_fix in file_post_fix_list:
                     if (fname.endswith(post_fix)):
@@ -34,14 +35,18 @@ class oh_hap(oh_common.oh_package):
         # here, a filter means a k,v in rules dict. k: path, v: white postfix list
         not_white_files = []
         for path, file_post_fix_list in rules.items():
+            if (path == "."):
+                continue
             l = self.filter_postfix_white(path, file_post_fix_list)
             not_white_files.extend(l)
+        if ("." in rules.keys()):
+            pass  # TODO: support level 1 files
         return not_white_files
 
     def filter_postfix_black(self, path: str, file_post_fix_list) -> list:
         black_files = []
         for fname in self.files:
-            if (fname.startswith(path)):
+            if (fname.startswith(path) or path == "*"):
                 for post_fix in file_post_fix_list:
                     if (fname.endswith(post_fix)):
                         black_files.append(fname)
@@ -50,6 +55,10 @@ class oh_hap(oh_common.oh_package):
     def filters_postfix_black(self, rules: dict) -> list:
         black_files = []
         for path, file_post_fix_list in rules.items():
+            if (path == "."):
+                continue
             l = self.filter_postfix_black(path, file_post_fix_list)
             black_files.extend(l)
+        if ("." in rules.keys()):
+            pass  # TODO: support level 1 files
         return black_files
