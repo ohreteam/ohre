@@ -38,3 +38,18 @@ class oh_app(oh_common.oh_package):
         except zipfile.BadZipFile:
             Log.warn(f"{self.sha1} Bad ZIP file, {self.file_path}")
             return False
+
+    def get_haps_name(self) -> list:
+        return list(self.haps.keys())
+
+    def get_haps_dict(self) -> dict:
+        return self.haps
+
+    def get_haps(self) -> list:
+        return list(self.haps.values())
+
+    def get_hap(self, name: set):
+        if (name in self.haps.keys()):
+            return self.haps[name]
+        else:
+            return None
