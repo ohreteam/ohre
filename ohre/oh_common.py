@@ -90,8 +90,8 @@ class oh_package(object):
     def get_bundle_name(self) -> str:
         if (self.pack_info is not None and
             "summary" in self.pack_info.keys() and
-                "app" in self.pack_info["summary"].keys()
-                and "bundleName" in self.pack_info["summary"]["app"].keys()):
+                "app" in self.pack_info["summary"].keys() and
+                "bundleName" in self.pack_info["summary"]["app"].keys()):
             return self.pack_info["summary"]["app"]["bundleName"]
         else:
             Log.warn(f"get bundle name failed")
@@ -122,9 +122,11 @@ class oh_package(object):
         Log.warn(f"pack.info not found")
         return None
 
-    def apply_yara_rule(
-            self, rule_str: str = "", rule_path: str = "", file_post_fix: str = "", file_filter: str = "", file_list: list = []):
+    def apply_yara_rule(self, rule_str: str = "", rule_path: str = "", file_post_fix: str = "", file_filter: str = "",
+                        file_list: list = []) -> list:
+        # rule_str rule_path: yara rule str ot yara rule file path, specify one of them
         all_files = file_list if (len(file_list)) else self.get_files()
+        Log.info(f"apply_yara_rule all files cnt {len(all_files)}")
         # === yara rule
         Log.info(
             f"apply_yara_rule: rule_str/rule_path len {len(rule_str)}/{len(rule_path)}", False)
@@ -145,7 +147,10 @@ class oh_package(object):
             if (need_flag):
                 files_need.append(fname)
         # === apply rule, scan start
+        match_list = list()
         for fname in files_need:
             matches = rules.match(data=self.get_file(fname))
             if (len(matches)):
                 print(f"matches: {matches}")
+                match_list.append(matches)
+        return match_list

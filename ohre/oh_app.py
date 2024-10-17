@@ -55,6 +55,9 @@ class oh_app(oh_common.oh_package):
         else:
             return None
 
+    def is_certificated(self) -> bool:
+        pass
+
     def filters_postfix_white_all_haps(self, rules: dict) -> dict:
         not_white_files_dict = dict()
         for fname, hap in self.haps.items():
