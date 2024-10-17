@@ -5,7 +5,7 @@ import json
 import yara
 
 from . import Log
-
+from typing import Any, Dict
 
 class FileNotPresent(Exception):
     pass
@@ -97,7 +97,7 @@ class oh_package(object):
             Log.warn(f"get bundle name failed")
             return ""
 
-    def get_version(self) -> dict:
+    def get_version(self) -> Dict:
         return self.pack_info["summary"]["app"]["version"]
 
     def get_version_name(self) -> str:
@@ -106,7 +106,7 @@ class oh_package(object):
     def get_version_code(self) -> str:
         return str(self.pack_info["summary"]["app"]["version"]["code"])
 
-    def get_pack_info(self) -> dict:
+    def get_pack_info(self) -> Dict:
         if (self.pack_info is not None):
             return self.pack_info
         ret = None
