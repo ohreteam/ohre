@@ -1,11 +1,14 @@
+import io
 import os
 import zipfile
 import hashlib
 import json
+import tempfile
 import yara
 
 from . import Log
 from typing import Any, Dict
+
 
 class FileNotPresent(Exception):
     pass
@@ -33,7 +36,7 @@ def cal_sha1(file_path) -> str:
 
 def extract_local_zip_to(zip_path: str, unzip_folder: str):
     try:
-        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        with zipfile.ZipFile(zip_path, "r") as zip_ref:
             zip_ref.extractall(unzip_folder)
     except zipfile.BadZipFile:
         Log.warn(f"unzip {zip_path} to {unzip_folder}. Bad ZIP file")
@@ -44,17 +47,21 @@ class oh_package(object):
     def __init__(self, value):
         Log.info(f"oh_package init {type(value)} {value}")
         self.file_path = ""
+        self.md5 = None
+        self.sha1 = None
         if (isinstance(value, str)):
             self.file_path = value
             self.package = zipfile.ZipFile(value, "r")
+            self.md5 = cal_md5(value)
+            self.sha1 = cal_sha1(value)
         elif (isinstance(value, zipfile.ZipFile)):
             self.package = value
+        elif (isinstance(value, io.BytesIO)):
+            self.package = zipfile.ZipFile(value, "r")
         else:
-            Log.error(f"ERROR! init oh_package failed, value type {
-                      type(value)} NOT supported")
+            Log.error(f"ERROR! init oh_package failed, value type {type(value)} NOT supported")
+
         self.files = self.package.namelist()
-        self.md5 = hashlib.md5(self.package.read())
-        self.sha1 = hashlib.sha1(self.package.read())
         self.pack_info = None
         self.get_pack_info()
 

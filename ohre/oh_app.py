@@ -21,7 +21,7 @@ class oh_app(oh_common.oh_package):
         for fname in self.package.namelist():
             if fname.endswith(".hap"):
                 zfiledata = BytesIO(self.package.read(fname))
-                hap = oh_hap(zfiledata)
+                hap = oh_hap.oh_hap(zfiledata)
                 self.haps[fname] = hap
 
     def extract_all_to(self, unzip_folder: str, unzip_sub_hap=True) -> bool:
