@@ -1,4 +1,5 @@
 # OHRE
+
 <p>
 <a href="https://github.com/kokifish/ohre/star"><img alt="stars" src="https://img.shields.io/github/stars/kokifish/ohre?style=social"></a>
 <a href="https://github.com/kokifish/ohre"><img alt="watchers" src="https://img.shields.io/github/watchers/kokifish/ohre?style=social"></a> 
@@ -12,19 +13,26 @@
 
 A **O**pen **H**armonyOS app/hap package analyze and **RE**verse tool. Maybe pronounced like "ōli".
 
+tag: HarmonyOS, Open HarmonyOS, HarmonyOS NEXT, 鸿蒙OS, hap, app
+
 ## Features
 
-OHRE is a full python(python3) tool to play with HarmonyOS files.
+OHRE is a full python3 tool to play with HarmonyOS .app and .hap files.
+
+- .app and .hap
 - pack.json
-- handle .app and .hap
-- resources.index
+- module.json
 - white/black list of file names in specific path
+- resources.index (in progress)
+- .so (in progress)
+- .abc (in progress)
 
 ## Installation
 
 - Dependency: yara-python
 
 ### Linux/MacOS
+
 ```bash
 pip install yara-python
 # install as a python package locally
@@ -34,7 +42,9 @@ python ohre_demo.py xxx.app # run demo with HarmonyOS app
 ```
 
 ## How to Use
+
 `ohre_demo.py` is a demo that shows almost all usages. Check it and then maybe check the wiki.
 
 ## Contacts
+
 Please new an issue or make a MR.
