@@ -1,11 +1,14 @@
 .DS_Store
-rules/
+./rules/
 *.hap
 *.app
 *.zip
+*.log
 tmp/
 tmp_extract/
 tmp_hap_extract/
+tmp_app_extract/
+local_readme.md
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

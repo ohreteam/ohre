@@ -1,4 +1,32 @@
+import logging
+
+from . import Log
 from .oh_app import oh_app
 from .oh_hap import oh_hap
-from . import Log
+
 Log.init_log("ohre_test")
+Log.debug(f"ohre __init__.py called")
+
+def set_log_dir(log_dir:str):
+    Log.init_log("ohre_test", log_dir)
+
+def set_log_level(level: str):
+    print(f"ohre setting log level {level}")
+    g_log = Log.get_logger()
+    if (level.lower() == "debug"):
+        g_log.setLevel(logging.DEBUG)
+    elif (level.lower() == "info"):
+        g_log.setLevel(logging.INFO)
+    elif (level.lower() == "warn"):
+        g_log.setLevel(logging.WARNING)
+    elif (level.lower() == "warning"):
+        g_log.setLevel(logging.WARNING)
+    elif (level.lower() == "error"):
+        g_log.setLevel(logging.ERROR)
+    else:
+        print(f"ohre set log level ERROR, level not valid")
+
+
+def set_log_print(print_flag: bool):
+    print(f"ohre setting log console print flag {print_flag}")
+    Log.set_debug_print_flag(print_flag)

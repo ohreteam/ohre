@@ -1,14 +1,16 @@
+import fnmatch
+import hashlib
 import io
+import json
 import os
 import zipfile
-import hashlib
-import json
-import tempfile
+from typing import Any, Dict, List
+
 import yara
 
 from . import Log
-from typing import Any, Dict
 
+HAP_EXTRACT_PREFIX = "hap_extract_"
 
 class FileNotPresent(Exception):
     pass
@@ -16,6 +18,13 @@ class FileNotPresent(Exception):
 
 class ParaNotValid(Exception):
     pass
+
+
+def fname_in_pattern_list(fname, pattern_list: List) -> bool:
+    for patt in pattern_list:
+        if (fnmatch.fnmatch(fname, patt)):
+            return True
+    return False
 
 
 def cal_md5(file_path) -> str:
@@ -45,31 +54,39 @@ def extract_local_zip_to(zip_path: str, unzip_folder: str):
 
 class oh_package(object):
     def __init__(self, value):
-        Log.info(f"oh_package init {type(value)} {value}")
+        Log.debug(f"oh_package init {type(value)} {value}")
         self.file_path = ""
-        self.md5 = None
-        self.sha1 = None
+        self._md5 = None
+        self._sha1 = None
         if (isinstance(value, str)):
             self.file_path = value
             self.package = zipfile.ZipFile(value, "r")
-            self.md5 = cal_md5(value)
-            self.sha1 = cal_sha1(value)
+            self._md5 = cal_md5(value)
+            self._sha1 = cal_sha1(value)
         elif (isinstance(value, zipfile.ZipFile)):
             self.package = value
         elif (isinstance(value, io.BytesIO)):
             self.package = zipfile.ZipFile(value, "r")
         else:
-            Log.error(f"ERROR! init oh_package failed, value type {type(value)} NOT supported")
+            Log.error(f"{self._sha1} ERROR! init oh_package failed, value type {type(value)} NOT supported")
 
         self.files = self.package.namelist()
         self.pack_info = None
         self.get_pack_info()
 
+    @property
+    def sha1(self):
+        return self._sha1
+
+    @property
+    def md5(self):
+        return self._md5
+
     def extract_all_to(self, unzip_folder: str):
         try:
             self.package.extractall(unzip_folder)
         except zipfile.BadZipFile:
-            Log.warn(f"{self.sha1} Bad ZIP file, {self.file_path}")
+            Log.warn(f"{self._sha1} Bad ZIP file, {self.file_path}")
             return False
 
     def get_files(self) -> list[str]:
@@ -84,13 +101,13 @@ class oh_package(object):
 
     def get_md5(self, filename="") -> str:
         if (filename == ""):
-            return self.md5
+            return self._md5
         else:
             raise Exception("Not implemented")
 
     def get_sha1(self, filename="") -> str:
         if (filename == ""):
-            return self.sha1
+            return self._sha1
         else:
             raise Exception("Not implemented")
 
@@ -101,7 +118,7 @@ class oh_package(object):
                 "bundleName" in self.pack_info["summary"]["app"].keys()):
             return self.pack_info["summary"]["app"]["bundleName"]
         else:
-            Log.warn(f"get bundle name failed")
+            Log.warn(f"{self._sha1} get bundle name failed")
             return ""
 
     def get_version(self) -> Dict:
@@ -118,7 +135,7 @@ class oh_package(object):
             return self.pack_info
         ret = None
         for fname in self.files:
-            Log.debug(f"get_pack_info fname {fname}")
+            Log.debug(f"{self.sha1} get_pack_info fname {fname}")
             if (fname == "pack.info"):
                 json_string = self.get_file(fname).decode(
                     "utf-8", errors="ignore")
@@ -126,23 +143,23 @@ class oh_package(object):
                 ret = json.loads(json_string)
                 self.pack_info = ret
                 return ret
-        Log.warn(f"pack.info not found")
+        Log.warn(f"{self._sha1} pack.info not found")
         return None
 
     def apply_yara_rule(self, rule_str: str = "", rule_path: str = "", file_post_fix: str = "", file_filter: str = "",
                         file_list: list = []) -> list:
         # rule_str rule_path: yara rule str ot yara rule file path, specify one of them
         all_files = file_list if (len(file_list)) else self.get_files()
-        Log.info(f"apply_yara_rule all files cnt {len(all_files)}")
+        Log.info(f"{self._sha1} apply_yara_rule all files cnt {len(all_files)}")
         # === yara rule
         Log.info(
-            f"apply_yara_rule: rule_str/rule_path len {len(rule_str)}/{len(rule_path)}", False)
+            f"{self._sha1} apply_yara_rule: rule_str/rule_path len {len(rule_str)}/{len(rule_path)}", False)
         if (len(rule_str)):
             rules = yara.compile(source=rule_str)
         elif (len(rule_path)):
             rules = yara.compile(filepath=rule_path)
         else:
-            raise ParaNotValid("both rule_str and rule_path are empty")
+            raise ParaNotValid(f"{self._sha1} both rule_str and rule_path are empty")
         # === filter
         files_need = []
         for fname in all_files:
@@ -158,6 +175,6 @@ class oh_package(object):
         for fname in files_need:
             matches = rules.match(data=self.get_file(fname))
             if (len(matches)):
-                print(f"matches: {matches}")
+                Log.debug(f"{self._sha1} matches: {matches}")
                 match_list.append(matches)
         return match_list
