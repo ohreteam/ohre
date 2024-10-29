@@ -44,10 +44,20 @@ def test_oh_hap(app_path):
 def test_oh_app(app_path):
     happ = oh_app.oh_app(app_path)
     happ.extract_all_to(TMP_APP_EXTRACT)
-    print(f"{happ.md5} {happ.sha1} get_files() {happ.get_files()}")
+    print(f"md5 {happ.md5} sha1 {happ.sha1} files in app {happ.get_files_in_app()}")
+    print(f"get_files_in_haps {happ.get_files_in_haps()}")
+    print(f"get_files {happ.get_files()}")
+    # print(f"get_file {happ.get_file('entry-default.hap/resources.index')}")
+    print(f"get_file {happ.get_file('entry-default.hap/resources/base/profile/backup_config.json')}")
     print(happ.get_haps_dict())
     for hap_name, hap in happ.get_haps_dict().items():
         print(f"{hap_name} hap sha1 {hap.sha1} files {len(hap.get_files())} {hap.get_files()}")
+        print(f"hap module.json {hap.get_module_json_raw()} ")
+        print(f"{type(hap.get_module_json())} {hap.get_module_json()}")
+        print(f"{hap.get_module_name()} {hap.get_module_package_name()} {hap.get_module_device_types()}")
+        d = hap.get_module_json()
+        for k, v in d.items():
+            print(f"k {k} v: {v}")
 
     print(f"{happ.get_bundle_name()} get_version {happ.get_version()} "
           f"version name/code {happ.get_version_name()} {happ.get_version_code()}")
@@ -63,6 +73,8 @@ def test_oh_app(app_path):
     print(f"OHRE_APP_WHITE {ret}")
 
     happ.apply_yara_rule(rule_path="ohre/rules/IP.yar")
+    print(f"is release: {happ.is_api_version_release()} get_packages_device_type {happ.get_packages_device_type()}")
+    print(f"api target {happ.get_taget_api_version()} compatible {happ.get_compatible_api_version()}")
 
 
 if __name__ == "__main__":  # clear; pip install -e .; python3 ohre_demo.py native_tmpl.hap
@@ -74,7 +86,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 ohre_demo.py nati
     print(f"[demo] START: {app_path}")
     ohre.set_log_dir(".")  # put log file to pwd (current path)
     ohre.set_log_level("debug")  # if bugs occured, set to debug level and attach xxx.log at issue
-    # ohre.set_log_level("info")
+    ohre.set_log_level("info")
     ohre.set_log_print(True)  # set true to print log at console too
     if (os.path.exists(TMP_APP_EXTRACT)):
         shutil.rmtree(TMP_APP_EXTRACT)

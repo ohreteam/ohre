@@ -78,9 +78,41 @@ class oh_hap(oh_common.oh_package):
                             black_files.append(fpath)
         return sorted(list(set(black_files)))
 
-    def get_resource_indx(self) -> bytes:
+    def get_resource_index_raw(self) -> bytes:
         if ("resources.index" not in self.files):
             Log.error(f"{self.sha1} resources.index NOT found in this hap")
             return bytes()
         else:
             return super().get_file("resources.index")
+
+    # === module.json analysis START ===
+    def get_module_json_raw(self) -> bytes:
+        if ("module.json" not in self.files):
+            Log.error(f"{self.sha1} module.json NOT found in this hap")
+            return bytes()
+        else:
+            return super().get_file("module.json")
+
+    def get_module_json(self) -> Dict:
+        if ("module.json" not in self.files):
+            Log.error(f"{self.sha1} module.json NOT found in this hap")
+            return dict()
+        json_string = self.get_file("module.json").decode("utf-8", errors="ignore")
+        self.module_json_dict = json.loads(json_string)
+        return self.module_json_dict
+
+    def get_module_name(self) -> str:
+        if ("module" in self.module_json_dict and "name" in self.module_json_dict["module"]):
+            return self.module_json_dict["module"]["name"]
+        return ""
+
+    def get_module_package_name(self) -> str:
+        if ("module" in self.module_json_dict and "packageName" in self.module_json_dict["module"]):
+            return self.module_json_dict["module"]["packageName"]
+        return ""
+
+    def get_module_device_types(self) -> List:
+        if ("module" in self.module_json_dict and "deviceTypes" in self.module_json_dict["module"]):
+            return self.module_json_dict["module"]["deviceTypes"]
+        return ""
+    # === module.json analysis END ===

@@ -90,28 +90,58 @@ class oh_package(object):
             Log.warn(f"{self._sha1} Bad ZIP file, {self.file_path}")
             return False
 
-    def get_files(self) -> list[str]:
+    def get_files(self) -> List[str]:
         # return files's name
         return self.files
 
-    def get_file(self, filename) -> bytes:
+    def get_file(self, filename: str) -> bytes:
         try:
             return self.package.read(filename)
         except KeyError:
             raise FileNotPresent(filename)
 
-    def get_md5(self, filename="") -> str:
+    def get_md5(self, filename: str = "") -> str:
         if (filename == ""):
             return self._md5
         else:
             raise Exception("Not implemented")
 
-    def get_sha1(self, filename="") -> str:
+    def get_sha1(self, filename: str = "") -> str:
         if (filename == ""):
             return self._sha1
         else:
             raise Exception("Not implemented")
 
+    def apply_yara_rule(self, rule_str: str = "", rule_path: str = "", fname_pattern_list: List = [],
+                        file_list: List = []) -> List:
+        # rule_str rule_path: yara rule str ot yara rule file path, specify one of them
+        # file_list: if len==0, use all files to match file name pattern in fname_pattern_list
+        all_files = file_list if (len(file_list)) else self.get_files()
+        Log.info(f"{self._sha1} apply_yara_rule: all files {len(all_files)} patt list {len(fname_pattern_list)}")
+        # === yara rule
+        Log.info(f"{self._sha1} apply_yara_rule: rule_str/rule_path len {len(rule_str)}/{len(rule_path)}", False)
+        if (len(rule_str)):
+            rules = yara.compile(source=rule_str)
+        elif (len(rule_path)):
+            rules = yara.compile(filepath=rule_path)
+        else:
+            raise ParaNotValid(f"{self._sha1} both rule_str and rule_path are empty")
+        # === filter
+        files_need = []
+        if (len(fname_pattern_list)):
+            for fname in all_files:
+                if (fname_in_pattern_list(fname, fname_pattern_list)):
+                    files_need.append(fname)
+        # === apply rule, scan start
+        match_list = list()
+        for fname in files_need:
+            matches = rules.match(data=self.get_file(fname))
+            if (len(matches)):
+                Log.debug(f"{self._sha1} matches: {matches}")
+                match_list.append(matches)
+        return match_list
+
+    # === pack.info analysis START ===
     def get_bundle_name(self) -> str:
         if (self.pack_info is not None and
             "summary" in self.pack_info.keys() and
@@ -138,41 +168,59 @@ class oh_package(object):
         for fname in self.files:
             Log.debug(f"{self.sha1} get_pack_info fname {fname}")
             if (fname == "pack.info"):
-                json_string = self.get_file(fname).decode(
-                    "utf-8", errors="ignore")
+                json_string = self.get_file(fname).decode("utf-8", errors="ignore")
                 Log.info(f"pack.info: {fname} {json_string}", False)
                 ret = json.loads(json_string)
                 self.pack_info = ret
                 return ret
-        Log.warn(f"{self._sha1} pack.info not found")
+        Log.error(f"{self._sha1} pack.info not found")
         return None
 
-    def apply_yara_rule(self, rule_str: str = "", rule_path: str = "", fname_pattern_list: List = [],
-                        file_list: list = []) -> list:
-        # rule_str rule_path: yara rule str ot yara rule file path, specify one of them
-        # file_list: if len==0, use all files to match file name pattern in fname_pattern_list
-        all_files = file_list if (len(file_list)) else self.get_files()
-        Log.info(f"{self._sha1} apply_yara_rule: all files {len(all_files)} patt list {len(fname_pattern_list)}")
-        # === yara rule
-        Log.info(
-            f"{self._sha1} apply_yara_rule: rule_str/rule_path len {len(rule_str)}/{len(rule_path)}", False)
-        if (len(rule_str)):
-            rules = yara.compile(source=rule_str)
-        elif (len(rule_path)):
-            rules = yara.compile(filepath=rule_path)
+    def get_taget_api_version(self) -> int:
+        api_lvs = set()
+        if ("summary" in self.pack_info and "modules" in self.pack_info["summary"]):
+            for d_ in self.pack_info["summary"]["modules"]:
+                if ("apiVersion" in d_ and "target" in d_["apiVersion"]):
+                    target_api_version = d_["apiVersion"]["target"]
+                    if (isinstance(target_api_version, int) and target_api_version > 0):
+                        api_lvs.add(target_api_version)
+        return min(api_lvs)
+
+    def get_compatible_api_version(self) -> int:
+        api_lvs = set()
+        if ("summary" in self.pack_info and "modules" in self.pack_info["summary"]):
+            for d_ in self.pack_info["summary"]["modules"]:
+                if ("apiVersion" in d_ and "compatible" in d_["apiVersion"]):
+                    target_api_version = d_["apiVersion"]["compatible"]
+                    if (isinstance(target_api_version, int) and target_api_version > 0):
+                        api_lvs.add(target_api_version)
+        return max(api_lvs)
+
+    def is_api_version_release(self) -> bool:
+        not_release_hit = False
+        release_hit = False
+        if ("summary" in self.pack_info and "modules" in self.pack_info["summary"]):
+            for d_ in self.pack_info["summary"]["modules"]:
+                if ("apiVersion" in d_ and "releaseType" in d_["apiVersion"]):
+                    if (str(d_["apiVersion"]["releaseType"]).lower() == "release"):
+                        release_hit = True
+                        Log.debug(f"api version release_hit {d_}")
+                    else:
+                        Log.debug(f"api version not_release_hit {d_}")
+                        not_release_hit = True
+        if (release_hit and (not not_release_hit)):
+            return True
         else:
-            raise ParaNotValid(f"{self._sha1} both rule_str and rule_path are empty")
-        # === filter
-        files_need = []
-        if (len(fname_pattern_list)):
-            for fname in all_files:
-                if (fname_in_pattern_list(fname, fname_pattern_list)):
-                    files_need.append(fname)
-        # === apply rule, scan start
-        match_list = list()
-        for fname in files_need:
-            matches = rules.match(data=self.get_file(fname))
-            if (len(matches)):
-                Log.debug(f"{self._sha1} matches: {matches}")
-                match_list.append(matches)
-        return match_list
+            return False
+
+    def get_packages_device_type(self) -> List:
+        # pack.info packages deviceType
+        device_type_l = list()
+        if ("packages" in self.pack_info):
+            for d_ in self.pack_info["packages"]:
+                print(f"d_ {d_}")
+                if ("deviceType" in d_):
+                    print(d_["deviceType"])
+                    device_type_l.extend(d_["deviceType"])
+        return sorted(list(set(device_type_l)))
+    # === pack.info analysis END ===
