@@ -19,17 +19,19 @@ tag: HarmonyOS, Open HarmonyOS, HarmonyOS NEXT, 鸿蒙OS, hap, app
 
 OHRE is a full python3 tool to play with HarmonyOS .app and .hap files.
 
-- .app and .hap
+- .app
+- .hap
 - pack.json
 - module.json
-- white/black list of file names in specific path
+- white/black pattern of file names in specific path
+- yara rules
 - resources.index
 - .so (in progress)
 - .abc (in progress)
 
 ## Installation
 
-- Dependency: yara-python
+As far as we know ohre is platform independent.
 
 ```bash
 # install as a python package locally

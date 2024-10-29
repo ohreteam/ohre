@@ -37,6 +37,7 @@ def test_oh_hap(app_path):
 
     ret = hhap.filters_filename_white({"resources/base/": ["*.png"]})
     print(f"filters_filename_white {ret}")
+    hhap.apply_yara_rule(rule_path="ohre/rules/IP.yar")
 
 
 def test_oh_app(app_path):
@@ -60,7 +61,7 @@ def test_oh_app(app_path):
     ret = happ.filters_filename_white_app_level(filters_filename.OHRE_APP_WHITE)
     print(f"OHRE_APP_WHITE {ret}")
 
-    # happ.apply_yara_rule(rule_path="rules/rsa.yar")
+    happ.apply_yara_rule(rule_path="ohre/rules/IP.yar")
 
 
 if __name__ == "__main__":  # clear; pip install -e .; python3 ohre_demo.py native_tmpl.hap

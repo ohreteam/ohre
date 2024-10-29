@@ -3,7 +3,7 @@ OHRE_HAP_ROOT_WHITE = {
 }
 
 OHRE_HAP_WHITE = {
-    "resources/base/media/": ["*.png", "*.json", "*.jpg", "*.jpeg"]
+    "resources/base/media/": ["*.png", "*.json", "*.jpg", "*.jpeg", "*.gif", "*.svg"]
 }
 
 OHRE_HAP_BLACK = {
