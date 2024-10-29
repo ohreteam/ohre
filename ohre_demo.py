@@ -46,9 +46,9 @@ def test_oh_app(app_path):
     happ.extract_all_to(TMP_APP_EXTRACT)
     print(f"md5 {happ.md5} sha1 {happ.sha1} files in app {happ.get_files_in_app()}")
     print(f"get_files_in_haps {happ.get_files_in_haps()}")
-    print(f"get_files {happ.get_files()}")
+    print(f"get_files {len(happ.get_files())} {happ.get_files()}")
     # print(f"get_file {happ.get_file('entry-default.hap/resources.index')}")
-    print(f"get_file {happ.get_file('entry-default.hap/resources/base/profile/backup_config.json')}")
+    # print(f"get_file {happ.get_file('entry-default.hap/resources/base/profile/backup_config.json')}")
     print(happ.get_haps_dict())
     for hap_name, hap in happ.get_haps_dict().items():
         print(f"{hap_name} hap sha1 {hap.sha1} files {len(hap.get_files())} {hap.get_files()}")

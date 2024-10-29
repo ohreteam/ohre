@@ -40,8 +40,7 @@ class oh_app(oh_common.oh_package):
         # return files's name in app and all haps
         ret = self.files
         for hap_name, f_list in self.haps_files_path.items():
-            for f_path in f_list:
-                ret.append(os.path.join(hap_name, f_path))
+            ret.extend([os.path.join(hap_name,f_path) for f_path in f_list])
         return ret
 
     def get_file(self, filename: str) -> bytes:
