@@ -1,11 +1,9 @@
-import hashlib
 import json
 import os
 import zipfile
 from io import BytesIO
 from typing import Any, Dict, List
 
-import yara
 
 from . import Log, oh_common, oh_hap
 

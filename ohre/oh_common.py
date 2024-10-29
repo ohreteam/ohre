@@ -146,11 +146,12 @@ class oh_package(object):
         Log.warn(f"{self._sha1} pack.info not found")
         return None
 
-    def apply_yara_rule(self, rule_str: str = "", rule_path: str = "", file_post_fix: str = "", file_filter: str = "",
+    def apply_yara_rule(self, rule_str: str = "", rule_path: str = "", fname_pattern_list: List = [],
                         file_list: list = []) -> list:
         # rule_str rule_path: yara rule str ot yara rule file path, specify one of them
+        # file_list: if len==0, use all files to match file name pattern in fname_pattern_list
         all_files = file_list if (len(file_list)) else self.get_files()
-        Log.info(f"{self._sha1} apply_yara_rule all files cnt {len(all_files)}")
+        Log.info(f"{self._sha1} apply_yara_rule: all files {len(all_files)} patt list {len(fname_pattern_list)}")
         # === yara rule
         Log.info(
             f"{self._sha1} apply_yara_rule: rule_str/rule_path len {len(rule_str)}/{len(rule_path)}", False)
@@ -162,14 +163,10 @@ class oh_package(object):
             raise ParaNotValid(f"{self._sha1} both rule_str and rule_path are empty")
         # === filter
         files_need = []
-        for fname in all_files:
-            need_flag = True
-            if (len(file_post_fix) and (not fname.endswith(file_post_fix))):
-                need_flag = False
-            if (len(file_filter) and (not file_filter in fname)):
-                need_flag = False
-            if (need_flag):
-                files_need.append(fname)
+        if(len(fname_pattern_list)):
+            for fname in all_files:
+                if(fname_in_pattern_list(fname, fname_pattern_list)):
+                    files_need.append(fname)
         # === apply rule, scan start
         match_list = list()
         for fname in files_need:

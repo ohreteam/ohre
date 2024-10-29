@@ -32,9 +32,9 @@ class oh_hap(oh_common.oh_package):
 
     def filters_filename_white(self, rules: Dict) -> List:
         # ".": level 1 files(NOT in a sub folder)
-        # here, a filter means a k,v in rules dict. k: path, v: white postfix list
+        # here, a filter means a k,v in rules dict. k: path, v: white filename pattern list
         # NOTE: As long as 1 whitelist rule hit, the file will be considered as non-whitelisted.
-        # e.g. rules is {"*": ["*.png"], ".": ["pack.json"]}. then pack.json is a non-whitelisted file
+        # e.g. rules is {"*": ["*.png"], ".": ["pack.json"]}. then pack.json is a non-whitelisted file here
         not_white_files = []
         for path, pattern_list in rules.items():
             if (path == "."):
