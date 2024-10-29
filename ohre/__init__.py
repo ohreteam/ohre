@@ -1,3 +1,7 @@
+# The current version of ohre
+__version__ = "0.0.1a"
+
+
 import logging
 
 from . import Log
@@ -7,8 +11,10 @@ from .oh_hap import oh_hap
 Log.init_log("ohre_test")
 Log.debug(f"ohre __init__.py called")
 
-def set_log_dir(log_dir:str):
+
+def set_log_dir(log_dir: str):
     Log.init_log("ohre_test", log_dir)
+
 
 def set_log_level(level: str):
     print(f"ohre setting log level {level}")
