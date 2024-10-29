@@ -9,12 +9,13 @@ DEBUG_LOCAL = True
 DEBUG_LEN = 500
 
 
-def debug_print(logstr):
+def debug_print(logstr: str, level: str = "debug"):
     if (DEBUG_LOCAL and len(logstr)):
         if (len(logstr) >= DEBUG_LEN):
-            print("[LOG]", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), logstr[:DEBUG_LEN], " ... truncated")
+            print("[LOG]", level, datetime.datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S"), logstr[:DEBUG_LEN], " ... truncated")
         else:
-            print("[LOG]", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), logstr)
+            print("[LOG]", level, datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"), logstr)
 
 
 def init_log(log_name: str, log_dir=""):
@@ -58,31 +59,31 @@ def set_debug_print_flag(print_flag: bool):
 
 def debug(logstr, print_flag=True):
     if (print_flag and get_logger().getEffectiveLevel() <= logging.DEBUG):
-        debug_print(logstr)
+        debug_print(logstr, "debug")
     g_log.debug(logstr)
 
 
 def info(logstr, print_flag=True):
     if (print_flag and get_logger().getEffectiveLevel() <= logging.INFO):
-        debug_print(logstr)
+        debug_print(logstr, "info")
     g_log.info(logstr)
 
 
 def warn(logstr, print_flag=True):
     if (print_flag and get_logger().getEffectiveLevel() <= logging.WARNING):
-        debug_print(logstr)
+        debug_print(logstr, "warn")
     g_log.warning(logstr)
 
 
 def error(logstr, print_flag=True):
     if (print_flag and get_logger().getEffectiveLevel() <= logging.ERROR):
-        debug_print(logstr)
+        debug_print(logstr, "error")
     g_log.error(logstr)
 
 
 def critical(logstr, print_flag=True):
     if (print_flag and get_logger().getEffectiveLevel() <= logging.CRITICAL):
-        debug_print(logstr)
+        debug_print(logstr, "criti")
     g_log.critical(logstr)
 
 

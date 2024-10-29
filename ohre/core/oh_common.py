@@ -8,9 +8,10 @@ from typing import Any, Dict, List
 
 import yara
 
-from . import Log
+from ohre.misc import Log
 
 HAP_EXTRACT_PREFIX = "hap_extract_"
+
 
 class FileNotPresent(Exception):
     pass
@@ -163,9 +164,9 @@ class oh_package(object):
             raise ParaNotValid(f"{self._sha1} both rule_str and rule_path are empty")
         # === filter
         files_need = []
-        if(len(fname_pattern_list)):
+        if (len(fname_pattern_list)):
             for fname in all_files:
-                if(fname_in_pattern_list(fname, fname_pattern_list)):
+                if (fname_in_pattern_list(fname, fname_pattern_list)):
                     files_need.append(fname)
         # === apply rule, scan start
         match_list = list()

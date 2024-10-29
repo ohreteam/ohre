@@ -4,11 +4,11 @@ __version__ = "0.0.1a"
 
 import logging
 
-from . import Log
-from .oh_app import oh_app
-from .oh_hap import oh_hap
+from ohre.misc import Log
+from ohre.core import oh_app
+from ohre.core import oh_hap
 
-Log.init_log("ohre_test")
+Log.init_log("ohre_test", log_dir=".")
 Log.debug(f"ohre __init__.py called")
 
 

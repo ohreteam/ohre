@@ -4,8 +4,8 @@ import zipfile
 from io import BytesIO
 from typing import Any, Dict, List
 
-
-from . import Log, oh_common, oh_hap
+from ohre.core import oh_common, oh_hap
+from ohre.misc import Log
 
 
 class oh_app(oh_common.oh_package):

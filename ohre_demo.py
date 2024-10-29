@@ -7,7 +7,7 @@ import yara
 
 import ohre
 import ohre.rules.filters_filename as filters_filename
-from ohre import oh_app, oh_hap
+from ohre.core import oh_app, oh_hap
 
 TMP_HAP_EXTRACT = "tmp_hap_extract"
 TMP_APP_EXTRACT = "tmp_app_extract"
@@ -41,7 +41,7 @@ def test_oh_hap(app_path):
 
 
 def test_oh_app(app_path):
-    happ = oh_app(app_path)
+    happ = oh_app.oh_app(app_path)
     happ.extract_all_to(TMP_APP_EXTRACT)
     print(f"{happ.md5} {happ.sha1} get_files() {happ.get_files()}")
     print(happ.get_haps_dict())

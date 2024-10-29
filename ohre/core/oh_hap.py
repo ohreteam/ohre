@@ -7,7 +7,8 @@ from typing import Any, Dict, List
 
 import yara
 
-from . import Log, oh_common
+from ohre.core import oh_common
+from ohre.misc import Log
 
 
 class oh_hap(oh_common.oh_package):
