@@ -94,7 +94,7 @@ class oh_package(object):
         # return files's name
         return self.files
 
-    def get_file(self, filename):
+    def get_file(self, filename) -> bytes:
         try:
             return self.package.read(filename)
         except KeyError:

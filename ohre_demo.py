@@ -28,7 +28,7 @@ def yara_local_test():
 
 
 def test_oh_hap(app_path):
-    hhap = oh_hap(app_path)
+    hhap = oh_hap.oh_hap(app_path)
     hhap.extract_all_to(TMP_HAP_EXTRACT)
     print(f"{hhap.get_md5()} {hhap.get_sha1()} get_files() {hhap.get_files()}")
     print(f"{hhap.get_bundle_name()} get_version {hhap.get_version()} "
@@ -38,6 +38,7 @@ def test_oh_hap(app_path):
     ret = hhap.filters_filename_white({"resources/base/": ["*.png"]})
     print(f"filters_filename_white {ret}")
     hhap.apply_yara_rule(rule_path="ohre/rules/IP.yar")
+    print(f"get_resource_indx {hhap.get_resource_indx()}")
 
 
 def test_oh_app(app_path):

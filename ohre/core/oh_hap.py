@@ -77,3 +77,10 @@ class oh_hap(oh_common.oh_package):
                         if (fnmatch.fnmatch(fpath, patt)):
                             black_files.append(fpath)
         return sorted(list(set(black_files)))
+
+    def get_resource_indx(self) -> bytes:
+        if ("resources.index" not in self.files):
+            Log.error(f"{self.sha1} resources.index NOT found in this hap")
+            return bytes()
+        else:
+            return super().get_file("resources.index")
