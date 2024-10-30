@@ -9,7 +9,7 @@ import yara
 
 from ohre.core import oh_common
 from ohre.misc import Log
-
+from oh_resbuf import *
 
 class oh_hap(oh_common.oh_package):
     def __init__(self, value):
@@ -84,6 +84,16 @@ class oh_hap(oh_common.oh_package):
             return bytes()
         else:
             return super().get_file("resources.index")
+
+    def get_resource_index_content(self):
+        buf = self.get_resource_index_raw()
+        res_index = ResIndexBuf(buf)
+        resources = {"header": res_index.header,
+                     "limit_key_configs": res_index.limit_key_configs,
+                     "id_set": res_index.id_set,
+                     "resourecs_item": res_index.resource_items
+                     }
+        return resources
 
     # === module.json analysis START ===
     def get_module_json_raw(self) -> bytes:
