@@ -218,9 +218,7 @@ class oh_package(object):
         device_type_l = list()
         if ("packages" in self.pack_info):
             for d_ in self.pack_info["packages"]:
-                print(f"d_ {d_}")
                 if ("deviceType" in d_):
-                    print(d_["deviceType"])
                     device_type_l.extend(d_["deviceType"])
         return sorted(list(set(device_type_l)))
     # === pack.info analysis END ===

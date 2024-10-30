@@ -27,7 +27,7 @@ def init_log(log_name: str, log_dir=""):
     elif (platform.system() == "Darwin"):
         LOG_DIR = os.path.join("/", "Users", "Shared", "ohre", "log")
     else:
-        print("NOT SUPPORTED OS")
+        print("Log init: NOT SUPPORTED OS")
 
     if (len(log_dir)):
         LOG_DIR = log_dir
