@@ -38,7 +38,9 @@ def test_oh_hap(app_path):
     ret = hhap.filters_filename_white({"resources/base/": ["*.png"]})
     print(f"filters_filename_white {ret}")
     hhap.apply_yara_rule(rule_path="ohre/rules/IP.yar")
-    print(f"get_resource_indx {hhap.get_resource_indx()}")
+
+    res_index = hhap.get_resources_index()
+    print("Resources.index :\n", res_index)
 
 
 def test_oh_app(app_path):

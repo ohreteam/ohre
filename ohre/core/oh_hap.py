@@ -9,6 +9,7 @@ import yara
 
 from ohre.core import oh_common
 from ohre.misc import Log
+from res_analyzer.oh_resbuf import ResIndexBuf
 
 
 class oh_hap(oh_common.oh_package):
@@ -18,6 +19,7 @@ class oh_hap(oh_common.oh_package):
             if (not value.endswith(".hap")):
                 raise oh_common.ParaNotValid("Not a valid hap type, must be .hap")
         super().__init__(value)
+        self.res_index = None
 
     def filter_filename_white(self, path: str, pattern_list: List) -> List:
         # path: a path prefix to specify the dir to be scanned
@@ -78,14 +80,22 @@ class oh_hap(oh_common.oh_package):
                             black_files.append(fpath)
         return sorted(list(set(black_files)))
 
-    def get_resource_index_raw(self) -> bytes:
+    def get_resources_index_raw(self) -> bytes:
         if ("resources.index" not in self.files):
             Log.error(f"{self.sha1} resources.index NOT found in this hap")
             return bytes()
         else:
             return super().get_file("resources.index")
 
+    def get_resources_index(self) -> Dict:
+        if (self.res_index is None):
+            buf = self.get_resources_index_raw()
+            res_content = ResIndexBuf(buf)
+            self.res_index = res_content.resources_content
+        return self.res_index
+
     # === module.json analysis START ===
+
     def get_module_json_raw(self) -> bytes:
         if ("module.json" not in self.files):
             Log.error(f"{self.sha1} module.json NOT found in this hap")
