@@ -98,13 +98,13 @@ class oh_hap(oh_common.oh_package):
         if (self.res_index is None):
             self.get_resources_index()
 
-        self.get_module_json()  # TODO 不调用有可能不存在
+        self.get_module_json()  # TODO: This might not exist if not called
 
-        # TODO 确认prefix是否准确
+        # TODO: Verify if the prefix is correct
         files_prefix = "resources"
         resources_prefix = os.path.join(self.get_module_package_name(), "resources")
 
-        # TODO 有没有更好的方法预过滤
+        # TODO: We need a better way to pre-filter, e.g., using "file_type"
         res_index_list = [res["file_value"] for res in self.res_index["resource_items"].values()]
 
         def filter_path(prefix, path_list):
@@ -116,7 +116,10 @@ class oh_hap(oh_common.oh_package):
 
         res_list = filter_path(resources_prefix, res_index_list)
         files_list = filter_path(files_prefix, self.files)
-        return {"files_only": list(set(files_list) - set(res_list)), "resource_index_only": list(set(res_list) - set(files_list)), "intersection ": list(set(res_list) & set(files_list))}
+
+        return {"files_only": list(set(files_list) - set(res_list)),
+                "resource_index_only": list(set(res_list) - set(files_list)),
+                "intersection ": list(set(res_list) & set(files_list))}
 
     # === module.json analysis START ===
 
