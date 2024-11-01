@@ -1,0 +1,34 @@
+[tool.poetry]
+name = "ohre"
+version = "0.0.1a"
+description = "ohre is a analyze and reverse tool of Open HarmonyOS and HarmonyOS NEXT package."
+authors = [
+    "koki <k0k1fish@outlook.com>",
+    "Penkace <penkaceunique@163.com>",
+    ""]
+homepage = "https://github.com/ohreteam"
+readme = "README.md"
+license = "AGPL-3.0"
+documentation = "https://github.com/ohreteam/ohre"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: AGPL-3.0 License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Security",
+    "Topic :: Software Development",
+    "Topic :: Utilities",
+    "Topic :: HarmonyOS"
+]
+
+[tool.poetry.dependencies]
+python = "^3.9"
+"yara-python" = "^4.5.0"
+pendulum = "^3.0.0"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
