@@ -13,20 +13,6 @@ TMP_HAP_EXTRACT = "tmp_hap_extract"
 TMP_APP_EXTRACT = "tmp_app_extract"
 
 
-def yara_local_test():
-    rules = yara.compile(filepath="rules/sha1.yar")
-    data = '''
-    {
-        "0123456789abcdef"
-        "some other text"
-    }
-    '''
-    matches = rules.match(data=data)
-    print(f"matches {matches}")
-    for match in matches:
-        print(f"Rule: {match.rule} {type(match)} {match.tags} {match.meta} {match.strings}")
-
-
 def test_oh_hap(app_path):
     hhap = oh_hap.oh_hap(app_path)
     hhap.extract_all_to(TMP_HAP_EXTRACT)
