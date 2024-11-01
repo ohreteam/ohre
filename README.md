@@ -11,6 +11,8 @@
 <a href="https://github.com/ohreteam/ohre/graphs/commit-activity"><img alt="maintained" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg"></a>
 </p>
 
+- zh_CN [简体中文](README_ZH.md)
+
 A **O**pen **H**armonyOS app/hap package analyze and **RE**verse tool, compatible with HarmonyOS NEXT. Maybe pronounced like "ōli".
 
 With ohre, you can (or will can) perform the following operations on a HarmonyOS app package (.app or .hap): file operations, information analysis, resource analysis, sensitive information detection, vulnerability detection, reverse analysis, etc.
