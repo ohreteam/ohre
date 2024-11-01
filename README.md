@@ -11,9 +11,9 @@
 <a href="https://github.com/ohreteam/ohre/graphs/commit-activity"><img alt="maintained" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg"></a>
 </p>
 
-A **O**pen **H**armonyOS app/hap package analyze and **RE**verse tool. Maybe pronounced like "ōli".
+A **O**pen **H**armonyOS app/hap package analyze and **RE**verse tool, compatible with HarmonyOS NEXT. Maybe pronounced like "ōli".
 
-MORE DESCRIPTION HERE (TBD).
+With ohre, you can (or will can) perform the following operations on a HarmonyOS app package (.app or .hap): file operations, information analysis, resource analysis, sensitive information detection, vulnerability detection, reverse analysis, etc.
 
 tag: HarmonyOS, Open HarmonyOS, HarmonyOS NEXT, 鸿蒙 OS, hap, app
 
@@ -25,11 +25,11 @@ OHRE is a full python3 tool to play with HarmonyOS .app and .hap files.
 - .hap
 - pack.json
 - module.json
-- white/black pattern of file names in specific path
-- yara rules
-- resources.index
-- .so (in progress)
-- .abc (in progress)
+- resources analysis: resources.index, resources\base\\\*, etc
+- Code file leakage detection: pattern of file names in a specific path, either in white or black
+- Built-in and self-defined vulnerability and sensitive information detection rules based on yara
+- xxx.abc (in progress)
+- xxx.so (in progress)
 
 > Because it is still under testing, the debug log will be placed in `pwd` by default, which is one of the requirements for creating a new issue.
 
@@ -38,10 +38,11 @@ OHRE is a full python3 tool to play with HarmonyOS .app and .hap files.
 As far as we know ohre is platform-independent, which means it can be used under Windows, Linux, and macOS with any CPU architecture.
 
 ```bash
-pip install ohre # install from pip # for all users
+pip install yara-python
+pip install ohre # install from pip release version # for all users
 
-# install as a python package locally # for developers
-pip install -e . # in same folder as setup.py and .git
+# install as a python package locally # for debug and developers
+pip install -e . # in the same folder as setup.py and .git
 ```
 
 ## How to Use
@@ -55,4 +56,4 @@ python ohre_demo.py xxx.app # run demo with HarmonyOS app
 
 ## Contacts
 
-Please new an issue, participate in the discussion or make a MR.
+Please new an issue, participate in the discussion or make a PR.

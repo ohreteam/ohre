@@ -1,14 +1,12 @@
 from ohre import __version__
 from setuptools import setup, find_packages
 
-with open("requirements.txt", "r") as fp:
-    install_requires = fp.read().splitlines()
 
 setup(
     name="ohre",
     version=__version__,
     packages=find_packages(),
-    install_requires=install_requires,
+    install_requires="yara-python>=4.5.0",
     author="https://github.com/ohreteam",
     description="ohre is a analyze and reverse tool of Open HarmonyOS / HarmonyOS NEXT package.",
     long_description=open("README.md").read(),
@@ -17,7 +15,7 @@ setup(
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: AGPL-3.0 License",
+        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
@@ -25,7 +23,6 @@ setup(
         "Topic :: Security",
         "Topic :: Software Development",
         "Topic :: Utilities",
-        "Topic :: HarmonyOS"
     ],
     python_requires=">=3.9",
 )
