@@ -1,3 +1,5 @@
+import argparse
+import json
 import os
 import shutil
 import sys
@@ -65,12 +67,34 @@ def test_oh_app(app_path):
     print(f"api target {happ.get_taget_api_version()} compatible {happ.get_compatible_api_version()}")
 
 
+def test_oh_hap_resource_anaylsis(hap_path):
+    hhap = oh_hap.oh_hap(hap_path)
+    hhap.extract_all_to(TMP_HAP_EXTRACT)
+    print(json.dumps(hhap.compare_files_with_resources_index(), indent=4))
+
+    print("============== \"only path\" test, please ignore this =====================")
+    hhap.files.append("resources/files_only_test")
+    print(json.dumps(hhap.compare_files_with_resources_index(), indent=4))
+
+    hhap.res_index["resource_items"]["resources_index_only_test"] = (
+        {
+            "file_size": 4096,
+            "file_type": "resources_index_only_test",
+            "file_value": f"{hhap.get_module_package_name()}/resources/resources_index_only_test",
+            "file_name": "resources_index_only_test"
+        })
+    print(json.dumps(hhap.compare_files_with_resources_index(), indent=4))
+    print("===========================================================================")
+
+
 if __name__ == "__main__":  # clear; pip install -e .; python3 ohre_demo.py native_tmpl.hap
+    parser = argparse.ArgumentParser()
+    parser.add_argument("app_path", type=str, help="TBD")
+    parser.add_argument("--resource_analysis", action="store_true", help="TBD")
+    arg = parser.parse_args()
+
     start_time = time.time()
-    if (len(sys.argv) < 2):
-        print("python ohre_demo.py app_path")
-        sys.exit(0)
-    app_path = sys.argv[1]
+    app_path = arg.app_path
     print(f"[demo] START: {app_path}")
     ohre.set_log_dir(".")  # put log file to pwd (current path)
     ohre.set_log_level("debug")  # if bugs occured, set to debug level and attach xxx.log at issue
@@ -82,7 +106,10 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 ohre_demo.py nati
         shutil.rmtree(TMP_HAP_EXTRACT)
 
     if (app_path.endswith(".hap")):
-        test_oh_hap(app_path)
+        if (arg.resource_analysis):
+            test_oh_hap_resource_anaylsis(app_path)
+        else:
+            test_oh_hap(app_path)
     else:
         test_oh_app(app_path)
     total_time = time.time() - start_time
