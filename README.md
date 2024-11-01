@@ -51,6 +51,7 @@ pip install -e . # in same folder as setup.py and .git
 ```bash
 python ohre_demo.py xxx.hap # run demo with HarmonyOS hap
 python ohre_demo.py xxx.app # run demo with HarmonyOS app
+python ohre_demo.py xxx.hap --resource_analysis # run demo with HarmonyOS hap and resource analysis
 ```
 
 ## Contacts
