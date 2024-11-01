@@ -113,9 +113,11 @@ class oh_package(object):
             raise Exception("Not implemented")
 
     def apply_yara_rule(self, rule_str: str = "", rule_path: str = "", fname_pattern_list: List = [],
-                        file_list: List = []) -> List:
+                        file_list: List = []) -> Dict[str, List]:
         # rule_str rule_path: yara rule str ot yara rule file path, specify one of them
         # file_list: if len==0, use all files to match file name pattern in fname_pattern_list
+        # return : a dict representing files that match input yara rules
+        # e.g. dict{file_0: [match_rule0, match_rule1], file_1: [match_rule1]}
         all_files = file_list if (len(file_list)) else self.get_files()
         Log.info(f"{self._sha1} apply_yara_rule: all files {len(all_files)} patt list {len(fname_pattern_list)}")
         # === yara rule
@@ -132,14 +134,19 @@ class oh_package(object):
             for fname in all_files:
                 if (fname_in_pattern_list(fname, fname_pattern_list)):
                     files_need.append(fname)
+        else:
+            files_need = all_files
         # === apply rule, scan start
-        match_list = list()
+        match_d = dict()
         for fname in files_need:
             matches = rules.match(data=self.get_file(fname))
             if (len(matches)):
-                Log.debug(f"{self._sha1} matches: {matches}")
-                match_list.append(matches)
-        return match_list
+                Log.debug(f"{self._sha1} matches: {type(matches)} {matches} fname {fname}")
+                if(fname in match_d):
+                    match_d[fname].extend(matches)
+                else:
+                    match_d[fname] = matches
+        return match_d
 
     # === pack.info analysis START ===
     def get_bundle_name(self) -> str:

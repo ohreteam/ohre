@@ -36,3 +36,5 @@ def set_log_level(level: str):
 def set_log_print(print_flag: bool):
     print(f"ohre setting log console print flag {print_flag}")
     Log.set_debug_print_flag(print_flag)
+
+set_log_print(False)
