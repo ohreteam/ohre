@@ -217,6 +217,7 @@ class ResIndexBuf:
     def get_resources_items(self) -> Dict[str, Dict[str, Any]]:
         id_set = self.id_set
         resource_item_dict: Dict[str, Dict[str, Any]] = {}
+        offset = self.pos
         try:
             for rid, ridx in id_set.items():
                 offset = ridx
