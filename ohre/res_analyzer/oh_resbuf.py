@@ -228,7 +228,7 @@ class ResIndexBuf:
 
                 res_id = struct.unpack_from('<I', self.buf, offset)[0]
                 offset += 4
-
+                
                 data_size = struct.unpack_from('<H', self.buf, offset)[0]
                 offset += 2
 

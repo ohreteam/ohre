@@ -9,7 +9,7 @@ import yara
 
 from ohre.core import oh_common
 from ohre.misc import Log
-from res_analyzer.oh_resbuf import ResIndexBuf
+from ohre.res_analyzer.oh_resbuf import ResIndexBuf
 
 
 class oh_hap(oh_common.oh_package):
