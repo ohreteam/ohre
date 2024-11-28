@@ -119,7 +119,7 @@ class oh_hap(oh_common.oh_package):
 
         return {"files_only": list(set(files_list) - set(res_list)),
                 "resource_index_only": list(set(res_list) - set(files_list)),
-                "intersection ": list(set(res_list) & set(files_list))}
+                "intersection": list(set(res_list) & set(files_list))}
 
     # === module.json analysis START ===
 
