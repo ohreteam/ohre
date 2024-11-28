@@ -1,5 +1,6 @@
 .DS_Store
 rules_local/
+*.abc
 *.hap
 *.app
 *.zip

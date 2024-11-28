@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "ohre"
-version = "0.0.1b0"
+version = "0.0.2a0"
 description = "ohre is a analyze and reverse tool of HarmonyOS APP package."
 authors = [
     "koki <k0k1fish@outlook.com>",
