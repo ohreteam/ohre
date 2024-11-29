@@ -8,9 +8,11 @@ import leb128
 import yara
 
 import ohre
-import ohre.abc_decompiler.RegionHeader
-import ohre.abc_decompiler.Header
-import ohre.rules.filters_filename as filters_filename
+import ohre.abc_decompiler.core.RegionHeader
+import ohre.abc_decompiler.core.Header
+import ohre.abc_decompiler.core.ClassIndex as ClassIndex
+import ohre.abc_decompiler.core.Class as Class
+import ohre.core.operator as op
 from ohre.core import oh_app, oh_hap
 
 if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_decompile.py a.abc
@@ -22,9 +24,17 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
     abc_path = arg.abc_path
     f = open(abc_path, "rb")
     buf = f.read()
-    header = ohre.abc_decompiler.Header.Header(buf)
+    header = ohre.abc_decompiler.core.Header.Header(buf)
     print(f"> header.pos {header.pos} is_valid {header.is_valid()}")
-    region_header = ohre.abc_decompiler.RegionHeader.RegionHeader(buf, header.pos)
-    print(
-        f"> region_header.pos {region_header.pos} start_off {hex(region_header.start_off)} proto_idx_off {hex(region_header.proto_idx_off)}")
+
+    class_index = ClassIndex.ClassIndex(buf, header.class_idx_off, header.num_classes)
+    print(f"> {class_index}")
+    for offset in class_index.offsets:
+        abc_class = Class.Class(buf,offset)
+        print(f"> {abc_class}")
+
+    print(f"header.pos value: {hex(op._read_uint32(buf, header.pos))}")
+    for i in range(header.num_index_regions):
+        region_header = ohre.abc_decompiler.core.RegionHeader.RegionHeader(buf, header.class_idx_off * 4)
+        print(f"> {region_header}")
     f.close()
