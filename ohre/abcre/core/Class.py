@@ -33,12 +33,12 @@ class Class(BaseRegion):
         out_methods = ""
         for i in range(len(self.methods)):
             out_methods += f"\n[{i}] {self.methods[i]}; "
-        out = f"""Class: [{hex(self.pos_start)}/{hex(self.pos_end)}] name {self.name}
+        out = f"Class: [{hex(self.pos_start)}/{hex(self.pos_end)}] name {self.name} \
 super_class_off {self.super_class_off} access_flags {hex(self.access_flags)} \
 num_fields {hex(self.num_fields)} num_methods {hex(self.num_methods)}\n\
 class_data({len(self.class_data)}) {out_tag_value}\n\
 fields({len(self.fields)}) {out_fields}\n\
-methods({len(self.methods)}) {out_methods}"""
+methods({len(self.methods)}) {out_methods}"
         return out
 
 

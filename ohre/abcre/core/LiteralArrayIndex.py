@@ -1,16 +1,17 @@
 import ohre.core.operator as op
 import ohre.abcre.core.BaseRegion as BaseRegion
 
-class ClassIndex(BaseRegion.BaseRegion):
-    def __init__(self, buf, pos: int = 0, num_classes: int = 0):
+
+class LiteralArrayIndex(BaseRegion.BaseRegion):
+    def __init__(self, buf, pos: int = 0, num_lnps: int = 0):
         super().__init__(pos)
         self.offsets = list()
-        for i in range(num_classes):
+        for i in range(num_lnps):
             tmp, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
             self.offsets.append(tmp)
 
     def __str__(self):
-        out = f"ClassIndex: [{hex(self.pos_start)}/{hex(self.pos_end)}] offsets({hex(len(self.offsets))})"
+        out = f"LiteralArrayIndex: [{hex(self.pos_start)}/{hex(self.pos_end)}] offsets({hex(len(self.offsets))})"
         for v in self.offsets:
             out += f" {hex(v)}"
         return out

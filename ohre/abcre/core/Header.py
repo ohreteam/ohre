@@ -30,8 +30,8 @@ class Header:
         self.pos = 0
         self.buf = buf
         self.magic, self.checksum, self.version, self.file_size, self.foreign_off, self.foreign_size, \
-            self.num_classes, self.class_idx_off, self.num_lnps, self.lnp_idx_off, self.num_literal_arrays, \
-            self.literal_array_idx_off, self.num_index_regions, self.index_section_off = self._parse_header()
+            self.num_classes, self.class_idx_off, self.num_lnps, self.lnp_idx_off, self.num_literalarrays, \
+            self.literalarray_idx_off, self.num_index_regions, self.index_section_off = self._parse_header()
 
     def _parse_header(self):
         offset = 0
@@ -90,14 +90,14 @@ class Header:
         # 	Number of literalArrays defined in the file.
         # 	Also this is the number of elements in the LiteralArrayIndex structure.
         # uint32_t
-        num_literal_arrays = op._read_uint32(self.buf, offset + 28)
-        print(f"num_literal_arrays {hex(num_literal_arrays)} {num_literal_arrays} {offset + 28}")
+        num_literalarrays = op._read_uint32(self.buf, offset + 28)
+        print(f"num_literalarrays {hex(num_literalarrays)} {num_literalarrays} {offset + 28}")
 
         # Offset to the literalarray index structure.
         # The offset must point to a structure in LiteralArrayIndex format.
         # uint32_t
-        literal_array_idx_off = op._read_uint32(self.buf, offset + 32)
-        print(f"literal_array_idx_off {hex(literal_array_idx_off)} {literal_array_idx_off} {offset + 32}")
+        literalarray_idx_off = op._read_uint32(self.buf, offset + 32)
+        print(f"literalarray_idx_off {hex(literalarray_idx_off)} {literalarray_idx_off} {offset + 32}")
 
         # Number of the index regions in the file.
         # Also this is the number of elements in the RegionIndex structure.
@@ -114,7 +114,7 @@ class Header:
         self.pos = offset + 44
         print(f"Final offset is : {self.pos}")
         return [magic, checksum, version, file_size, foreign_off, foreign_size, num_classes, class_idx_off,
-                num_lnps, lnp_idx_off, num_literal_arrays, literal_array_idx_off, num_index_regions,
+                num_lnps, lnp_idx_off, num_literalarrays, literalarray_idx_off, num_index_regions,
                 index_section_off]
 
     def _read_string(self, offset, length):

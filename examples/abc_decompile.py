@@ -1,14 +1,13 @@
 import argparse
-import os
-import shutil
-import sys
 import time
 
 import ohre
 import ohre.abcre.core.RegionHeader
 import ohre.abcre.core.Header
-import ohre.abcre.core.ClassIndex as ClassIndex
-import ohre.abcre.core.Class as Class
+from ohre.abcre.core.ClassIndex import ClassIndex
+from ohre.abcre.core.LineNumberProgramIndex import LineNumberProgramIndex
+from ohre.abcre.core.LiteralArrayIndex import LiteralArrayIndex
+from ohre.abcre.core.Class import Class
 import ohre.core.operator as op
 from ohre.core import oh_app, oh_hap
 from ohre.misc import Log
@@ -27,11 +26,21 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
     header = ohre.abcre.core.Header.Header(buf)
     print(f"> header.pos {header.pos} is_valid {header.is_valid()}")
 
-    class_index = ClassIndex.ClassIndex(buf, header.class_idx_off, header.num_classes)
+    class_index = ClassIndex(buf, header.class_idx_off, header.num_classes)
     print(f"> {class_index}")
     for i in range(len(class_index.offsets)):
-        abc_class = Class.Class(buf, class_index.offsets[i])
-        print(f">[{i}/{header.num_classes}] {abc_class} [abc_class print end]\n\n")
+        abc_class = Class(buf, class_index.offsets[i])
+        print(f">[{i}/{header.num_classes}] {abc_class} [abc_class print end]\n")
+
+    line_number_program_index = LineNumberProgramIndex(buf, header.lnp_idx_off, header.num_lnps)
+    print(f"> {line_number_program_index}")
+
+    literal_array_index = LiteralArrayIndex(buf, header.literalarray_idx_off, header.num_literalarrays)
+    print(f"> {literal_array_index}")
+
+    # TODO: RegionIndex
+    # region_index = RegionIndex(buf, header.index_section_off, header.num_index_regions)
+    # print(f"> {literal_array_index}")
 
     # TODO: 2024.11.30 0250 finish class, then RegionHeader
     print(f"header.pos value: {hex(op._read_uint32(buf, header.pos))}")
