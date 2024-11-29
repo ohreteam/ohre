@@ -1,5 +1,5 @@
 import ohre.core.operator as op
-import ohre.abc_decompiler.core.BaseRegion as BaseRegion
+import ohre.abcre.core.BaseRegion as BaseRegion
 
 class ClassIndex(BaseRegion.BaseRegion):
     def __init__(self, buf, pos: int = 0, num_classes: int = 0):
@@ -10,7 +10,7 @@ class ClassIndex(BaseRegion.BaseRegion):
             self.offsets.append(tmp)
 
     def __str__(self):
-        out = f"ClassIndex: pos start/end {hex(self.pos_start)}/{hex(self.pos_end)} num_classes {hex(len(self.offsets))}"
+        out = f"ClassIndex: [{hex(self.pos_start)}/{hex(self.pos_end)}] num_classes {hex(len(self.offsets))}"
         for v in self.offsets:
             out += f" {hex(v)}"
         return out

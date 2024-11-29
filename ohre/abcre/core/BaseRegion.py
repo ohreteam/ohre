@@ -1,5 +1,7 @@
-class BaseRegion(object):
-    def __init__(self, pos: int = 0):
+class BaseRegion:
+    # NOTE: for common usage, pos=pos_end of the last region,
+    # then use pos_end when unpacking data
+    def __init__(self, pos: int):
         self.pos_start = pos
         self.pos_end = pos
 
