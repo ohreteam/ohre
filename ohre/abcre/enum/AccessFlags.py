@@ -1,5 +1,3 @@
-
-# https://gitee.com/openharmony/arkcompiler_runtime_core/blob/master/docs/file_format.md#access-flags
 class ClassAccessFlags:
     ACC_PUBLIC = 0x0001  # Declared public; may be accessed from outside its package.
     ACC_FINAL = 0x0010  # Declared final; no subclasses allowed.

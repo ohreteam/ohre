@@ -2,7 +2,6 @@ import io
 import leb128
 import ohre.core.operator as op
 import ohre.abcre.core.BaseRegion as BaseRegion
-# https://gitee.com/openharmony/arkcompiler_runtime_core/blob/master/docs/file_format.md#string
 
 
 class String(BaseRegion.BaseRegion):
