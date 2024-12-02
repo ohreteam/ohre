@@ -1,8 +1,10 @@
 import ohre.core.operator as op
-import ohre.abcre.core.BaseRegion as BaseRegion
+from ohre.abcre.core.BaseRegion import BaseRegion
 
-class ClassIndex(BaseRegion.BaseRegion):
+
+class ClassIndex(BaseRegion):
     def __init__(self, buf, pos: int = 0, num_classes: int = 0):
+        pos = op._align4(pos)
         super().__init__(pos)
         self.offsets = list()
         for i in range(num_classes):

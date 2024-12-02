@@ -1,8 +1,8 @@
 import ohre.core.operator as op
-import ohre.abcre.core.BaseRegion as BaseRegion
+from ohre.abcre.core.BaseRegion import BaseRegion
 
 
-class LineNumberProgramIndex(BaseRegion.BaseRegion):
+class LineNumberProgramIndex(BaseRegion):
     def __init__(self, buf, pos: int = 0, num_lnps: int = 0):
         super().__init__(pos)
         self.offsets = list()

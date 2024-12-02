@@ -13,3 +13,8 @@ class BaseRegion:
 
     def get_pos(self) -> tuple[int, int]:
         return self.pos_start, self.pos_end
+
+    @classmethod
+    def _get_class_offset(cls, buf, pos):
+        ret_class = cls(buf, pos)
+        return ret_class, ret_class.pos_end

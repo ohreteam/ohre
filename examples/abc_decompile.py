@@ -7,6 +7,11 @@ import ohre.abcre.core.Header
 from ohre.abcre.core.ClassIndex import ClassIndex
 from ohre.abcre.core.LineNumberProgramIndex import LineNumberProgramIndex
 from ohre.abcre.core.LiteralArrayIndex import LiteralArrayIndex
+from ohre.abcre.core.RegionIndex import RegionIndex
+from ohre.abcre.core.ClassRegionIndex import ClassRegionIndex
+from ohre.abcre.core.MethodRegionIndex import MethodRegionIndex
+from ohre.abcre.core.FieldRegionIndex import FieldRegionIndex
+from ohre.abcre.core.ProtoRegionIndex import ProtoRegionIndex
 from ohre.abcre.core.Class import Class
 import ohre.core.operator as op
 from ohre.core import oh_app, oh_hap
@@ -24,13 +29,13 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
     f = open(abc_path, "rb")
     buf = f.read()
     header = ohre.abcre.core.Header.Header(buf)
-    print(f"> header.pos {header.pos} is_valid {header.is_valid()}")
+    print(f"> {header} . is_valid {header.is_valid()}")
 
     class_index = ClassIndex(buf, header.class_idx_off, header.num_classes)
     print(f"> {class_index}")
     for i in range(len(class_index.offsets)):
         abc_class = Class(buf, class_index.offsets[i])
-        print(f">[{i}/{header.num_classes}] {abc_class} [abc_class print end]\n")
+        print(f">> [{i}/{header.num_classes}] {abc_class}")
 
     line_number_program_index = LineNumberProgramIndex(buf, header.lnp_idx_off, header.num_lnps)
     print(f"> {line_number_program_index}")
@@ -38,13 +43,19 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
     literal_array_index = LiteralArrayIndex(buf, header.literalarray_idx_off, header.num_literalarrays)
     print(f"> {literal_array_index}")
 
-    # TODO: RegionIndex
-    # region_index = RegionIndex(buf, header.index_section_off, header.num_index_regions)
-    # print(f"> {literal_array_index}")
-
-    # TODO: 2024.11.30 0250 finish class, then RegionHeader
-    print(f"header.pos value: {hex(op._read_uint32(buf, header.pos))}")
-    for i in range(header.num_index_regions):
-        region_header = ohre.abcre.core.RegionHeader.RegionHeader(buf, header.class_idx_off * 4)
-        print(f"> {region_header}")
-    f.close()
+    region_index = RegionIndex(buf, header.index_section_off, header.num_index_regions)
+    print(f"> {region_index}")
+    for i in range(len(region_index.arrRegionHeader)):
+        print(f">> [{i}/{len(region_index.arrRegionHeader)}]")
+        class_region_index = ClassRegionIndex(
+            buf, region_index.arrRegionHeader[i].class_idx_off, region_index.arrRegionHeader[i].class_idx_size)
+        print(f">> {class_region_index}")
+        method_region_index = MethodRegionIndex(
+            buf, region_index.arrRegionHeader[i].method_idx_off, region_index.arrRegionHeader[i].method_idx_size)
+        print(f">> {method_region_index}")
+        field_region_index = FieldRegionIndex(
+            buf, region_index.arrRegionHeader[i].field_idx_off, region_index.arrRegionHeader[i].field_idx_size)
+        print(f">> {field_region_index}")
+        proto_region_index = ProtoRegionIndex(
+            buf, region_index.arrRegionHeader[i].proto_idx_off, region_index.arrRegionHeader[i].proto_idx_size)
+        print(f">> {proto_region_index}")

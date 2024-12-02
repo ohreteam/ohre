@@ -1,4 +1,8 @@
-class FieldType:
+import ohre.core.operator as op
+from ohre.abcre.core.BaseRegion import BaseRegion
+
+
+class FieldType(BaseRegion):
     d_code_to_type = {
         0x00: "u1",
         0x01: "i8",
@@ -26,8 +30,10 @@ class FieldType:
     u64 = 0x0a
     any = 0x0b
 
-    def __init__(self, field_type: int):
-        self.field_type = field_type  # must by a uint32_t
+    def __init__(self, buf, pos: int):
+        super().__init__(pos)
+        # must by a uint32_t
+        self.field_type, self.pos_end = op._read_uint32_t_offset(buf, pos)
 
     def field_type_name(self) -> str:
         if (self.field_type in self.d_code_to_type.keys()):

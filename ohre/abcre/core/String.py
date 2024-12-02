@@ -1,10 +1,10 @@
 import io
 import leb128
 import ohre.core.operator as op
-import ohre.abcre.core.BaseRegion as BaseRegion
+from ohre.abcre.core.BaseRegion import BaseRegion
 
 
-class String(BaseRegion.BaseRegion):
+class String(BaseRegion):
     def __init__(self, buf, pos: int = 0):
         super().__init__(pos)
         self.utf16_length, readed_bytes = leb128.u.decode_reader(io.BytesIO(buf[pos:]))

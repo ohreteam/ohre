@@ -4,8 +4,12 @@ import leb128
 import io
 
 
-def _read_uint32(buf, offset):
+def _read_uint32_t(buf, offset):
     return struct.unpack("I", buf[offset:offset + 4])[0]
+
+
+def _get_uint32_t_max():
+    return 0xffffffff
 
 
 def _read_uint32_t_offset(buf, offset):
@@ -63,3 +67,10 @@ def _read_uleb128_offset(buf, offset):
 def _read_sleb128_offset(buf, offset):
     ret, readed_bytes = leb128.i.decode_reader(io.BytesIO(buf[offset:]))
     return ret, offset + readed_bytes
+
+
+def _align4(num):
+    if (num % 4 == 0):
+        return num
+    else:
+        return num - num % 4 + 4
