@@ -13,6 +13,7 @@ class Field(BaseRegion):
             self.class_idx, self.pos_end = op._read_uint16_t_offset(buf, self.pos_end)
             self.type_idx, self.pos_end = op._read_uint16_t_offset(buf, self.pos_end)
             self.name_off, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
+            self.name = op._read_String(buf, self.name_off)
             self.access_flags, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
             # TaggedValue[] list of (uint8_t/FieldTag, uint8_t[])
             self.field_data, self.pos_end = _read_field_data_TaggedValue(buf, self.pos_end)
@@ -21,7 +22,7 @@ class Field(BaseRegion):
         out_tag_value = ""
         for tag_value in self.field_data:
             out_tag_value += f"{tag_value}; "
-        out = f"Field: [{hex(self.pos_start)}/{hex(self.pos_end)}] class_idx {hex(self.class_idx)} \
+        out = f"Field: [{hex(self.pos_start)}/{hex(self.pos_end)}] {self.name} class_idx {hex(self.class_idx)} \
 type_idx {hex(self.type_idx)} name_off {hex(self.name_off)} access_flags {hex(self.access_flags)} \
 field_data({len(self.field_data)}) {out_tag_value}"
         return out

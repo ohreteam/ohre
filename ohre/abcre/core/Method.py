@@ -13,8 +13,8 @@ class Method(BaseRegion):
             self.class_idx, self.pos_end = op._read_uint16_t_offset(buf, self.pos_end)
             self.proto_idx, self.pos_end = op._read_uint16_t_offset(buf, self.pos_end)
             self.name_off, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
+            self.name = op._read_String(buf, self.name_off)
             self.access_flags, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
-            
             self._method_data_pos_start = self.pos_end
             # TaggedValue[] list of (uint8_t/MethodTag, uint8_t[])
             self.method_data, self.pos_end = _read_method_data_TaggedValue(buf, self.pos_end)
@@ -23,7 +23,7 @@ class Method(BaseRegion):
         out_tag_value = ""
         for tag_value in self.method_data:
             out_tag_value += f"{tag_value}; "
-        out = f"Method: [{hex(self.pos_start)}/{hex(self.pos_end)}] class_idx {hex(self.class_idx)} \
+        out = f"Method: [{hex(self.pos_start)}/{hex(self.pos_end)}] {self.name} class_idx {hex(self.class_idx)} \
 proto_idx {hex(self.proto_idx)} name_off {hex(self.name_off)} access_flags {hex(self.access_flags)} \
 method_data({len(self.method_data)}) {out_tag_value}"
         return out

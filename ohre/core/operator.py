@@ -51,6 +51,10 @@ def _read_String_offset(buf, offset):
     return s, s.pos_end
 
 
+def _read_String(buf, offset):
+    return String.String(buf, offset)
+
+
 def _read_uleb128_offset(buf, offset):
     ret, readed_bytes = leb128.u.decode_reader(io.BytesIO(buf[offset:]))
     return ret, offset + readed_bytes

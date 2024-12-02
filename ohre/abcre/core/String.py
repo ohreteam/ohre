@@ -17,6 +17,6 @@ class String(BaseRegion.BaseRegion):
         self.data, self.pos_end = op._read_uint8_t_array_to_string_offset(buf, self.pos_end, self.utf16_length)
 
     def __str__(self):
-        out = f"String: [{hex(self.pos_start)}/{hex(self.pos_end)}] \
-{hex(self.utf16_length)} {hex(len(self.data))} {self.data}"
+        out = f"s{{[{hex(self.pos_start)}/{hex(self.pos_end)}] \
+{hex(self.utf16_length)} {hex(len(self.data))} {self.data}}}"
         return out
