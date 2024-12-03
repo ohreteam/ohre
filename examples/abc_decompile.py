@@ -12,6 +12,7 @@ from ohre.abcre.core.ClassRegionIndex import ClassRegionIndex
 from ohre.abcre.core.MethodRegionIndex import MethodRegionIndex
 from ohre.abcre.core.FieldRegionIndex import FieldRegionIndex
 from ohre.abcre.core.ProtoRegionIndex import ProtoRegionIndex
+from ohre.abcre.core.ForeignMethod import ForeignMethod
 from ohre.abcre.core.Class import Class
 import ohre.core.operator as op
 from ohre.core import oh_app, oh_hap
@@ -44,18 +45,25 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
     print(f"> {literal_array_index}")
 
     region_index = RegionIndex(buf, header.index_section_off, header.num_index_regions)
-    print(f"> {region_index}")
+    print(f"\n> RegionIndex: {region_index}")
     for i in range(len(region_index.arrRegionHeader)):
         print(f">> [{i}/{len(region_index.arrRegionHeader)}]")
         class_region_index = ClassRegionIndex(
             buf, region_index.arrRegionHeader[i].class_idx_off, region_index.arrRegionHeader[i].class_idx_size)
         print(f">> {class_region_index}")
+
         method_region_index = MethodRegionIndex(
             buf, region_index.arrRegionHeader[i].method_idx_off, region_index.arrRegionHeader[i].method_idx_size)
         print(f">> {method_region_index}")
+        # for off in method_region_index.offsets: # TODO: it's weird! some seems like a String
+        #     print(f"off {hex(off)}")
+        #     foreign_method = ForeignMethod(buf, off)
+        #     print(f">>>> {foreign_method}")
+
         field_region_index = FieldRegionIndex(
             buf, region_index.arrRegionHeader[i].field_idx_off, region_index.arrRegionHeader[i].field_idx_size)
         print(f">> {field_region_index}")
+
         proto_region_index = ProtoRegionIndex(
             buf, region_index.arrRegionHeader[i].proto_idx_off, region_index.arrRegionHeader[i].proto_idx_size)
         print(f">> {proto_region_index}")

@@ -29,6 +29,7 @@ classifiers = [
 python = "^3.9"
 "yara-python" = "^4.5.0"
 pendulum = "^3.0.0"
+leb128 = "^1.0.6"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

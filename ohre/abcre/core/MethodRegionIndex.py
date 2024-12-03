@@ -1,5 +1,6 @@
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
+from ohre.abcre.core.ForeignMethod import ForeignMethod
 
 
 class MethodRegionIndex(BaseRegion):

@@ -1,23 +1,19 @@
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 from ohre.abcre.core.TaggedValue import TaggedValue
+from ohre.abcre.core.ForeignMethod import ForeignMethod
 from typing import Any, Dict, List, Tuple
 from ohre.abcre.enum.MethodTag import MethodTag
 from ohre.misc import Log
 
 
-class Method(BaseRegion):
+class Method(ForeignMethod):
     def __init__(self, buf=None, pos: int = 0):
-        super().__init__(pos)
-        if (buf is not None):
-            self.class_idx, self.pos_end = op._read_uint16_t_offset(buf, self.pos_end)
-            self.proto_idx, self.pos_end = op._read_uint16_t_offset(buf, self.pos_end)
-            self.name_off, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
-            self.name = op._read_String(buf, self.name_off)
-            self.access_flags, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
-            self._method_data_pos_start = self.pos_end
-            # TaggedValue[] list of (uint8_t/MethodTag, uint8_t[])
-            self.method_data, self.pos_end = _read_method_data_TaggedValue(buf, self.pos_end)
+        super().__init__(buf, pos)
+        # self.class_idx Corresponding index entry must be an offset to a Class.
+        self._method_data_pos_start = self.pos_end
+        # TaggedValue[] list of (uint8_t/MethodTag, uint8_t[])
+        self.method_data, self.pos_end = _read_method_data_TaggedValue(buf, self.pos_end)
 
     def __str__(self):
         out_tag_value = ""
