@@ -162,4 +162,11 @@ class oh_hap(oh_common.oh_package):
             if (self.module_json_dict["app"]["debug"]):
                 return True
         return False
+
+    def get_module_abilities(self) -> str:
+        out_l = list()
+        if ("module" in self.module_json_dict and "abilities" in self.module_json_dict["module"]):
+            for d in self.module_json_dict["module"]["abilities"]:
+                out_l.append(d)
+        return out_l
     # === module.json analysis END ===

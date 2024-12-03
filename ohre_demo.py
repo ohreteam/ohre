@@ -18,10 +18,11 @@ TMP_APP_EXTRACT = "tmp_app_extract"
 def test_oh_hap(app_path):
     hhap = oh_hap.oh_hap(app_path)
     hhap.extract_all_to(TMP_HAP_EXTRACT)
-    print(f"{hhap.get_md5()} {hhap.get_sha1()} get_files() {hhap.get_files()}")
+    print(f"{hhap.get_md5()} {hhap.get_sha1()} get_files() {hhap.get_files()} is_debug {hhap.is_debug()}")
     print(f"{hhap.get_bundle_name()} get_version {hhap.get_version()} "
           f"version name/code {hhap.get_version_name()} {hhap.get_version_code()}")
     print(f"pack.info {hhap.get_pack_info()} {type(hhap.get_pack_info())}")
+    print(f"get_module_abilities: {hhap.get_module_abilities()}")
 
     ret = hhap.filters_filename_white({"resources/base/": ["*.png"]})
     print(f"filters_filename_white {ret}")
