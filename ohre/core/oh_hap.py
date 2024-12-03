@@ -20,6 +20,8 @@ class oh_hap(oh_common.oh_package):
                 raise oh_common.ParaNotValid("Not a valid hap type, must be .hap")
         super().__init__(value)
         self.res_index = None
+        self.module_json_dict = None
+        self.module_json_dict = self.get_module_json()
 
     def filter_filename_white(self, path: str, pattern_list: List) -> List:
         # path: a path prefix to specify the dir to be scanned
@@ -131,6 +133,8 @@ class oh_hap(oh_common.oh_package):
             return super().get_file("module.json")
 
     def get_module_json(self) -> Dict:
+        if (self.module_json_dict is not None):
+            return self.module_json_dict
         if ("module.json" not in self.files):
             Log.error(f"{self.sha1} module.json NOT found in this hap")
             return dict()
@@ -152,4 +156,10 @@ class oh_hap(oh_common.oh_package):
         if ("module" in self.module_json_dict and "deviceTypes" in self.module_json_dict["module"]):
             return self.module_json_dict["module"]["deviceTypes"]
         return ""
+
+    def is_debug(self) -> bool:
+        if ("app" in self.module_json_dict and "debug" in self.module_json_dict["app"]):
+            if (self.module_json_dict["app"]["debug"]):
+                return True
+        return False
     # === module.json analysis END ===
