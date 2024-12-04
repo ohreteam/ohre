@@ -119,3 +119,10 @@ class oh_app(oh_common.oh_package):
     def filters_filename_black_app_level(self, rules: Dict) -> List:
         # not filter files in haps, only scan app
         pass
+
+    def compare_files_with_resources_index_all_haps(self) -> Dict[str, Dict]:
+        hap_compare_results = dict()
+        Log.info(f"{self.sha1} all haps compare resource files with resources.index:")
+        for fname, hap in self.haps.items():
+            hap_compare_results[fname] = hap.compare_files_with_resources_index()
+        return hap_compare_results
