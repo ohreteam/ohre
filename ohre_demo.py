@@ -67,6 +67,9 @@ def test_oh_app(app_path):
     print(f"is release: {happ.is_api_version_release()} get_packages_device_type {happ.get_packages_device_type()}")
     print(f"api target {happ.get_taget_api_version()} compatible {happ.get_compatible_api_version()}")
 
+    ret = happ.compare_files_with_resources_index_all_haps()
+    print(f"Compare resource files and resoure.index in all haps:\n{ret}")
+
 
 def test_oh_hap_resource_anaylsis(hap_path):
     hhap = oh_hap.oh_hap(hap_path)
