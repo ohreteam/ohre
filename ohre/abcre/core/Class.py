@@ -4,7 +4,7 @@ from ohre.abcre.enum.ClassTag import ClassTag
 from ohre.abcre.core.Field import Field
 from ohre.abcre.core.Method import Method
 from ohre.abcre.core.TaggedValue import TaggedValue
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Iterable
 from ohre.misc import Log
 
 
@@ -21,6 +21,7 @@ class Class(BaseRegion):
         # Field[] cnt=num_fields
         self.fields, self.pos_end = _read_Field_array(buf, self.pos_end, self.num_fields)
         # Method[] cnt=num_methods
+        self.methods: Iterable[Class] = None
         self.methods, self.pos_end = _read_Method_array(buf, self.pos_end, self.num_methods)
 
     def __str__(self):
@@ -88,7 +89,7 @@ def _read_class_data_TaggedValue(buf, offset) -> Tuple[list[TaggedValue], int]:
     return l_tag_value, offset
 
 
-def _read_Field_array(buf, offset, num_fields):
+def _read_Field_array(buf, offset, num_fields) -> Tuple[list[Field], int]:
     l_field = list()
     for i in range(num_fields):
         field = Field(buf, offset)
@@ -97,7 +98,7 @@ def _read_Field_array(buf, offset, num_fields):
     return l_field, offset
 
 
-def _read_Method_array(buf, offset, num_methods):
+def _read_Method_array(buf, offset, num_methods) -> Tuple[list[Method], int]:
     l_method = list()
     for i in range(num_methods):
         method = Method(buf, offset)

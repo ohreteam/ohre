@@ -4,11 +4,13 @@ rules_local/
 *.hap
 *.app
 *.zip
+*.out
 *.log
 tmp/
 tmp_extract/
 tmp_hap_extract/
 tmp_app_extract/
+tmp_app_extract*
 local_readme.md
 resources.index
 poetry.lock

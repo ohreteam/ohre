@@ -47,7 +47,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
     region_index = RegionIndex(buf, header.index_section_off, header.num_index_regions)
     print(f"\n> RegionIndex: {region_index}")
     for i in range(len(region_index.arrRegionHeader)):
-        print(f">> [{i}/{len(region_index.arrRegionHeader)}]")
+        print(f">> [{i}/{len(region_index.arrRegionHeader)}] region_index.arrRegionHeader")
         class_region_index = ClassRegionIndex(
             buf, region_index.arrRegionHeader[i].class_idx_off, region_index.arrRegionHeader[i].class_idx_size)
         print(f">> {class_region_index}")
