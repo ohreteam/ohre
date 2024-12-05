@@ -1,30 +1,44 @@
+from typing import Any, Dict, Iterable, List, Tuple
+
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 from ohre.abcre.core.TaggedValue import TaggedValue
-from typing import Any, Dict, List, Tuple
 from ohre.abcre.enum.FieldTag import FieldTag
 from ohre.misc import Log
 
 
 class Field(BaseRegion):
-    def __init__(self, buf=None, pos: int = 0):
+    def __init__(self, buf, pos: int):
         super().__init__(pos)
-        if (buf is not None):
-            self.class_idx, self.pos_end = op._read_uint16_t_offset(buf, self.pos_end)
-            self.type_idx, self.pos_end = op._read_uint16_t_offset(buf, self.pos_end)
-            self.name_off, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
-            self.name = op._read_String(buf, self.name_off)
-            self.access_flags, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
-            # TaggedValue[] list of (uint8_t/FieldTag, uint8_t[])
-            self.field_data, self.pos_end = _read_field_data_TaggedValue(buf, self.pos_end)
+        self.class_idx, self.pos_end = op._read_uint16_t_offset(buf, self.pos_end)
+        self.type_idx, self.pos_end = op._read_uint16_t_offset(buf, self.pos_end)
+        self.name_off, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
+        self.name = op._read_String(buf, self.name_off)
+        self.access_flags, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
+        self.field_data: List[TaggedValue] = None  # TaggedValue[] list of (uint8_t/FieldTag, uint8_t[])
+        self.field_data, self.pos_end = _read_field_data_TaggedValue(buf, self.pos_end)
 
     def __str__(self):
-        out_tag_value = ""
+        out_field_data = ""
+        # for t_v in self.field_data:
+        #     out_field_data += f"{t_v}; "
         for t_v in self.field_data:
-            out_tag_value += f"{t_v}; "
+            if (t_v.tag == FieldTag.NOTHING):
+                out_field_data += f"{FieldTag.get_code_name(t_v.tag)}"
+            elif (t_v.tag == FieldTag.INT_VALUE):
+                out_field_data += f"{FieldTag.get_code_name(t_v.tag)} {hex(t_v.data)}; "
+            elif (t_v.tag == FieldTag.VALUE or
+                  t_v.tag == FieldTag.RUNTIME_ANNOTATIONS or
+                  t_v.tag == FieldTag.ANNOTATIONS or
+                  t_v.tag == FieldTag.RUNTIME_TYPE_ANNOTATION or
+                  t_v.tag == FieldTag.TYPE_ANNOTATION):
+                out_field_data += f"{FieldTag.get_code_name(t_v.tag)} {hex(op._uint8_t_array4_to_int(t_v.data))}; "
+            else:
+                out_field_data += f"{FieldTag.get_code_name(t_v.tag)} {t_v.data}; "
+
         out = f"Field: [{hex(self.pos_start)}/{hex(self.pos_end)}] {self.name} class_idx {hex(self.class_idx)} \
 type_idx {hex(self.type_idx)} name_off {hex(self.name_off)} access_flags {hex(self.access_flags)} \
-field_data({len(self.field_data)}) {out_tag_value}"
+field_data({len(self.field_data)}) {out_field_data}"
         return out
 
 

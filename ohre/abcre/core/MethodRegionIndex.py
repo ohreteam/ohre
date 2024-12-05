@@ -1,8 +1,8 @@
+from typing import Any, Dict, Iterable, List, Tuple
+
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 from ohre.abcre.core.ForeignMethod import ForeignMethod
-
-from typing import Any, Dict, List, Tuple, Iterable
 
 
 class MethodRegionIndex(BaseRegion):

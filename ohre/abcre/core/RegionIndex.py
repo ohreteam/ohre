@@ -1,7 +1,8 @@
+from typing import Any, Dict, Iterable, List, Tuple
+
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 from ohre.abcre.core.RegionHeader import RegionHeader
-from typing import Any, Dict, List, Tuple, Iterable
 from ohre.misc import Log
 
 

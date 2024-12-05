@@ -157,7 +157,7 @@ class ResIndexBuf:
 
     def get_limit_key_configs(self) -> Dict[int, List[str]]:
         limit_key_configs: Dict[int, List[str]] = {}
-        offset = self.pos+136
+        offset = self.pos + 136
         for i in range(self.header["limit_key_config_count"]):
             offset += 4
             k_offset = struct.unpack('<i', self.buf[offset:offset + 4])[0]
@@ -171,8 +171,8 @@ class ResIndexBuf:
             else:
                 for _ in range(key_count):
 
-                    key_type = self.buf[offset:offset+4]
-                    key_value = self.buf[offset+4:offset+8]
+                    key_type = self.buf[offset:offset + 4]
+                    key_value = self.buf[offset + 4:offset + 8]
 
                     key_type = struct.unpack('I', key_type)[0]
                     key_value_ = struct.unpack(f'{len(key_value)}s', key_value)
@@ -198,7 +198,7 @@ class ResIndexBuf:
             for i in range(self.header["limit_key_config_count"]):
                 offset += 4
 
-                id_count = self.buf[offset:offset+4]
+                id_count = self.buf[offset:offset + 4]
                 id_count = struct.unpack('<i', id_count)[0]
                 offset += 4
                 for _ in range(id_count):
@@ -229,11 +229,11 @@ class ResIndexBuf:
 
                 res_id = struct.unpack_from('<I', self.buf, offset)[0]
                 offset += 4
-                
+
                 data_size = struct.unpack_from('<H', self.buf, offset)[0]
                 offset += 2
 
-                data_value = self.buf[offset:offset+data_size]
+                data_value = self.buf[offset:offset + data_size]
                 offset += data_size
 
                 name_size = struct.unpack_from('<H', self.buf, offset)[0]

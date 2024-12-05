@@ -1,14 +1,15 @@
+from typing import Any, Dict, Iterable, List, Tuple
+
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
-from ohre.abcre.core.TaggedValue import TaggedValue
 from ohre.abcre.core.ForeignMethod import ForeignMethod
-from typing import Any, Dict, List, Tuple
+from ohre.abcre.core.TaggedValue import TaggedValue
 from ohre.abcre.enum.MethodTag import MethodTag
 from ohre.misc import Log
 
 
 class Method(ForeignMethod):
-    def __init__(self, buf=None, pos: int = 0):
+    def __init__(self, buf, pos: int):
         super().__init__(buf, pos)
         # self.class_idx Corresponding index entry must be an offset to a Class.
         self._method_data_pos_start = self.pos_end

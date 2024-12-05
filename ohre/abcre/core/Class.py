@@ -1,43 +1,59 @@
+from typing import Any, Dict, Iterable, List, Tuple
+
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
-from ohre.abcre.enum.ClassTag import ClassTag
 from ohre.abcre.core.Field import Field
 from ohre.abcre.core.Method import Method
 from ohre.abcre.core.TaggedValue import TaggedValue
-from typing import Any, Dict, List, Tuple, Iterable
+from ohre.abcre.enum.ClassTag import ClassTag
+from ohre.abcre.enum.SourceLanguage import SourceLanguage
 from ohre.misc import Log
 
 
 class Class(BaseRegion):
-    def __init__(self, buf, pos: int = 0):
+    def __init__(self, buf, pos: int):
         super().__init__(pos)
         self.name, self.pos_end = op._read_String_offset(buf, self.pos_end)
         self.super_class_off, self.pos_end = op._read_uint8_t_array_offset(buf, self.pos_end, 4)
         self.access_flags, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
         self.num_fields, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
         self.num_methods, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
-        # TaggedValue[] end with ClassTag.NOTHING 0x00
+        self.class_data: List[TaggedValue] = None  # TaggedValue[] end with ClassTag.NOTHING 0x00
         self.class_data, self.pos_end = _read_class_data_TaggedValue(buf, self.pos_end)
-        # Field[] cnt=num_fields
+        self.fields: List[Field] = None  # Field[] cnt=num_fields
         self.fields, self.pos_end = _read_Field_array(buf, self.pos_end, self.num_fields)
-        # Method[] cnt=num_methods
-        self.methods: Iterable[Class] = None
+        self.methods: List[Class] = None  # Method[] cnt=num_methods
         self.methods, self.pos_end = _read_Method_array(buf, self.pos_end, self.num_methods)
 
     def __str__(self):
-        out_tag_value = ""
+        out_class_data = ""
         for t_v in self.class_data:
-            out_tag_value += f"{t_v}; "
+            if (t_v.tag == ClassTag.NOTHING):
+                out_class_data += f"{ClassTag.get_code_name(t_v.tag)}"
+            elif (t_v.tag == ClassTag.RUNTIME_ANNOTATION or
+                  t_v.tag == ClassTag.ANNOTATION or
+                  t_v.tag == ClassTag.RUNTIME_TYPE_ANNOTATION or
+                  t_v.tag == ClassTag.TYPE_ANNOTATION or
+                  t_v.tag == ClassTag.SOURCE_FILE):
+                out_class_data += f"{ClassTag.get_code_name(t_v.tag)} {hex(op._uint8_t_array4_to_int(t_v.data))}; "
+            elif (t_v.tag == ClassTag.INTERFACES):
+                out_class_data += f"TODO: {ClassTag.get_code_name(t_v.tag)} {t_v.data}; "
+            elif (t_v.tag == ClassTag.SOURCE_LANG):
+                out_class_data += f"{ClassTag.get_code_name(t_v.tag)} {SourceLanguage.get_code_name(t_v.data)}; "
+            else:
+                out_class_data += f"{ClassTag.get_code_name(t_v.tag)} {t_v.data}; "
+
         out_fields = ""
         for i in range(len(self.fields)):
-            out_fields += f"[{i}] {self.fields[i]}; "
+            out_fields += f" [{i}/{len(self.fields)}]{self.fields[i]}; "
+
         out_methods = ""
         for i in range(len(self.methods)):
             out_methods += f"\n[{i}] {self.methods[i]}; "
         out = f"Class: [{hex(self.pos_start)}/{hex(self.pos_end)}] name {self.name} \
 super_class_off {self.super_class_off} access_flags {hex(self.access_flags)} \
 num_fields {hex(self.num_fields)} num_methods {hex(self.num_methods)}\n\
-class_data({len(self.class_data)}) {out_tag_value}\n\
+class_data({len(self.class_data)}) {out_class_data}\n\
 fields({len(self.fields)}) {out_fields}\n\
 methods({len(self.methods)}) {out_methods}"
         return out

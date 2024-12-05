@@ -1,13 +1,14 @@
+from typing import Any, Dict, Iterable, List, Tuple
+
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 
-from typing import Any, Dict, List, Tuple, Iterable
-
 
 class LiteralArrayIndex(BaseRegion):
-    def __init__(self, buf, pos: int = 0, num_lnps: int = 0):
+    def __init__(self, buf, pos: int, num_lnps: int = 0):
         pos = op._align4(pos)
         super().__init__(pos)
+        # an array of offsets from the beginning of the file to the LiteralArray structures
         self.offsets: List[int] = list()
         for i in range(num_lnps):
             tmp, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)

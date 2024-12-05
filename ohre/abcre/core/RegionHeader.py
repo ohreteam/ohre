@@ -3,7 +3,7 @@ from ohre.abcre.core.BaseRegion import BaseRegion
 
 
 class RegionHeader(BaseRegion):
-    def __init__(self, buf, pos: int = 0):
+    def __init__(self, buf, pos: int):
         pos = op._align4(pos)
         super().__init__(pos)
 

@@ -1,11 +1,11 @@
+from typing import Any, Dict, Iterable, List, Tuple
+
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 
-from typing import Any, Dict, List, Tuple, Iterable
-
 
 class ClassIndex(BaseRegion):
-    def __init__(self, buf, pos: int = 0, num_classes: int = 0):
+    def __init__(self, buf, pos: int, num_classes: int = 0):
         pos = op._align4(pos)
         super().__init__(pos)
         self.offsets: List[int] = list()

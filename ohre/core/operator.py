@@ -1,7 +1,8 @@
-import struct
-import leb128
 import io
-from typing import Any, Dict, List, Tuple, Iterable
+import struct
+from typing import Any, Dict, Iterable, List, Tuple
+
+import leb128
 
 import ohre.abcre.core.String as String
 import ohre.misc.const as const

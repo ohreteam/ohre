@@ -11,4 +11,4 @@ class BaseEnum():
         for name, val in cls.__dict__.items():
             if val == value and is_uppercase_or_underscore(name):
                 return name
-        return ""
+        return value
