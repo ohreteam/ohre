@@ -1,0 +1,3 @@
+UINT8MAX = 0xff
+UINT16MAX = 0xffff
+UINT32MAX = 0xffffffff

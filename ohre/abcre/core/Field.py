@@ -20,8 +20,8 @@ class Field(BaseRegion):
 
     def __str__(self):
         out_tag_value = ""
-        for tag_value in self.field_data:
-            out_tag_value += f"{tag_value}; "
+        for t_v in self.field_data:
+            out_tag_value += f"{t_v}; "
         out = f"Field: [{hex(self.pos_start)}/{hex(self.pos_end)}] {self.name} class_idx {hex(self.class_idx)} \
 type_idx {hex(self.type_idx)} name_off {hex(self.name_off)} access_flags {hex(self.access_flags)} \
 field_data({len(self.field_data)}) {out_tag_value}"
@@ -33,32 +33,32 @@ def _read_field_data_TaggedValue(buf, offset) -> Tuple[list[TaggedValue], int]:
     while (True):
         tag, offset = op._read_uint8_t_offset(buf, offset)
         Log.debug(f"_read_field_data_TaggedValue tag/offset {tag}/{hex(offset)}")
-        tag_value = TaggedValue(-1)
+        t_v = TaggedValue(-1)
         if (tag == FieldTag.NOTHING):
-            tag_value = TaggedValue(FieldTag.NOTHING)
+            t_v = TaggedValue(FieldTag.NOTHING)
         elif (tag == FieldTag.INT_VALUE):
             INT_VALUE, offset = op._read_sleb128_offset(buf, offset)
-            tag_value = TaggedValue(FieldTag.INT_VALUE, INT_VALUE)
+            t_v = TaggedValue(FieldTag.INT_VALUE, INT_VALUE)
         elif (tag == FieldTag.VALUE):
             VALUE, offset = op._read_uint8_t_array_offset(buf, offset, 4)
-            tag_value = TaggedValue(FieldTag.VALUE, VALUE)
+            t_v = TaggedValue(FieldTag.VALUE, VALUE)
         elif (tag == FieldTag.RUNTIME_ANNOTATIONS):
             RUNTIME_ANNOTATIONS, offset = op._read_uint8_t_array_offset(buf, offset, 4)
-            tag_value = TaggedValue(FieldTag.RUNTIME_ANNOTATIONS, RUNTIME_ANNOTATIONS)
+            t_v = TaggedValue(FieldTag.RUNTIME_ANNOTATIONS, RUNTIME_ANNOTATIONS)
         elif (tag == FieldTag.ANNOTATIONS):
             ANNOTATIONS, offset = op._read_uint8_t_array_offset(buf, offset, 4)
-            tag_value = TaggedValue(FieldTag.ANNOTATIONS, ANNOTATIONS)
+            t_v = TaggedValue(FieldTag.ANNOTATIONS, ANNOTATIONS)
         elif (tag == FieldTag.RUNTIME_TYPE_ANNOTATION):
             RUNTIME_TYPE_ANNOTATION, offset = op._read_uint8_t_array_offset(buf, offset, 4)
-            tag_value = TaggedValue(FieldTag.RUNTIME_TYPE_ANNOTATION, RUNTIME_TYPE_ANNOTATION)
+            t_v = TaggedValue(FieldTag.RUNTIME_TYPE_ANNOTATION, RUNTIME_TYPE_ANNOTATION)
         elif (tag == FieldTag.TYPE_ANNOTATION):
             TYPE_ANNOTATION, offset = op._read_uint8_t_array_offset(buf, offset, 4)
-            tag_value = TaggedValue(FieldTag.TYPE_ANNOTATION, TYPE_ANNOTATION)
+            t_v = TaggedValue(FieldTag.TYPE_ANNOTATION, TYPE_ANNOTATION)
         else:
             Log.error(f"_read_field_data_TaggedValue: tag NOT supported {tag} offset {offset}")
             exit()
 
-        l_tag_value.append(tag_value)
+        l_tag_value.append(t_v)
         if (tag == FieldTag.NOTHING):
             break
     return l_tag_value, offset

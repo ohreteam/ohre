@@ -6,6 +6,14 @@ class TaggedValue:
         self.tag_value = tag_value
         self.data = data
 
+    @property
+    def tag(self):
+        return self.tag_value
+
+    @property
+    def value(self):
+        return self.data
+
     def set_tag_value(self, tag_value):
         self.tag_value = tag_value
 

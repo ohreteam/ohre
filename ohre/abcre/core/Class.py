@@ -26,8 +26,8 @@ class Class(BaseRegion):
 
     def __str__(self):
         out_tag_value = ""
-        for tag_value in self.class_data:
-            out_tag_value += f"{tag_value}; "
+        for t_v in self.class_data:
+            out_tag_value += f"{t_v}; "
         out_fields = ""
         for i in range(len(self.fields)):
             out_fields += f"[{i}] {self.fields[i]}; "
@@ -54,36 +54,36 @@ def _read_class_data_TaggedValue(buf, offset) -> Tuple[list[TaggedValue], int]:
     while (True):
         tag, offset = op._read_uint8_t_offset(buf, offset)
         Log.debug(f"_read_class_data_TaggedValue tag/offset {tag}/{hex(offset)}")
-        tag_value = TaggedValue(-1)
+        t_v = TaggedValue(-1)
         if (tag == ClassTag.NOTHING):
-            tag_value = TaggedValue(ClassTag.NOTHING)
+            t_v = TaggedValue(ClassTag.NOTHING)
         elif (tag == ClassTag.INTERFACES):
             num_INTERFACES, data_INTERFACES, offset = _read_ClassTag_INTERFACES(buf, offset)
-            tag_value = TaggedValue(ClassTag.INTERFACES)  # TODO:
+            t_v = TaggedValue(ClassTag.INTERFACES)  # TODO:
             print(f"num_INTERFACES {num_INTERFACES} data_INTERFACES {data_INTERFACES} offset {offset}")
         elif (tag == ClassTag.SOURCE_LANG):
             SOURCE_LANG, offset = op._read_uint8_t_offset(buf, offset)
-            tag_value = TaggedValue(ClassTag.SOURCE_LANG, SOURCE_LANG)
+            t_v = TaggedValue(ClassTag.SOURCE_LANG, SOURCE_LANG)
         elif (tag == ClassTag.RUNTIME_ANNOTATION):
             RUNTIME_ANNOTATION, offset = op._read_uint8_t_array_offset(buf, offset, 4)
-            tag_value = TaggedValue(ClassTag.RUNTIME_ANNOTATION, RUNTIME_ANNOTATION)
+            t_v = TaggedValue(ClassTag.RUNTIME_ANNOTATION, RUNTIME_ANNOTATION)
         elif (tag == ClassTag.ANNOTATION):
             ANNOTATION, offset = op._read_uint8_t_array_offset(buf, offset, 4)
-            tag_value = TaggedValue(ClassTag.ANNOTATION, ANNOTATION)
+            t_v = TaggedValue(ClassTag.ANNOTATION, ANNOTATION)
         elif (tag == ClassTag.RUNTIME_TYPE_ANNOTATION):
             RUNTIME_TYPE_ANNOTATION, offset = op._read_uint8_t_array_offset(buf, offset, 4)
-            tag_value = TaggedValue(ClassTag.RUNTIME_TYPE_ANNOTATION, RUNTIME_TYPE_ANNOTATION)
+            t_v = TaggedValue(ClassTag.RUNTIME_TYPE_ANNOTATION, RUNTIME_TYPE_ANNOTATION)
         elif (tag == ClassTag.TYPE_ANNOTATION):
             TYPE_ANNOTATION, offset = op._read_uint8_t_array_offset(buf, offset, 4)
-            tag_value = TaggedValue(ClassTag.TYPE_ANNOTATION, TYPE_ANNOTATION)
+            t_v = TaggedValue(ClassTag.TYPE_ANNOTATION, TYPE_ANNOTATION)
         elif (tag == ClassTag.SOURCE_FILE):
             SOURCE_FILE, offset = op._read_uint8_t_array_offset(buf, offset, 4)
-            tag_value = TaggedValue(ClassTag.SOURCE_FILE, SOURCE_FILE)
+            t_v = TaggedValue(ClassTag.SOURCE_FILE, SOURCE_FILE)
         else:
             Log.error(f"_read_class_data_TaggedValue: tag NOT supported {tag} offset {offset}")
             exit()
 
-        l_tag_value.append(tag_value)
+        l_tag_value.append(t_v)
         if (tag == ClassTag.NOTHING):
             break
     return l_tag_value, offset

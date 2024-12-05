@@ -31,7 +31,11 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
     buf = f.read()
     header = ohre.abcre.core.Header.Header(buf)
     print(f"> {header} . is_valid {header.is_valid()}")
-
+    # Offset to the foreign region.
+    # The region must contain elements only of types ForeignField, ForeignMethod, or ForeignClass.
+    # It is not necessary foreign_off points to the first entity.
+    # Runtime should use foreign_off and foreign_size to determine type of an offset.
+    print(f"> header.foreign_off {header.foreign_off} header.foreign_size {header.foreign_size}")
     class_index = ClassIndex(buf, header.class_idx_off, header.num_classes)
     print(f"> {class_index}")
     for i in range(len(class_index.offsets)):

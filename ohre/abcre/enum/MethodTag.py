@@ -1,4 +1,10 @@
-class MethodTag:
+from ohre.misc.utils import is_uppercase_or_underscore
+from ohre.abcre.enum.BaseEnum import BaseEnum
+
+
+class MethodTag(BaseEnum):
+    def __init__(self):
+        super().__init__()
     NOTHING = 0x00
     CODE = 0x01
     SOURCE_LANG = 0x02
