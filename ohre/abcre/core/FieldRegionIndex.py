@@ -1,12 +1,14 @@
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 
+from typing import Any, Dict, List, Tuple, Iterable
+
 
 class FieldRegionIndex(BaseRegion):
     def __init__(self, buf, pos: int, field_idx_size: int):
         pos = op._align4(pos)
         super().__init__(pos)
-        self.offsets = list()  # uint32_t[] # Array of offsets to Field or ForeignField structures
+        self.offsets: List[int] = list()  # uint32_t[] # Array of offsets to Field or ForeignField structures
         if (field_idx_size <= 0 or field_idx_size == op._get_uint32_t_max()):
             return
         for i in range(field_idx_size):

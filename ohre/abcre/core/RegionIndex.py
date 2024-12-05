@@ -1,7 +1,7 @@
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 from ohre.abcre.core.RegionHeader import RegionHeader
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Iterable
 from ohre.misc import Log
 
 
@@ -9,7 +9,7 @@ class RegionIndex(BaseRegion):
     def __init__(self, buf, pos: int, num_index_regions: int):
         pos = op._align4(pos)
         super().__init__(pos)
-        self.arrRegionHeader = list()
+        self.arrRegionHeader: List[RegionHeader] = list()
         for i in range(num_index_regions):
             region_header, self.pos_end = RegionHeader._get_class_offset(buf, self.pos_end)
             self.arrRegionHeader.append(region_header)

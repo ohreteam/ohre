@@ -51,7 +51,6 @@ def _uint8_t_array_to_string(arr) -> str:
 
 def _uint8_t_array4_to_int(arr: Iterable) -> int:
     out = 0
-    print(f"_uint8_t_array4_to_int {len(arr)} {type(arr)}")
     assert len(arr) == 4, "len of uint8_t array must be 4"
     for i in range(4):
         assert arr[i] <= const.UINT8MAX and arr[i] >= 0, "value of uint8_t must be 0 <= v <= UINT8MAX"

@@ -1,12 +1,14 @@
 import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 
+from typing import Any, Dict, List, Tuple, Iterable
+
 
 class ProtoRegionIndex(BaseRegion):
     def __init__(self, buf, pos: int, proto_idx_size: int):
         pos = op._align4(pos)
         super().__init__(pos)
-        self.offsets = list()  # uint32_t[] # Array of offsets to Proto structure
+        self.offsets: List[int] = list()  # uint32_t[] # Array of offsets to Proto structure
         if (proto_idx_size <= 0 or proto_idx_size == op._get_uint32_t_max()):
             return
         for i in range(proto_idx_size):

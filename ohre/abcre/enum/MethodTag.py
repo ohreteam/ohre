@@ -1,4 +1,3 @@
-from ohre.misc.utils import is_uppercase_or_underscore
 from ohre.abcre.enum.BaseEnum import BaseEnum
 
 

@@ -2,12 +2,14 @@ import ohre.core.operator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 from ohre.abcre.core.ForeignMethod import ForeignMethod
 
+from typing import Any, Dict, List, Tuple, Iterable
+
 
 class MethodRegionIndex(BaseRegion):
     def __init__(self, buf, pos: int, method_idx_size: int):
         pos = op._align4(pos)
         super().__init__(pos)
-        self.offsets = list()  # uint32_t[] # Array of offsets to Method or ForeignMethod structures
+        self.offsets: List[int] = list()  # uint32_t[] # Array of offsets to Method or ForeignMethod structures
         if (method_idx_size <= 0 or method_idx_size == op._get_uint32_t_max()):
             return
         for i in range(method_idx_size):

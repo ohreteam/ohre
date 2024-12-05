@@ -1,4 +1,9 @@
-class ClassTag:
+from ohre.abcre.enum.BaseEnum import BaseEnum
+
+
+class ClassTag(BaseEnum):
+    def __init__(self):
+        super().__init__()
     NOTHING = 0x00
     INTERFACES = 0x01
     SOURCE_LANG = 0x02

@@ -1,4 +1,9 @@
-class FieldTag:
+from ohre.abcre.enum.BaseEnum import BaseEnum
+
+
+class FieldTag(BaseEnum):
+    def __init__(self):
+        super().__init__()
     NOTHING = 0x00
     INT_VALUE = 0x01
     VALUE = 0x02
