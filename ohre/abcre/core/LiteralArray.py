@@ -47,9 +47,10 @@ class LiteralArray(BaseRegion):
                   or tag == LiteralTag.ARRAY_I32 or tag == LiteralTag.ARRAY_U64
                   or tag == LiteralTag.ARRAY_I64 or tag == LiteralTag.ARRAY_F32
                   or tag == LiteralTag.ARRAY_F64 or tag == LiteralTag.ARRAY_STRING):
-                print(f"{hex(self.pos_end)} LiteralTag DEBUG {hex(tag)} {LiteralTag.get_code_name(tag)} \
-pos_end {hex(self.pos_end)}")
-                value, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
+                print(f"LiteralTag DEBUG tag end at {hex(self.pos_end)}")
+                value, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
+                print(f"{hex(self.pos_end)} {hex(tag)} {LiteralTag.get_code_name(tag)} \
+pos_end {hex(self.pos_end)} value {value}")
                 i = self.num_literals
             elif (tag == LiteralTag.UNKOWN_6B):
                 print(f"{hex(self.pos_end)} LiteralTag DEBUG tag={hex(tag)} UNKOWN_6B HIT")

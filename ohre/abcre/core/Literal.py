@@ -108,7 +108,7 @@ class Literal():
             out += f"{self.value}"
         elif (self.tag == LiteralTag.STRING):
             s = String.String(buf, self.value)
-            out += f"{hex(self.value)} {s}"
+            out += f"{s}"
         elif (self.IsStringValue() and self.tag != LiteralTag.STRING):
             out += f"{hex(self.value)}"
         else:
