@@ -1,2 +1,2 @@
 def is_uppercase_or_underscore(s: str):
-    return s.replace('_', '').isupper()
+    return all(c.isupper() or c.isdigit() or c == "_" for c in s)

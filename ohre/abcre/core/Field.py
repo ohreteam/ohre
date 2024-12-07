@@ -32,7 +32,7 @@ class Field(BaseRegion):
                   t_v.tag == FieldTag.ANNOTATIONS or
                   t_v.tag == FieldTag.RUNTIME_TYPE_ANNOTATION or
                   t_v.tag == FieldTag.TYPE_ANNOTATION):
-                out_field_data += f"{FieldTag.get_code_name(t_v.tag)} {hex(op._uint8_t_array4_to_int(t_v.data))}; "
+                out_field_data += f"{FieldTag.get_code_name(t_v.tag)} {hex(op._uint8_t_array_to_int(t_v.data))}; "
             else:
                 out_field_data += f"{FieldTag.get_code_name(t_v.tag)} {t_v.data}; "
 

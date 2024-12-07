@@ -1,8 +1,10 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
+import ohre.abcre.core.String as String
 import ohre.core.operator as op
-from ohre.abcre.enum.LiteralTag import LiteralTag
+import ohre.misc.const as const
 from ohre.abcre.core.BaseRegion import BaseRegion
+from ohre.abcre.enum.LiteralTag import LiteralTag
 
 
 class Literal():
@@ -43,7 +45,7 @@ class Literal():
             return True
         return False
 
-    def IsFloatValue(self) -> bool:
+    def IsDoubleValue(self) -> bool:
         if (self.tag == LiteralTag.ARRAY_F64 or self.tag == LiteralTag.DOUBLE):
             return True
         return False
@@ -55,3 +57,60 @@ class Literal():
                 or self.tag == LiteralTag.ASYNCGENERATORMETHOD):
             return True
         return False
+
+    def __str__(self):
+        out = f"{LiteralTag.get_code_name(self.tag)} "
+        if (self.IsBoolValue()):
+            if (self.value):
+                out += f"{self.value}"
+            else:
+                out += f"{self.value}"
+        elif (self.IsByteValue()):
+            out += f"{hex(self.value)}"
+        elif (self.IsShortValue()):
+            out += f"{hex(self.value)}"
+        elif (self.IsIntegerValue()):
+            if (self.value > const.UINT32MAX):
+                out += f"value NOT valid "
+            out += f"{hex(self.value)}"
+        elif (self.IsLongValue()):
+            out += f"{hex(self.value)}"
+        elif (self.IsFloatValue()):
+            out += f"{self.value}"
+        elif (self.IsDoubleValue()):
+            out += f"{self.value}"
+        elif (self.IsStringValue()):
+            out += f"{hex(self.value)}"
+        else:
+            out += f"Literal-IS-UNKNOWN {hex(self.value)}"
+        return out
+
+    def get_str(self, buf):
+        out = f"{LiteralTag.get_code_name(self.tag)} "
+        if (self.IsBoolValue()):
+            if (self.value):
+                out += f"True"
+            else:
+                out += f"False"
+        elif (self.IsByteValue()):
+            out += f"{hex(self.value)}"
+        elif (self.IsShortValue()):
+            out += f"{hex(self.value)}"
+        elif (self.IsIntegerValue()):
+            if (self.value > const.UINT32MAX):
+                out += f"NOT valid "
+            out += f"{hex(self.value)}"
+        elif (self.IsLongValue()):
+            out += f"{hex(self.value)}"
+        elif (self.IsFloatValue()):
+            out += f"{self.value}"
+        elif (self.IsDoubleValue()):
+            out += f"{self.value}"
+        elif (self.tag == LiteralTag.STRING):
+            s = String.String(buf, self.value)
+            out += f"{hex(self.value)} {s}"
+        elif (self.IsStringValue() and self.tag != LiteralTag.STRING):
+            out += f"{hex(self.value)}"
+        else:
+            out += f"Literal-IS-UNKNOWN {hex(self.value)}"
+        return out

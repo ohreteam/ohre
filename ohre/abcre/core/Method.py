@@ -30,7 +30,7 @@ class Method(ForeignMethod):
                   t_v.tag == MethodTag.PARAM_ANNOTATION or
                   t_v.tag == MethodTag.TYPE_ANNOTATION or
                   t_v.tag == MethodTag.RUNTIME_TYPE_ANNOTATION):
-                out_tag_value += f"{MethodTag.get_code_name(t_v.tag)} {hex(op._uint8_t_array4_to_int(t_v.data))}; "
+                out_tag_value += f"{MethodTag.get_code_name(t_v.tag)} {hex(op._uint8_t_array_to_int(t_v.data))}; "
             else:
                 out_tag_value += f"{MethodTag.get_code_name(t_v.tag)} {t_v.data}; "
         out = f"Method: [{hex(self.pos_start)}/{hex(self.pos_end)}] {self.name} class_idx {hex(self.class_idx)} \

@@ -63,7 +63,6 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
     for k, v in literal_array_d.items():
         out += f"{hex(k)} {hex(v)}, "
     print(f">>> debug >>> literal_array_d({len(literal_array_d)}) {out}")
-    exit()
 
     region_index = RegionIndex(buf, header.index_section_off, header.num_index_regions)
     print(f"\n> RegionIndex: {region_index}")

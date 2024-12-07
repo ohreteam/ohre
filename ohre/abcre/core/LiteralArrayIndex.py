@@ -5,6 +5,7 @@ from ohre.abcre.core.BaseRegion import BaseRegion
 
 
 class LiteralArrayIndex(BaseRegion):
+    # coressponding to EntityId in libpandafile\file.h
     def __init__(self, buf, pos: int, num_lnps: int = 0):
         pos = op._align4(pos)
         super().__init__(pos)

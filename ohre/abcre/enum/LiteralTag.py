@@ -33,4 +33,5 @@ class LiteralTag(BaseEnum):
     BUILTINTYPEINDEX = 0x19
     GETTER = 0x1a
     SETTER = 0x1b
+    UNKOWN_6B = 0x2e
     NULLVALUE = 0xff

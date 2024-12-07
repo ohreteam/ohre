@@ -35,7 +35,7 @@ class Class(BaseRegion):
                   t_v.tag == ClassTag.RUNTIME_TYPE_ANNOTATION or
                   t_v.tag == ClassTag.TYPE_ANNOTATION or
                   t_v.tag == ClassTag.SOURCE_FILE):
-                out_class_data += f"{ClassTag.get_code_name(t_v.tag)} {hex(op._uint8_t_array4_to_int(t_v.data))}; "
+                out_class_data += f"{ClassTag.get_code_name(t_v.tag)} {hex(op._uint8_t_array_to_int(t_v.data))}; "
             elif (t_v.tag == ClassTag.INTERFACES):
                 out_class_data += f"TODO: {ClassTag.get_code_name(t_v.tag)} {t_v.data}; "
             elif (t_v.tag == ClassTag.SOURCE_LANG):
