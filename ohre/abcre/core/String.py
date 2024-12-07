@@ -24,3 +24,6 @@ class String(BaseRegion):
             out += "NOT_EQUAL_LEN "
         out += f"{self.data}}}"
         return out
+
+    def get_str(self):
+        return self.data

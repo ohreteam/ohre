@@ -17,6 +17,7 @@ from ohre.abcre.core.MethodRegionIndex import MethodRegionIndex
 from ohre.abcre.core.ProtoRegionIndex import ProtoRegionIndex
 from ohre.abcre.core.RegionIndex import RegionIndex
 from ohre.core import oh_app, oh_hap
+from ohre.abcre.ArkTSAnalyzer import ArkTSAnalyzer
 from ohre.misc import Log
 
 if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_decompile.py a.abc
@@ -40,13 +41,9 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
     print(f"> header.foreign_off {header.foreign_off} header.foreign_size {header.foreign_size}")
     class_index = ClassIndex(buf, header.class_idx_off, header.num_classes)
     print(f"> {class_index}")
-    Method_addr_l = list()
     for i in range(len(class_index.offsets)):
         abc_class = Class(buf, class_index.offsets[i])
         print(f">> [{i}/{header.num_classes}] {abc_class}")
-        for method in abc_class.methods:
-            Method_addr_l.append(method.get_pos_start())
-    Method_addr_l = sorted(Method_addr_l)
 
     line_number_program_index = LineNumberProgramIndex(buf, header.lnp_idx_off, header.num_lnps)
     print(f"> {line_number_program_index}")
@@ -66,7 +63,6 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
 
     region_index = RegionIndex(buf, header.index_section_off, header.num_index_regions)
     print(f"\n> RegionIndex: {region_index}")
-    method_in_MethodRegionIndex_l = list()
     for i in range(len(region_index.arrRegionHeader)):
         print(f">> [{i}/{len(region_index.arrRegionHeader)}] region_index.arrRegionHeader")
         class_region_index = ClassRegionIndex(
@@ -75,8 +71,6 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
 
         method_region_index = MethodRegionIndex(
             buf, region_index.arrRegionHeader[i].method_idx_off, region_index.arrRegionHeader[i].method_idx_size)
-        for method_off in method_region_index.offsets:
-            method_in_MethodRegionIndex_l.append(method_off)
         print(f">> {method_region_index}")
         # for off in method_region_index.offsets: # TODO: it's weird! some seems like a String
         #     print(f"off {hex(off)}")
@@ -91,12 +85,8 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
             buf, region_index.arrRegionHeader[i].proto_idx_off, region_index.arrRegionHeader[i].proto_idx_size)
         print(f">> {proto_region_index}")
 
-    out = f"len {len(Method_addr_l)}: "
-    for addr in Method_addr_l:
-        out += f"{hex(addr)} "
-    print(f"{out} Method_addr_l")
-
-    out = f"len {len(method_in_MethodRegionIndex_l)}: "
-    for addr in method_in_MethodRegionIndex_l:
-        out += f"{hex(addr)} "
-    print(f"{out} method_in_MethodRegionIndex_l")
+    print(f"\n\n=== ArkTSAnalyzer START =========================")
+    arkts_analyzer = ArkTSAnalyzer(buf)
+    print(f"=== ArkTSAnalyzer END =========================\n\n")
+    for k, v in arkts_analyzer.methods_in_ri.items():
+        print(f"> method-ri > {hex(k)} \t: {v}")

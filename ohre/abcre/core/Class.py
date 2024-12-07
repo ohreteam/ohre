@@ -22,7 +22,7 @@ class Class(BaseRegion):
         self.class_data, self.pos_end = _read_class_data_TaggedValue(buf, self.pos_end)
         self.fields: List[Field] = None  # Field[] cnt=num_fields
         self.fields, self.pos_end = _read_Field_array(buf, self.pos_end, self.num_fields)
-        self.methods: List[Class] = None  # Method[] cnt=num_methods
+        self.methods: List[Method] = None  # Method[] cnt=num_methods
         self.methods, self.pos_end = _read_Method_array(buf, self.pos_end, self.num_methods)
 
     def __str__(self):
