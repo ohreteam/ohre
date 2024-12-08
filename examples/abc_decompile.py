@@ -21,6 +21,7 @@ from ohre.abcre.ArkTSAnalyzer import ArkTSAnalyzer
 from ohre.misc import Log
 from ohre.abcre.enum.MethodTag import MethodTag
 from ohre.abcre.core.DebugInfo import DebugInfo
+from ohre.abcre.core.Annotation import Annotation
 
 if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_decompile.py a.abc
     Log.init_log("abcre", ".")
@@ -52,6 +53,9 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
                 if t_v.tag == MethodTag.DEBUG_INFO:
                     debuginfo = DebugInfo(buf, t_v.data)
                     print(f"[DebugInfo]>> {debuginfo}")
+                if t_v.tag== MethodTag.ANNOTATION:
+                    annotation = Annotation(buf,t_v.data)
+                    print(f"[Annotation]>>{annotation}")
     line_number_program_index = LineNumberProgramIndex(buf, header.lnp_idx_off, header.num_lnps)
     print(f"> {line_number_program_index}")
 
