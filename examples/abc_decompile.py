@@ -19,6 +19,8 @@ from ohre.abcre.core.RegionIndex import RegionIndex
 from ohre.core import oh_app, oh_hap
 from ohre.abcre.ArkTSAnalyzer import ArkTSAnalyzer
 from ohre.misc import Log
+from ohre.abcre.enum.MethodTag import MethodTag
+from ohre.abcre.core.DebugInfo import DebugInfo
 
 if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_decompile.py a.abc
     Log.init_log("abcre", ".")
@@ -44,7 +46,12 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
     for i in range(len(class_index.offsets)):
         abc_class = Class(buf, class_index.offsets[i])
         print(f">> [{i}/{header.num_classes}] {abc_class}")
-
+        # Fetch DeBugInfo
+        for method_ in abc_class.methods:
+            for t_v in method_.method_data:
+                if t_v.tag == MethodTag.DEBUG_INFO:
+                    debuginfo = DebugInfo(buf, t_v.data)
+                    print(f"[DebugInfo]>> {debuginfo}")
     line_number_program_index = LineNumberProgramIndex(buf, header.lnp_idx_off, header.num_lnps)
     print(f"> {line_number_program_index}")
 
