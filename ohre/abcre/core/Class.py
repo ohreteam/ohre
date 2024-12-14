@@ -1,20 +1,23 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
-import ohre.core.operator as op
+import ohre.core.ohoperator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 from ohre.abcre.core.Field import Field
 from ohre.abcre.core.Method import Method
 from ohre.abcre.core.TaggedValue import TaggedValue
 from ohre.abcre.enum.ClassTag import ClassTag
 from ohre.abcre.enum.SourceLanguage import SourceLanguage
+from ohre.abcre.enum.ClassAccessFlag import ClassAccessFlag
 from ohre.misc import Log
 
 
 class Class(BaseRegion):
     def __init__(self, buf, pos: int):
         super().__init__(pos)
+        # name of Class: TypeDescriptor
         self.name, self.pos_end = op._read_String_offset(buf, self.pos_end)
-        self.super_class_off, self.pos_end = op._read_uint8_t_array_offset(buf, self.pos_end, 4)
+        self.reserved0, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
+        # ClassAccessFlag
         self.access_flags, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
         self.num_fields, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
         self.num_methods, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
@@ -51,7 +54,7 @@ class Class(BaseRegion):
         for i in range(len(self.methods)):
             out_methods += f"\n[{i}] {self.methods[i]}; "
         out = f"Class: [{hex(self.pos_start)}/{hex(self.pos_end)}] name {self.name} \
-super_class_off {self.super_class_off} access_flags {hex(self.access_flags)} \
+reserved0 {self.reserved0} access_flags {ClassAccessFlag.get_bitmap_name(self.access_flags)} \
 num_fields {hex(self.num_fields)} num_methods {hex(self.num_methods)}\n\
 class_data({len(self.class_data)}) {out_class_data}\n\
 fields({len(self.fields)}) {out_fields}\n\

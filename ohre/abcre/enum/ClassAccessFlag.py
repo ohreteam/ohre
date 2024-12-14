@@ -1,7 +1,7 @@
 from ohre.abcre.enum.BaseEnum import BaseEnum
 
 
-class ClassAccessFlags(BaseEnum):
+class ClassAccessFlag(BaseEnum):
     def __init__(self):
         super().__init__()
     ACC_PUBLIC = 0x0001  # Declared public; may be accessed from outside its package.

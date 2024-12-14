@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
 import ohre.abcre.core.String as String
-import ohre.core.operator as op
+import ohre.core.ohoperator as op
 import ohre.misc.const as const
 from ohre.abcre.core.BaseRegion import BaseRegion
 from ohre.abcre.enum.LiteralTag import LiteralTag
@@ -85,7 +85,7 @@ class Literal():
             out += f"Literal-IS-UNKNOWN {hex(self.value)}"
         return out
 
-    def get_str(self, buf):
+    def get_str(self, buf=None):
         out = f"{LiteralTag.get_code_name(self.tag)} "
         if (self.IsBoolValue()):
             if (self.value):
@@ -106,7 +106,7 @@ class Literal():
             out += f"{self.value}"
         elif (self.IsDoubleValue()):
             out += f"{self.value}"
-        elif (self.tag == LiteralTag.STRING):
+        elif (self.tag == LiteralTag.STRING and buf is not None):
             s = String.String(buf, self.value)
             out += f"{s}"
         elif (self.IsStringValue() and self.tag != LiteralTag.STRING):

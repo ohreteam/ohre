@@ -130,7 +130,7 @@ class ResIndexBuf:
         self.resources_content: Dict[str, Any] = self._get_resources_content()
 
     def save_resource_to_json(self, path):
-        with open(os.path.join(path, 'resource_index_content.json'), 'w', encoding='utf-8') as json_file:
+        with open(os.path.join(path, "resource_index_content.json"), "w", encoding="utf-8") as json_file:
             json.dump(self.resources_content, json_file, ensure_ascii=False, indent=4)
 
     def _get_resources_content(self) -> Dict[str, Any]:
@@ -144,8 +144,8 @@ class ResIndexBuf:
     def read_header(self) -> Dict[str, Any]:
         version = self.buf[:128]
         try:
-            file_size, limit_key_config_count = struct.unpack('<II', self.buf[128:136])
-            version_str = version.decode('utf-8', 'ignore').rstrip('\x00')
+            file_size, limit_key_config_count = struct.unpack("<II", self.buf[128:136])
+            version_str = version.decode("utf-8", "ignore").rstrip("\x00")
             Log.info(f"{version_str}, {file_size}, and the limit_key_config_count is {limit_key_config_count}")
             return {"version": version_str,
                     "file_size": file_size,
@@ -160,27 +160,27 @@ class ResIndexBuf:
         offset = self.pos + 136
         for i in range(self.header["limit_key_config_count"]):
             offset += 4
-            k_offset = struct.unpack('<i', self.buf[offset:offset + 4])[0]
+            k_offset = struct.unpack("<i", self.buf[offset:offset + 4])[0]
             offset += 4
-            key_count = struct.unpack('<I', self.buf[offset:offset + 4])[0]
+            key_count = struct.unpack("<I", self.buf[offset:offset + 4])[0]
             offset += 4
 
             params = []
             if key_count == 0:
-                params = ['base']
+                params = ["base"]
             else:
                 for _ in range(key_count):
 
                     key_type = self.buf[offset:offset + 4]
                     key_value = self.buf[offset + 4:offset + 8]
 
-                    key_type = struct.unpack('I', key_type)[0]
-                    key_value_ = struct.unpack(f'{len(key_value)}s', key_value)
+                    key_type = struct.unpack("I", key_type)[0]
+                    key_value_ = struct.unpack(f"{len(key_value)}s", key_value)
                     try:
-                        key_value = key_value_[0].decode('utf-8').rstrip('\x00')[::-1]
+                        key_value = key_value_[0].decode("utf-8").rstrip("\x00")[::-1]
                     except:
                         Log.error(f"Key value decoding to UTF-8 failed in {self.__class__.__name__}")
-                        key_value = key_value_[0].decode('utf-8', 'ignore').rstrip('\x00')[::-1]
+                        key_value = key_value_[0].decode("utf-8", "ignore").rstrip("\x00")[::-1]
                     offset += 8
 
                     params.append(f"{str(KeyParam(key_type))}: {str(key_value)}")
@@ -199,10 +199,10 @@ class ResIndexBuf:
                 offset += 4
 
                 id_count = self.buf[offset:offset + 4]
-                id_count = struct.unpack('<i', id_count)[0]
+                id_count = struct.unpack("<i", id_count)[0]
                 offset += 4
                 for _ in range(id_count):
-                    values = struct.unpack('<Q', self.buf[offset:offset + 8])[0]
+                    values = struct.unpack("<Q", self.buf[offset:offset + 8])[0]
                     values = IdOffset(values)
                     id_set_map[str(values.id)] = values.offset
                     offset += 8
@@ -221,37 +221,37 @@ class ResIndexBuf:
         try:
             for rid, ridx in id_set.items():
                 offset = ridx
-                size = struct.unpack_from('<I', self.buf, offset)[0]
+                size = struct.unpack_from("<I", self.buf, offset)[0]
                 offset += 4
 
-                res_type = struct.unpack_from('<I', self.buf, offset)[0]
+                res_type = struct.unpack_from("<I", self.buf, offset)[0]
                 offset += 4
 
-                res_id = struct.unpack_from('<I', self.buf, offset)[0]
+                res_id = struct.unpack_from("<I", self.buf, offset)[0]
                 offset += 4
 
-                data_size = struct.unpack_from('<H', self.buf, offset)[0]
+                data_size = struct.unpack_from("<H", self.buf, offset)[0]
                 offset += 2
 
                 data_value = self.buf[offset:offset + data_size]
                 offset += data_size
 
-                name_size = struct.unpack_from('<H', self.buf, offset)[0]
+                name_size = struct.unpack_from("<H", self.buf, offset)[0]
                 offset += 2
 
                 name_value = self.buf[offset:offset + name_size]
                 offset += name_size
                 try:
-                    data_value = data_value.decode('utf-8').strip('\x00')
+                    data_value = data_value.decode("utf-8").strip("\x00")
                 except:
                     Log.error(f"data_value decoding to UTF-8 failed in {self.__class__.__name__}")
-                    data_value = data_value.decode('utf-8', 'ignore').strip('\x00')
+                    data_value = data_value.decode("utf-8", "ignore").strip("\x00")
 
                 try:
-                    name_value = name_value.decode('utf-8').strip('\x00')
+                    name_value = name_value.decode("utf-8").strip("\x00")
                 except:
                     Log.error(f"name_value decoding to UTF-8 failed in {self.__class__.__name__}")
-                    name_value = name_value.decode('utf-8', 'ignore').strip('\x00')
+                    name_value = name_value.decode("utf-8", "ignore").strip("\x00")
 
                 resource_item_dict[str(res_id)] = {
                     "file_size": size,

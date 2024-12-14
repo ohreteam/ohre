@@ -4,8 +4,8 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 import ohre
 import ohre.abcre.core.Header
-import ohre.abcre.core.RegionHeader
-import ohre.core.operator as op
+import ohre.abcre.core.IndexHeader
+import ohre.core.ohoperator as op
 from ohre.abcre.core.Class import Class
 from ohre.abcre.core.ClassIndex import ClassIndex
 from ohre.abcre.core.ClassRegionIndex import ClassRegionIndex
@@ -14,9 +14,9 @@ from ohre.abcre.core.ForeignMethod import ForeignMethod
 from ohre.abcre.core.LineNumberProgramIndex import LineNumberProgramIndex
 from ohre.abcre.core.LiteralArray import LiteralArray
 from ohre.abcre.core.LiteralArrayIndex import LiteralArrayIndex
-from ohre.abcre.core.MethodRegionIndex import MethodRegionIndex
+from ohre.abcre.core.MethodStringLiteralRegionIndex import MethodStringLiteralRegionIndex
 from ohre.abcre.core.ProtoRegionIndex import ProtoRegionIndex
-from ohre.abcre.core.RegionIndex import RegionIndex
+from ohre.abcre.core.IndexSection import IndexSection
 from ohre.abcre.core.String import String
 
 from ohre.core import oh_app, oh_hap
@@ -27,7 +27,7 @@ class ArkTSAnalyzer:
     def __init__(self, buf):
         self.buf = buf
         self.header = ohre.abcre.core.Header.Header(buf)
-        self.class_index = ClassIndex(buf, self.header.class_idx_off, self.header.num_classes)
+        self.class_index = ClassIndex(buf, self.header.class_region_idx_off, self.header.num_classes)
         self.line_number_program_index = LineNumberProgramIndex(buf, self.header.lnp_idx_off, self.header.num_lnps)
         self.literal_array_index = LiteralArrayIndex(
             buf, self.header.literalarray_idx_off, self.header.num_literalarrays)
@@ -36,26 +36,26 @@ class ArkTSAnalyzer:
             la = LiteralArray(buf, self.literal_array_index.offsets[i])
             self.literal_array_map[self.literal_array_index.offsets[i]] = la
 
-        self.region_index = RegionIndex(buf, self.header.index_section_off, self.header.num_index_regions)
+        self.region_index = IndexSection(buf, self.header.index_section_off, self.header.num_index_regions)
         self.class_region_indexes: Dict[int, ClassRegionIndex] = dict()
-        self.method_region_indexes: Dict[int, MethodRegionIndex] = dict()
-        for i in range(len(self.region_index.arrRegionHeader)):
+        self.method_region_indexes: Dict[int, MethodStringLiteralRegionIndex] = dict()
+        for i in range(len(self.region_index.headers)):
             class_region_index = ClassRegionIndex(
-                buf, self.region_index.arrRegionHeader[i].class_idx_off,
-                self.region_index.arrRegionHeader[i].class_idx_size)
+                buf, self.region_index.headers[i].class_region_idx_off,
+                self.region_index.headers[i].class_region_idx_size)
             self.class_region_indexes[i] = class_region_index
 
-            method_region_index = MethodRegionIndex(
-                buf, self.region_index.arrRegionHeader[i].method_idx_off,
-                self.region_index.arrRegionHeader[i].method_idx_size)
+            method_region_index = MethodStringLiteralRegionIndex(
+                buf, self.region_index.headers[i].method_string_literal_region_idx_off,
+                self.region_index.headers[i].method_string_literal_region_idx_size)
             self.method_region_indexes[i] = method_region_index
 
             field_region_index = FieldRegionIndex(
-                buf, self.region_index.arrRegionHeader[i].field_idx_off,
-                self.region_index.arrRegionHeader[i].field_idx_size)
+                buf, self.region_index.headers[i].field_idx_off,
+                self.region_index.headers[i].field_idx_size)
             proto_region_index = ProtoRegionIndex(
-                buf, self.region_index.arrRegionHeader[i].proto_idx_off,
-                self.region_index.arrRegionHeader[i].proto_idx_size)\
+                buf, self.region_index.headers[i].proto_idx_off,
+                self.region_index.headers[i].proto_idx_size)
 
 
         # === the following code is just for debug ========================================

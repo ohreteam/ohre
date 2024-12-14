@@ -1,8 +1,9 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
-import ohre.core.operator as op
+import ohre.core.ohoperator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 from ohre.abcre.core.ForeignMethod import ForeignMethod
+from ohre.abcre.core.ForeignMethod import MethodIndexData
 from ohre.abcre.core.TaggedValue import TaggedValue
 from ohre.abcre.enum.MethodTag import MethodTag
 from ohre.misc import Log
@@ -13,8 +14,8 @@ class Method(ForeignMethod):
         super().__init__(buf, pos)
         # self.class_idx Corresponding index entry must be an offset to a Class.
         self._method_data_pos_start = self.pos_end
-        # TaggedValue[] list of (uint8_t/MethodTag, uint8_t[])
-        self.method_data: List[TaggedValue] = None
+        # method_data is the only data that ForeignMethod dont have
+        self.method_data: List[TaggedValue] = None  # (tag, value): (uint8_t/MethodTag, uint8_t[])
         self.method_data, self.pos_end = _read_method_data_TaggedValue(buf, self.pos_end)
 
     def __str__(self):
@@ -22,10 +23,11 @@ class Method(ForeignMethod):
         for t_v in self.method_data:
             if (t_v.tag == MethodTag.NOTHING):
                 out_tag_value += f"{MethodTag.get_code_name(t_v.tag)}"
+            elif (t_v.tag == MethodTag.DEBUG_INFO):
+                out_tag_value += f"{MethodTag.get_code_name(t_v.tag)} {hex(t_v.data)}; "
             elif (t_v.tag == MethodTag.CODE or
                   t_v.tag == MethodTag.RUNTIME_ANNOTATION or
                   t_v.tag == MethodTag.RUNTIME_PARAM_ANNOTATION or
-                  t_v.tag == MethodTag.DEBUG_INFO or
                   t_v.tag == MethodTag.ANNOTATION or
                   t_v.tag == MethodTag.PARAM_ANNOTATION or
                   t_v.tag == MethodTag.TYPE_ANNOTATION or
@@ -34,7 +36,7 @@ class Method(ForeignMethod):
             else:
                 out_tag_value += f"{MethodTag.get_code_name(t_v.tag)} {t_v.data}; "
         out = f"Method: [{hex(self.pos_start)}/{hex(self.pos_end)}] {self.name} class_idx {hex(self.class_idx)} \
-proto_idx {hex(self.proto_idx)} name_off {hex(self.name_off)} access_flags {hex(self.access_flags)} \
+reserved0 {hex(self.reserved0)} name_off {hex(self.name_off)} index_data {MethodIndexData(self.index_data)} \
 method_data({len(self.method_data)}) {out_tag_value}"
         return out
 
@@ -60,7 +62,7 @@ def _read_method_data_TaggedValue(buf, offset) -> Tuple[list[TaggedValue], int]:
             RUNTIME_PARAM_ANNOTATION, offset = op._read_uint8_t_array_offset(buf, offset, 4)
             t_v = TaggedValue(MethodTag.RUNTIME_PARAM_ANNOTATION, RUNTIME_PARAM_ANNOTATION)
         elif (tag == MethodTag.DEBUG_INFO):
-            DEBUG_INFO, offset = op._read_uint8_t_array_offset(buf, offset, 4)
+            DEBUG_INFO, offset = op._read_uint32_t_offset(buf, offset)
             t_v = TaggedValue(MethodTag.DEBUG_INFO, DEBUG_INFO)
         elif (tag == MethodTag.ANNOTATION):
             ANNOTATION, offset = op._read_uint8_t_array_offset(buf, offset, 4)

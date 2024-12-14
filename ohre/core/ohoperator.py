@@ -50,9 +50,9 @@ def _uint8_t_array_to_string(arr) -> str:
     return out
 
 
-def _uint8_t_array_to_int(arr: Iterable, len: int = 4) -> int:
+def _uint8_t_array_to_int(arr: Iterable, length: int = 4) -> int:
     out = 0
-    for i in range(len):
+    for i in range(length):
         assert arr[i] <= const.UINT8MAX and arr[i] >= 0, "value of uint8_t must be 0 <= v <= UINT8MAX"
         out += (arr[i]) * (2**(8 * i))
     return out
@@ -68,39 +68,53 @@ def _read_uintn_offset(buf, offset: int, byte_cnt: int) -> Tuple[int, int]:
     return ret, offset
 
 
-def _read_float32_t_offset(buf, offset):
+def _read_float32_t_offset(buf, offset: int) -> Tuple[float, int]:
     return struct.unpack("1f", buf[offset:offset + 4])[0], offset + 4
 
 
-def _read_double64_t_offset(buf, offset):
+def _read_double64_t_offset(buf, offset: int) -> Tuple[float, int]:
     return struct.unpack("1d", buf[offset:offset + 8])[0], offset + 8
 
 
-def _read_String_offset(buf, offset):
+def _read_String_offset(buf, offset: int):
     s = String.String(buf, offset)
     return s, s.pos_end
 
 
-def _read_String(buf, offset):
+def _read_String(buf, offset: int):
     return String.String(buf, offset)
 
 
-def _read_uleb128_offset(buf, offset):
+def _read_uleb128_offset(buf, offset: int) -> Tuple[int, int]:
     ret, readed_bytes = leb128.u.decode_reader(io.BytesIO(buf[offset:]))
     return ret, offset + readed_bytes
 
 
-def _read_sleb128_offset(buf, offset):
+def _read_uleb128_array_offset(buf, offset: int, length: int) -> Tuple[list, int]:
+    ret = list()
+    for _ in range(length):
+        tmp, readed_bytes = leb128.u.decode_reader(io.BytesIO(buf[offset:]))
+        offset += readed_bytes
+        ret.append(tmp)
+    return ret, offset
+
+
+def _read_sleb128_offset(buf, offset: int) -> Tuple[int, int]:
     ret, readed_bytes = leb128.i.decode_reader(io.BytesIO(buf[offset:]))
     return ret, offset + readed_bytes
 
 
-def _align4(num):
+def _align4(num: int) -> int:
     if (num % 4 == 0):
         return num
     else:
         return num - num % 4 + 4
 
 
+def _uint32_t_to_float32(num: int) -> float:
+    return struct.unpack("f", struct.pack("I", num))[0]
+
+
 if __name__ == "__main__":
     print(hex(_uint8_t_array_to_int((0x34, 0x12, 0, 0))))
+    print(_uint32_t_to_float32(1065353216))

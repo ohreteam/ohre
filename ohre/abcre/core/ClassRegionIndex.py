@@ -1,18 +1,18 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
-import ohre.core.operator as op
+import ohre.core.ohoperator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 from ohre.abcre.core.FieldType import FieldType
 
 
 class ClassRegionIndex(BaseRegion):
-    def __init__(self, buf, pos: int, class_idx_size: int):
+    def __init__(self, buf, pos: int, class_region_idx_size: int):
         pos = op._align4(pos)
         super().__init__(pos)
         self.types: List[FieldType] = list()
-        if (class_idx_size <= 0 or class_idx_size == op._get_uint32_t_max()):
+        if (class_region_idx_size <= 0 or class_region_idx_size == op._get_uint32_t_max()):
             return
-        for i in range(class_idx_size):
+        for _ in range(class_region_idx_size):
             ft, self.pos_end = FieldType._get_class_offset(buf, self.pos_end)
             self.types.append(ft)
 

@@ -1,4 +1,4 @@
-import ohre.core.operator as op
+import ohre.core.ohoperator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 
 
@@ -32,7 +32,7 @@ class Header(BaseRegion):
         self.pos = 0
         self.buf = buf
         self.magic, self.checksum, self.version, self.file_size, self.foreign_off, self.foreign_size, \
-            self.num_classes, self.class_idx_off, self.num_lnps, self.lnp_idx_off, self.num_literalarrays, \
+            self.num_classes, self.class_region_idx_off, self.num_lnps, self.lnp_idx_off, self.num_literalarrays, \
             self.literalarray_idx_off, self.num_index_regions, self.index_section_off = self._parse_header()
 
     def _parse_header(self):
@@ -55,53 +55,45 @@ class Header(BaseRegion):
         # Size of the file in bytes.
         file_size = op._read_uint32_t(self.buf, offset)
 
-        # uint32_t
         foreign_off = op._read_uint32_t(self.buf, offset + 4)
 
         # Size of the foreign region in bytes.
-        # uint32_t
         foreign_size = op._read_uint32_t(self.buf, offset + 8)
 
-        # uint32_t
         num_classes = op._read_uint32_t(self.buf, offset + 12)
 
         # Offset to the class index structure. The offset must point to a structure in ClassIndex format.
-        # uint32_t
-        class_idx_off = op._read_uint32_t(self.buf, offset + 16)
+        class_region_idx_off = op._read_uint32_t(self.buf, offset + 16)
 
         # Number of line number programs in the file.
         # Also this is the number of elements in the LineNumberProgramIndex structure.
-        # uint32_t
         num_lnps = op._read_uint32_t(self.buf, offset + 20)
 
         # Offset to the line number program index structure.
         # The offset must point to a structure in LineNumberProgramIndex format.
-        # lnp_idx_off
         lnp_idx_off = op._read_uint32_t(self.buf, offset + 24)
 
         # 	Number of literalArrays defined in the file.
         # 	Also this is the number of elements in the LiteralArrayIndex structure.
-        # uint32_t
+        # reserved from 12.0.6
         num_literalarrays = op._read_uint32_t(self.buf, offset + 28)
 
         # Offset to the literalarray index structure.
         # The offset must point to a structure in LiteralArrayIndex format.
-        # uint32_t
+        # reserved from 12.0.6
         literalarray_idx_off = op._read_uint32_t(self.buf, offset + 32)
 
         # Number of the index regions in the file.
-        # Also this is the number of elements in the RegionIndex structure.
-        # uint32_t
+        # Also this is the number of elements in the IndexSection structure.
         num_index_regions = op._read_uint32_t(self.buf, offset + 36)
 
         # Offset to the index section.
-        # The offset must point to a structure in RegionIndex format.
-        # uint32_t
+        # The offset must point to a structure in IndexSection/IndexSection format.
         index_section_off = op._read_uint32_t(self.buf, offset + 40)
 
         self.pos = offset + 44
         self.pos_end = offset + 44
-        return [magic, checksum, version, file_size, foreign_off, foreign_size, num_classes, class_idx_off,
+        return [magic, checksum, version, file_size, foreign_off, foreign_size, num_classes, class_region_idx_off,
                 num_lnps, lnp_idx_off, num_literalarrays, literalarray_idx_off, num_index_regions,
                 index_section_off]
 
@@ -116,7 +108,7 @@ class Header(BaseRegion):
         out = f"Header: [{hex(self.pos_start)}/{hex(self.pos_end)}] magic {self.magic} \
 checksum {hex(self.checksum)} version {self.version} file_size {hex(self.file_size)} \
 foreign_off {hex(self.foreign_off)} foreign_size {hex(self.foreign_size)}\n\
-num_classes {hex(self.num_classes)} class_idx_off {hex(self.class_idx_off)} \
+num_classes {hex(self.num_classes)} class_region_idx_off {hex(self.class_region_idx_off)} \
 num_lnps {hex(self.num_lnps)} lnp_idx_off {hex(self.lnp_idx_off)} \
 num_literalarrays {hex(self.num_literalarrays)} literalarray_idx_off {hex(self.literalarray_idx_off)} \
 num_index_regions {hex(self.num_index_regions)} index_section_off {hex(self.index_section_off)}"

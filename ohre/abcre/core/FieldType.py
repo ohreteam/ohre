@@ -1,4 +1,4 @@
-import ohre.core.operator as op
+import ohre.core.ohoperator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 
 
@@ -15,7 +15,7 @@ class FieldType(BaseRegion):
         0x08: "f64",
         0x09: "i64",
         0x0a: "u64",
-        0x0b: "any",
+        0x0c: "any",
     }
     u1 = 0x00
     i8 = 0x01
@@ -28,7 +28,7 @@ class FieldType(BaseRegion):
     f64 = 0x08
     i64 = 0x09
     u64 = 0x0a
-    any = 0x0b
+    any = 0x0c
 
     def __init__(self, buf, pos: int):
         super().__init__(pos)

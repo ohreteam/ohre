@@ -1,6 +1,6 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
-import ohre.core.operator as op
+import ohre.core.ohoperator as op
 from ohre.abcre.core.BaseRegion import BaseRegion
 
 

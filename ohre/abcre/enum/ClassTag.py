@@ -6,7 +6,7 @@ class ClassTag(BaseEnum):
         super().__init__()
     NOTHING = 0x00
     INTERFACES = 0x01
-    SOURCE_LANG = 0x02
+    SOURCE_LANG = 0x02 # data==0: ArkTS/TS/JS
     RUNTIME_ANNOTATION = 0x03
     ANNOTATION = 0x04
     RUNTIME_TYPE_ANNOTATION = 0x05

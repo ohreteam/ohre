@@ -1,6 +1,6 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
-import ohre.core.operator as op
+import ohre.core.ohoperator as op
 from ohre.abcre.enum.LiteralTag import LiteralTag
 from ohre.abcre.core.Literal import Literal
 from ohre.abcre.core.BaseRegion import BaseRegion
@@ -23,7 +23,6 @@ class LiteralArray(BaseRegion):
                 value, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
             elif (tag == LiteralTag.INTEGER_8):  # TODO: not sure, check it in the future
                 value, self.pos_end = op._read_uint8_t_offset(buf, self.pos_end)
-                print(f"{hex(self.pos_end)} LiteralTag DEBUG tag={hex(tag)} INTEGER_8 HIT")
             elif (tag == LiteralTag.DOUBLE):
                 value, self.pos_end = op._read_double64_t_offset(buf, self.pos_end)
             elif (tag == LiteralTag.BOOL):
@@ -47,7 +46,7 @@ class LiteralArray(BaseRegion):
                   or tag == LiteralTag.ARRAY_I32 or tag == LiteralTag.ARRAY_U64
                   or tag == LiteralTag.ARRAY_I64 or tag == LiteralTag.ARRAY_F32
                   or tag == LiteralTag.ARRAY_F64 or tag == LiteralTag.ARRAY_STRING):
-                print(f"LiteralTag DEBUG tag end at {hex(self.pos_end)}")
+                print(f"LiteralTag DEBUG tag end at {hex(self.pos_end)}, ARRAY HIT")
                 value, self.pos_end = op._read_uleb128_offset(buf, self.pos_end)
                 print(f"{hex(self.pos_end)} {hex(tag)} {LiteralTag.get_code_name(tag)} \
 pos_end {hex(self.pos_end)} value {value}")
