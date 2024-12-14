@@ -83,10 +83,6 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/abc_deco
         method_region_index = MethodStringLiteralRegionIndex(
             buf, region_index.headers[i].method_string_literal_region_idx_off, region_index.headers[i].method_string_literal_region_idx_size)
         print(f">> {method_region_index}")
-        # for off in method_region_index.offsets: # TODO: it's weird! some seems like a String
-        #     print(f"off {hex(off)}")
-        #     foreign_method = ForeignMethod(buf, off)
-        #     print(f">>>> {foreign_method}")
 
         field_region_index = FieldRegionIndex(
             buf, region_index.headers[i].field_idx_off, region_index.headers[i].field_idx_size)

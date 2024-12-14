@@ -7,6 +7,7 @@ class FieldTag(BaseEnum):
     NOTHING = 0x00
     INT_VALUE = 0x01
     VALUE = 0x02
+    # belows are removed
     RUNTIME_ANNOTATIONS = 0x03
     ANNOTATIONS = 0x04
     RUNTIME_TYPE_ANNOTATION = 0x05

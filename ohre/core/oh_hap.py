@@ -100,7 +100,7 @@ class oh_hap(oh_common.oh_package):
         if (self.res_index is None):
             self.get_resources_index()
 
-        self.get_module_json()  # TODO: This might not exist if not called
+        self.get_module_json()
 
         # TODO: Verify if the prefix is correct
         files_prefix = "resources"

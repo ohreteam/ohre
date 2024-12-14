@@ -40,7 +40,7 @@ class Class(BaseRegion):
                   t_v.tag == ClassTag.SOURCE_FILE):
                 out_class_data += f"{ClassTag.get_code_name(t_v.tag)} {hex(op._uint8_t_array_to_int(t_v.data))}; "
             elif (t_v.tag == ClassTag.INTERFACES):
-                out_class_data += f"TODO: {ClassTag.get_code_name(t_v.tag)} {t_v.data}; "
+                out_class_data += f"{ClassTag.get_code_name(t_v.tag)} {t_v.data} NOT SUPPORTED in new version; "
             elif (t_v.tag == ClassTag.SOURCE_LANG):
                 out_class_data += f"{ClassTag.get_code_name(t_v.tag)} {SourceLanguage.get_code_name(t_v.data)}; "
             else:
@@ -78,7 +78,7 @@ def _read_class_data_TaggedValue(buf, offset) -> Tuple[list[TaggedValue], int]:
             t_v = TaggedValue(ClassTag.NOTHING)
         elif (tag == ClassTag.INTERFACES):
             num_INTERFACES, data_INTERFACES, offset = _read_ClassTag_INTERFACES(buf, offset)
-            t_v = TaggedValue(ClassTag.INTERFACES)  # TODO:
+            t_v = TaggedValue(ClassTag.INTERFACES) # NOT supported in new version
             print(f"num_INTERFACES {num_INTERFACES} data_INTERFACES {data_INTERFACES} offset {offset}")
         elif (tag == ClassTag.SOURCE_LANG):
             SOURCE_LANG, offset = op._read_uint8_t_offset(buf, offset)

@@ -1,9 +1,9 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
 import ohre.core.ohoperator as op
-from ohre.abcre.enum.LiteralTag import LiteralTag
-from ohre.abcre.core.Literal import Literal
 from ohre.abcre.core.BaseRegion import BaseRegion
+from ohre.abcre.core.Literal import Literal
+from ohre.abcre.enum.LiteralTag import LiteralTag
 from ohre.misc import Log
 
 
@@ -21,7 +21,7 @@ class LiteralArray(BaseRegion):
             value = 0
             if (tag == LiteralTag.INTEGER or tag == LiteralTag.LITERALBUFFERINDEX):
                 value, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
-            elif (tag == LiteralTag.INTEGER_8):  # TODO: not sure, check it in the future
+            elif (tag == LiteralTag.INTEGER_8):  # NOTE: not sure, but seems right
                 value, self.pos_end = op._read_uint8_t_offset(buf, self.pos_end)
             elif (tag == LiteralTag.DOUBLE):
                 value, self.pos_end = op._read_double64_t_offset(buf, self.pos_end)
