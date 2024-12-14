@@ -21,7 +21,7 @@ tag: HarmonyOS, Open HarmonyOS, HarmonyOS NEXT, 鸿蒙 OS, hap, app
 
 ## Features
 
-OHRE is a full python3 tool to play with HarmonyOS .app and .hap files.
+OHRE is a full python3 tool to play with HarmonyOS `.app`, `.hap`,`.abc` files. You can reverse and conduct a detailed investigation of a **ArkTS** file which is always end with `.abc`.
 
 - .app
 - .hap
@@ -30,7 +30,7 @@ OHRE is a full python3 tool to play with HarmonyOS .app and .hap files.
 - resources analysis: resources.index, resources\base\\\*, etc
 - Code file leakage detection: pattern of file names in a specific path, either in white or black
 - Built-in and self-defined vulnerability and sensitive information detection rules based on yara
-- xxx.abc (in progress)
+- **xxx.abc** (**ArkTS** reverse almost done except logical code)
 - xxx.so (in progress)
 
 > Because it is still under testing, the debug log will be placed in `pwd` by default, which is one of the requirements for creating a new issue.
