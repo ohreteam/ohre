@@ -21,7 +21,7 @@ tag: HarmonyOS, Open HarmonyOS, HarmonyOS NEXT, 鸿蒙 OS, hap, app
 
 ## Features
 
-OHRE is a full python3 tool to play with HarmonyOS `.app`, `.hap`,`.abc` files. You can reverse and conduct a detailed investigation of a **ArkTS** file which is always end with `.abc`.
+OHRE is a full python3 tool to play with HarmonyOS `.app`, `.hap`,`.abc` files. You conduct a detailed investigation of a **ArkTS** file which is always end with `.abc`.
 
 - .app
 - .hap
