@@ -15,6 +15,7 @@ class ClassRegionIndex(BaseRegion):
         for _ in range(class_region_idx_size):
             ft, self.pos_end = FieldType._get_class_offset(buf, self.pos_end)
             self.types.append(ft)
+        assert len(self.types) == class_region_idx_size
 
     def __str__(self):
         out_types = ""

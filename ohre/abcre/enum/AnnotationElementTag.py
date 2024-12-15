@@ -38,9 +38,9 @@ class AnnotationElementTag(BaseEnum):
     unknown = "0"
 
     @classmethod
-    def get_type_str(cls, value: int):
+    def get_type_str(cls, num: int):
         for k, v in cls.map.items():
-            if (ord(v) == value):
+            if (ord(v) == num):
                 return k
         return "UNKNOWN"
 
@@ -50,3 +50,11 @@ class AnnotationElementTag(BaseEnum):
             if (k == value):
                 return ord(v)
         return 0
+
+    @classmethod
+    def is_longer_than_32bit(cls, num: int):
+        smaller_than_32bit_set = {"u1", "i8", "u8", "i16", "u16", "i32", "u32", "f32"}
+        for k, v in cls.map.items():
+            if (ord(v) == num and k in smaller_than_32bit_set):
+                return False
+        return True

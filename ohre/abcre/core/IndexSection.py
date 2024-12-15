@@ -14,6 +14,7 @@ class IndexSection(BaseRegion):
         for _ in range(num_index_regions):
             index_header, self.pos_end = IndexHeader._get_class_offset(buf, self.pos_end)
             self.headers.append(index_header)
+        assert len(self.headers) == num_index_regions
 
     def __str__(self):
         out_region_headers = ""

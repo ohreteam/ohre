@@ -25,8 +25,10 @@ class Class(BaseRegion):
         self.class_data, self.pos_end = _read_class_data_TaggedValue(buf, self.pos_end)
         self.fields: List[Field] = None  # Field[] cnt=num_fields
         self.fields, self.pos_end = _read_Field_array(buf, self.pos_end, self.num_fields)
+        assert len(self.fields) == self.num_fields
         self.methods: List[Method] = None  # Method[] cnt=num_methods
         self.methods, self.pos_end = _read_Method_array(buf, self.pos_end, self.num_methods)
+        assert len(self.methods) == self.num_methods
 
     def __str__(self):
         out_class_data = ""
@@ -78,7 +80,7 @@ def _read_class_data_TaggedValue(buf, offset) -> Tuple[list[TaggedValue], int]:
             t_v = TaggedValue(ClassTag.NOTHING)
         elif (tag == ClassTag.INTERFACES):
             num_INTERFACES, data_INTERFACES, offset = _read_ClassTag_INTERFACES(buf, offset)
-            t_v = TaggedValue(ClassTag.INTERFACES) # NOT supported in new version
+            t_v = TaggedValue(ClassTag.INTERFACES)  # NOT supported in new version
             print(f"num_INTERFACES {num_INTERFACES} data_INTERFACES {data_INTERFACES} offset {offset}")
         elif (tag == ClassTag.SOURCE_LANG):
             SOURCE_LANG, offset = op._read_uint8_t_offset(buf, offset)

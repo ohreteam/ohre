@@ -11,10 +11,11 @@ class FieldRegionIndex(BaseRegion):
         self.offsets: List[int] = list()  # uint32_t[] # Array of offsets to Field or ForeignField structures
         if (field_idx_size <= 0 or field_idx_size == op._get_uint32_t_max()):
             return
-        for i in range(field_idx_size):
+        for _ in range(field_idx_size):
             # TODO: determine if it's Field or the ForeignField
             offs, self.pos_end = op._read_uint32_t_offset(buf, self.pos_end)
             self.offsets.append(offs)
+        assert len(self.offsets) == field_idx_size
 
     def __str__(self):
         out_offsets = ""
