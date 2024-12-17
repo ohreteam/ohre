@@ -5,6 +5,7 @@ rules_local/
 *.app
 *.zip
 *.out
+*.dis
 *.log
 tmp/
 tmp_extract/
