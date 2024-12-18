@@ -1,6 +1,6 @@
 from typing import Any, Dict, Iterable, List, Tuple
 from ohre.misc import Log
-from ohre.abcre.dis.Types import AsmTpye
+from ohre.abcre.dis.AsmTypes import AsmTpye
 
 
 class AsmString:

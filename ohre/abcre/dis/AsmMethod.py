@@ -1,9 +1,9 @@
 from typing import Any, Dict, Iterable, List, Tuple
 from ohre.misc import Log
-from ohre.abcre.dis.Types import AsmTpye
+from ohre.abcre.dis.AsmTypes import AsmTpye
 
 
-class Method:
+class AsmMethod:
     # fields in Class
     def __init__(self, slotNumberIdx, lines: List[str]):
         assert len(lines) >= 2
@@ -70,7 +70,7 @@ class Method:
         return self.debug_short()
 
     def debug_short(self) -> str:
-        out = f"Method: {self.slotNumberIdx} {self.func_type} {self.class_func_name}  file: {self.file_name}\n\
+        out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name}  file: {self.file_name}\n\
 args({len(self.args)}) {self.args} insts({len(self.insts)})"
         return out
 
@@ -85,6 +85,6 @@ args({len(self.args)}) {self.args} insts({len(self.insts)})"
                 else:
                     out += f"{inst[i]}"
             out_insts += f"{out}\n"
-        out = f"Method: {self.slotNumberIdx} {self.func_type} {self.class_func_name}  file: {self.file_name}\n\
+        out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name}  file: {self.file_name}\n\
 args({len(self.args)}) {self.args} insts({len(self.insts)})\n{out_insts}"
         return out

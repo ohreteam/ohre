@@ -1,9 +1,9 @@
 from typing import Any, Dict, Iterable, List, Tuple
 from ohre.misc import Log
-from ohre.abcre.dis.Types import AsmTpye
+from ohre.abcre.dis.AsmTypes import AsmTpye
 
 
-class Record:
+class AsmRecord:
     # fields in Class
     def __init__(self, lines: List[str]):
         self.class_name: str = ""
@@ -22,13 +22,13 @@ class Record:
                 if (AsmTpye.is_uint(ty)):
                     value = int(value, 16)
                 else:
-                    Log.error(f"ERROR in Record init: ty {ty} name {name} value {value} {type(value)}")
+                    Log.error(f"ERROR in AsmRecord init: ty {ty} name {name} value {value} {type(value)}")
                 self.fields[name] = (ty, value)
             else:
-                Log.warn(f"invalid line in Record: {line},\nlines: {lines}")
+                Log.warn(f"invalid line in AsmRecord: {line},\nlines: {lines}")
 
     def debug_deep(self):
-        out = f"Record {self.class_name}: "
+        out = f"AsmRecord {self.class_name}: "
         for field_name, (ty, value) in self.fields.items():
             out += f"{field_name}({ty}) {value};"
         return out

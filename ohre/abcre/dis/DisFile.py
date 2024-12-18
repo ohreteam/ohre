@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
-from ohre.abcre.dis.Record import Record
-from ohre.abcre.dis.Method import Method
+from ohre.abcre.dis.AsmRecord import AsmRecord
+from ohre.abcre.dis.AsmMethod import AsmMethod
 from ohre.abcre.dis.AsmString import AsmString
 from ohre.misc import Log
 
@@ -27,8 +27,8 @@ class DisFile():
         self.source_binary_name: str = ""
         self.language: str = ""
         self.lines: List[str] = list()
-        self.records: List[Record] = list()
-        self.methods: List[Method] = list()
+        self.records: List[AsmRecord] = list()
+        self.methods: List[AsmMethod] = list()
         self.asmstrs: List[AsmString] = list()
         if (isinstance(value, str)):
             file = open(value, "r", encoding="utf-8", errors="ignore")
@@ -112,7 +112,7 @@ class DisFile():
                     l_n += 1
                     if ("}" in line_rec):
                         break
-                rec = Record(lines_record)
+                rec = AsmRecord(lines_record)
                 self.records.append(rec)
             else:
                 l_n += 1
@@ -136,7 +136,7 @@ class DisFile():
                     l_n += 1
                     if ("}" == line_method):
                         break
-                method = Method(slotNumberIdx, lines_method)
+                method = AsmMethod(slotNumberIdx, lines_method)
                 self.methods.append(method)
             else:
                 l_n += 1
