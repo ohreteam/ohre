@@ -1,6 +1,7 @@
 from typing import Any, Dict, Iterable, List, Tuple
+
+from ohre.abcre.dis.AsmTypes import AsmTypes
 from ohre.misc import Log
-from ohre.abcre.dis.AsmTypes import AsmTpye
 
 
 class AsmMethod:

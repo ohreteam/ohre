@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
-from ohre.abcre.dis.AsmRecord import AsmRecord
 from ohre.abcre.dis.AsmMethod import AsmMethod
+from ohre.abcre.dis.AsmRecord import AsmRecord
 from ohre.abcre.dis.AsmString import AsmString
 from ohre.misc import Log
 

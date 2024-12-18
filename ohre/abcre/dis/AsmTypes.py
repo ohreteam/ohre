@@ -1,7 +1,7 @@
 from ohre.abcre.enum.BaseEnum import BaseEnum
 
 
-class AsmTpye(BaseEnum):
+class AsmTypes(BaseEnum):
     uint_types = {"u8", "u16", "u32", "u64"}
 
     def __init__(self):

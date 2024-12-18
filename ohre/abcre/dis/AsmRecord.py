@@ -1,6 +1,7 @@
 from typing import Any, Dict, Iterable, List, Tuple
+
+from ohre.abcre.dis.AsmTypes import AsmTypes
 from ohre.misc import Log
-from ohre.abcre.dis.AsmTypes import AsmTpye
 
 
 class AsmRecord:
@@ -19,7 +20,7 @@ class AsmRecord:
                 parts = line.split("=")
                 ty, name = parts[0].split(" ")[0].strip(), parts[0].split(" ")[1].strip()
                 value = parts[1].strip()
-                if (AsmTpye.is_uint(ty)):
+                if (AsmTypes.is_uint(ty)):
                     value = int(value, 16)
                 else:
                     Log.error(f"ERROR in AsmRecord init: ty {ty} name {name} value {value} {type(value)}")
