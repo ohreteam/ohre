@@ -7,6 +7,7 @@ rules_local/
 *.out
 *.dis
 *.log
+isa.yaml
 tmp/
 tmp_extract/
 tmp_hap_extract/

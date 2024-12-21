@@ -17,6 +17,6 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     print(f"> {dis_file}")
     # print(f"\n> {dis_file.debug_deep()}")
     for method in dis_file.methods:
-        print(f">> {method.debug_short()}")
-    for asmstr in dis_file.asmstrs:
-        print(f">> {asmstr}")
+        print(f">> {method.debug_deep()}")
+    # for asmstr in dis_file.asmstrs:
+    #     print(f">> {asmstr}")

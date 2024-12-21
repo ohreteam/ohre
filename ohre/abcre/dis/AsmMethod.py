@@ -1,7 +1,11 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
 from ohre.abcre.dis.AsmTypes import AsmTypes
+from ohre.misc import utils
 from ohre.misc import Log
+from ohre.abcre.dis.NAC import NAC
+from ohre.abcre.dis.NACBlock import NACBlock
+from ohre.abcre.dis.NACBlocks import NACBlocks
 
 
 class AsmMethod:
@@ -14,8 +18,9 @@ class AsmMethod:
         self.class_func_name: str = ""
         self.func_type: str = ""
         self.args: List = list()
-        self.insts: List = list()
-        self._process_method(lines)
+        self.nac_blocks: NACBlocks | None = None
+        insts = self._process_method(lines)
+        self.nac_blocks = NACBlocks(insts)
 
     def _process_1st_line(self, line: str):
         parts = line.split(" ")
@@ -46,46 +51,51 @@ class AsmMethod:
             ty, name = arg_pair.strip().split(" ")
             self.args.append((ty, name))
 
-    def _process_method(self, lines: List[str]):
+    def _process_method(self, lines: List[str]) -> List[List[str]]:
+        insts = list()
         self._process_1st_line(lines[0].strip())
         for line in lines[1:]:
             line = line.strip()
             if (line.endswith(":")):
-                if (len(line.split(" ")) == 1):
+                if (len(line.split(" ")) == 1):  # single str in a single line endswith ":", maybe label?
                     tu = [line]
-                    self.insts.append(tu)
+                    insts.append(tu)
                 else:
                     Log.error(f"ERROR: {line} NOT tag?", True)
-            elif (len(line) == 0):
+            elif (len(line) == 0):  # skip empty line
                 continue
-            elif (line == "}"):
-                return
-            else:
-                tu = list(line.split(" "))
-                for i in range(len(tu)):
-                    if (tu[i].endswith(",")):
-                        tu[i] = tu[i][:-1]
-                self.insts.append(tu)
+            elif (line == "}"):  # process END
+                return insts
+            else:  # common situation
+                tu = self._process_common_inst(line)
+                insts.append(tu)
+        return insts
+
+    def _process_common_inst(self, line: str) -> List[str]:
+        line = line.strip()
+        idx = line.find(" ")
+        if (idx < 0):
+            ret = [line[:]]
+            return ret
+        ret = [line[:idx]]  # opcode
+        idx += 1
+        while (idx < len(line)):
+            start_idx = idx
+            idx = utils.find_next_delimiter(line, start_idx)
+            ret.append(line[start_idx: idx].strip())
+            idx = idx + 1
+        print(f"final ret({len(ret)}) {ret}")
+        return ret
 
     def __str__(self):
         return self.debug_short()
 
     def debug_short(self) -> str:
         out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name}  file: {self.file_name}\n\
-args({len(self.args)}) {self.args} insts({len(self.insts)})"
+args({len(self.args)}) {self.args} nac_blocks({self.nac_blocks.len})"
         return out
 
     def debug_deep(self) -> str:
-        out_insts = ""
-        for line_num in range(len(self.insts)):
-            inst = self.insts[line_num]
-            out = f"{line_num}\t{inst[0]} "
-            for i in range(1, len(inst)):
-                if (i != len(inst) - 1):
-                    out += f"{inst[i]}, "
-                else:
-                    out += f"{inst[i]}"
-            out_insts += f"{out}\n"
         out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name}  file: {self.file_name}\n\
-args({len(self.args)}) {self.args} insts({len(self.insts)})\n{out_insts}"
+args({len(self.args)}) {self.args} nac_blocks({self.nac_blocks.len})\n{self.nac_blocks.debug_deep()}"
         return out
