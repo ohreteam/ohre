@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 from typing import Any, Dict, Iterable, List, Tuple
@@ -44,20 +45,28 @@ class ISA:
             description: str = group["description"].strip() if "description" in group.keys() else None
             verification: List | None = group["verification"] if "verification" in group.keys() else None
             exceptions: List | None = group["exceptions"] if "exceptions" in group.keys() else None
-            properties: List | None = group["properties"] if "properties" in group.keys() else None
+            properties_common: List | None = group["properties"] if "properties" in group.keys() else None
             namespace: str = group["namespace"].strip() if "namespace" in group.keys() else None
             pseudo: str = group["pseudo"].strip() if "pseudo" in group.keys() else None
             semantics: str = group["semantics"].strip() if "semantics" in group.keys() else None
 
             assert "instructions" in group.keys()
-            for ins in group["instructions"]:
-                assert "sig" in ins.keys() and "opcode_idx" in ins.keys()
-                opstr = ins["sig"].split(" ")[0].strip()
-                opcode_idx = ins["opcode_idx"]
+            for inst in group["instructions"]:
+                assert "sig" in inst.keys() and "opcode_idx" in inst.keys()
+                opstr = inst["sig"].split(" ")[0].strip()
+                opcode_idx = inst["opcode_idx"]
 
-                acc = ins["acc"] if "acc" in ins.keys() else None
-                format = ins["format"] if "format" in ins.keys() else None
-                prefix = ins["prefix"] if "prefix" in ins.keys() else None
+                acc = inst["acc"] if "acc" in inst.keys() else None
+                format = inst["format"] if "format" in inst.keys() else None
+                prefix = inst["prefix"] if "prefix" in inst.keys() else None
+                properties_inst: List | None = inst["properties"] if "properties" in inst.keys() else None
+                properties = None
+                if (properties_inst is not None and properties_common is not None):
+                    properties = copy.deepcopy(properties_common + properties_inst)
+                elif (properties_inst is not None and properties_common is None):
+                    properties = copy.deepcopy(properties_inst)
+                elif (properties_inst is None and properties_common is not None):
+                    properties = copy.deepcopy(properties_common)
 
                 if (prefix is not None):  # final_opcode = prefix_opcode|op_code # concat, not 'or'
                     prefix_opcode = self._get_prefix_opcode(prefix)
@@ -65,14 +74,14 @@ class ISA:
                     opcode_idx = [(prefix_opcode << 8) + op_code for op_code in opcode_idx]
 
                 ret[opstr] = {
-                    "sig": ins["sig"],
+                    "sig": inst["sig"],
                     "acc": acc, "opcode_idx": opcode_idx, "prefix": prefix, "format": format, "title": title,
                     "description": description, "verification": verification, "exceptions": exceptions,
                     "properties": properties, "namespace": namespace, "pseudo": pseudo, "semantics": semantics}
         return ret
 
     def get_opcodes(self, opstr: str) -> List | None:
-        opcode_info_d = self.get_opcode_info_dict(opstr)
+        opcode_info_d = self.get_opstr_info_dict(opstr)
         if (opcode_info_d is None):
             return None
         else:
@@ -82,7 +91,7 @@ class ISA:
                 Log.warn(f"[ISA] opstr {opstr}, opcode_idx not in {opcode_info_d.keys()}")
                 return None
 
-    def get_opcode_info_dict(self, opstr: str) -> Dict | None:
+    def get_opstr_info_dict(self, opstr: str) -> Dict | None:
         if opstr in self.opstr2infod.keys():
             return self.opstr2infod[opstr]
         else:
@@ -103,8 +112,8 @@ if __name__ == "__main__":
     # print(json.dumps(isa.ori_d["groups"], indent=4))
     assert isa.get_opcodes("deprecated.getiteratornext") == [0xfc02]
     assert isa.get_opcodes("callruntime.notifyconcurrentresult") == [0xfb00]
-    for ins_str in ["mov", "callruntime.definefieldbyindex", "isin"]:
-        print(f"{ins_str}: {utils.hexstr(isa.get_opcodes(ins_str))} {isa.get_opcode_info_dict(ins_str)}")
+    for ins_str in ["mov", "callruntime.definefieldbyindex", "isin", "jequndefined"]:
+        print(f"{ins_str}: {utils.hexstr(isa.get_opcodes(ins_str))} {isa.get_opstr_info_dict(ins_str)}")
     title_set = set()
     for opstr in isa.opstr2infod.keys():
         title_set.add(isa.opstr2infod[opstr]["title"])

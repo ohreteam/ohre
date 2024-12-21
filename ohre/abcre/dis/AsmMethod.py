@@ -1,11 +1,10 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
 from ohre.abcre.dis.AsmTypes import AsmTypes
-from ohre.misc import utils
-from ohre.misc import Log
-from ohre.abcre.dis.NAC import NAC
-from ohre.abcre.dis.NACBlock import NACBlock
+from ohre.abcre.dis.ControlFlow import ControlFlow
+from ohre.abcre.dis.NAC_LV import NAC_LV
 from ohre.abcre.dis.NACBlocks import NACBlocks
+from ohre.misc import Log, utils
 
 
 class AsmMethod:
@@ -21,6 +20,11 @@ class AsmMethod:
         self.nac_blocks: NACBlocks | None = None
         insts = self._process_method(lines)
         self.nac_blocks = NACBlocks(insts)
+
+    def split_native_code_block(self):
+        assert self.nac_blocks.IR_lv == NAC_LV.NATIVE
+        self.nac_blocks = ControlFlow.split_native_code_block(self.nac_blocks)
+        self.nac_blocks.IR_lv = NAC_LV.NATIVE_BLOCK_SPLITED
 
     def _process_1st_line(self, line: str):
         parts = line.split(" ")
@@ -84,18 +88,17 @@ class AsmMethod:
             idx = utils.find_next_delimiter(line, start_idx)
             ret.append(line[start_idx: idx].strip())
             idx = idx + 1
-        print(f"final ret({len(ret)}) {ret}")
         return ret
 
     def __str__(self):
         return self.debug_short()
 
     def debug_short(self) -> str:
-        out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name}  file: {self.file_name}\n\
-args({len(self.args)}) {self.args} nac_blocks({self.nac_blocks.len})"
+        out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name} ret {self.return_type} \
+file: {self.file_name}\n\
+args({len(self.args)}) {self.args} nac_blocks({len(self.nac_blocks)})"
         return out
 
     def debug_deep(self) -> str:
-        out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name}  file: {self.file_name}\n\
-args({len(self.args)}) {self.args} nac_blocks({self.nac_blocks.len})\n{self.nac_blocks.debug_deep()}"
+        out = f"{self.debug_short()}\n{self.nac_blocks.debug_deep()}"
         return out
