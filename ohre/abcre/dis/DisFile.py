@@ -36,14 +36,14 @@ class DisFile():
                 self.lines.append(line)
             file.close()
         else:
-            Log.error(f"DisFile init ERROR: value type NOT supported, {type(value)} {value}", True)
+            Log.error(f"DisFile init ERROR: value type NOT supported, {type(value)} {value}")
         self._dis_process_main()
 
     def _dis_process_main(self):
         l_n = 0  # line number
         state = STATE.INIT
         while (l_n < len(self.lines)):
-            Log.info(f"DisFile processing: state {state} line-{l_n}: {self.lines[l_n].rstrip()}", True)
+            Log.info(f"DisFile processing: state {state} line-{l_n}: {self.lines[l_n].rstrip()}")
             if (state == STATE.INIT):
                 state, l_n = self._read_disheader(l_n)
             elif (state == STATE.NEW_SEC):

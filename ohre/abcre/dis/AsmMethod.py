@@ -1,9 +1,10 @@
 from typing import Any, Dict, Iterable, List, Tuple
 
 from ohre.abcre.dis.AsmTypes import AsmTypes
-from ohre.abcre.dis.ControlFlow import ControlFlow
 from ohre.abcre.dis.CODE_LV import CODE_LV
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
+from ohre.abcre.dis.NativeToTAC import NativeToTAC
+from ohre.abcre.dis.ControlFlow import ControlFlow
 from ohre.misc import Log, utils
 
 
@@ -22,9 +23,14 @@ class AsmMethod:
         self.code_blocks = CodeBlocks(insts)
 
     def split_native_code_block(self):
-        assert self.code_blocks.IR_lv == CODE_LV.NATIVE
+        assert self.code_blocks.level == CODE_LV.NATIVE
         self.code_blocks = ControlFlow.split_native_code_block(self.code_blocks)
-        self.code_blocks.IR_lv = CODE_LV.NATIVE_BLOCK_SPLITED
+        self.code_blocks.set_level(CODE_LV.NATIVE_BLOCK_SPLITED)
+
+    def native_code_to_TAC(self):
+        assert self.code_blocks.level == CODE_LV.NATIVE_BLOCK_SPLITED
+        self.code_blocks = NativeToTAC.native_code_to_TAC(self.code_blocks)
+        self.code_blocks.set_level(CODE_LV.TAC)
 
     def _process_1st_line(self, line: str):
         parts = line.split(" ")
@@ -65,7 +71,7 @@ class AsmMethod:
                     tu = [line]
                     insts.append(tu)
                 else:
-                    Log.error(f"ERROR: {line} NOT tag?", True)
+                    Log.error(f"ERROR: {line} NOT tag?")
             elif (len(line) == 0):  # skip empty line
                 continue
             elif (line == "}"):  # process END
@@ -94,8 +100,8 @@ class AsmMethod:
         return self.debug_short()
 
     def debug_short(self) -> str:
-        out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name} ret {self.return_type} \
-file: {self.file_name}\n\
+        out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name} \
+ret {self.return_type} file: {self.file_name}\n\
 args({len(self.args)}) {self.args} code_blocks({len(self.code_blocks)})"
         return out
 

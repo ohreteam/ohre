@@ -2,12 +2,12 @@ import copy
 from typing import Any, Dict, Iterable, List, Tuple
 
 from ohre.abcre.dis.NAC import NAC
-from ohre.abcre.dis.TAC import TAC
 from ohre.abcre.dis.NACTYPE import NACTYPE
+from ohre.abcre.dis.TAC import TAC
 
 
 class CodeBlock():  # asm instruction(NAC) cantained
-    def __init__(self, in_l: List[List[str]] | List[NAC] | List[NAC]):
+    def __init__(self, in_l: List[List[str]] | List[NAC] | List[TAC]):
         assert len(in_l) >= 0
         self.insts: List[NAC] | List[TAC] = list()
         if (isinstance(in_l[0], NAC)):  # NAC in list
@@ -23,14 +23,14 @@ class CodeBlock():  # asm instruction(NAC) cantained
     def __str__(self):
         return self.debug_short()
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.insts)
 
-    def debug_short(self):
+    def debug_short(self) -> str:
         out = f"CodeBlock: insts {len(self.insts)}"
         return out
 
-    def debug_deep(self):
+    def debug_deep(self) -> str:
         out = f"CodeBlock: insts {len(self.insts)}\n"
         for i in range(len(self.insts)):
             if (self.insts[i].type == NACTYPE.LABEL):

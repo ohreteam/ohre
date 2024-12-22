@@ -75,13 +75,13 @@ def warn(logstr, print_flag=True):
     g_log.warning(logstr)
 
 
-def error(logstr, print_flag=True):
+def error(logstr):
     if (get_logger().getEffectiveLevel() <= logging.ERROR):
         debug_print(logstr, "error")
     g_log.error(logstr)
 
 
-def critical(logstr, print_flag=True):
+def critical(logstr):
     if (get_logger().getEffectiveLevel() <= logging.CRITICAL):
         debug_print(logstr, "criti")
     g_log.critical(logstr)
