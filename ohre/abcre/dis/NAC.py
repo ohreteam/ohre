@@ -20,13 +20,6 @@ class NAC():  # N Address Code
     def __str__(self):
         return self.debug_short()
 
-    def _is_std_nac(self):
-        std_nac_set = {NACTYPE.ASSIGN, NACTYPE.COND_JMP, NACTYPE.UNCN_JMP,
-                       NACTYPE.CALL, NACTYPE.COND_THROW, NACTYPE.UNCN_THROW, NACTYPE.RETURN}
-        if (self.type in std_nac_set):
-            return True
-        return False
-
     def debug_short(self):
         out = f"{self.op} "
         for i in range(len(self.args)):

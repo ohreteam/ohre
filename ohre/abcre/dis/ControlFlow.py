@@ -1,16 +1,16 @@
-from ohre.abcre.dis.NACBlock import NACBlock
-from ohre.abcre.dis.NACBlocks import NACBlocks
+from ohre.abcre.dis.CodeBlock import CodeBlock
+from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.abcre.dis.NACTYPE import NACTYPE
 from ohre.misc import Log, utils
 
 
 class ControlFlow():
-    def split_native_code_block(blocks: NACBlocks) -> NACBlocks:
+    def split_native_code_block(blocks: CodeBlocks) -> CodeBlocks:
         assert len(blocks) == 1
-        nac_block = blocks.nac_blocks[0]
+        nac_block = blocks.blocks[0] # should only have one NAC block, not TAC
         delimited_id: list = list()
         for i in range(len(nac_block)):
-            nac = nac_block.nacs[i]
+            nac = nac_block.insts[i]
             if (nac.type == NACTYPE.LABEL):
                 delimited_id.append(i)
             elif (nac.type == NACTYPE.COND_JMP or nac.type == NACTYPE.UNCN_JMP or nac.type == NACTYPE.RETURN):
@@ -22,7 +22,7 @@ class ControlFlow():
         debug_out = ""
         for idx in delimited_id:
             if (idx < len(nac_block)):
-                debug_out += f"{idx}-{nac_block.nacs[idx]}; "
+                debug_out += f"{idx}-{nac_block.insts[idx]}; "
             else:
                 debug_out += f"{idx} nac_block len {len(nac_block)}"
         Log.info(f"[ControlFlow] delimited id-nac {debug_out}", False)
@@ -33,4 +33,4 @@ class ControlFlow():
             idx_end = delimited_id[i]
             final_nac_blocks.append(nac_block.get_slice_block(idx_start, idx_end))
             idx_start = idx_end
-        return NACBlocks(final_nac_blocks)
+        return CodeBlocks(final_nac_blocks)

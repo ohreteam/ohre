@@ -56,6 +56,22 @@ python ohre_demo.py xxx.app # run demo with HarmonyOS app
 python ohre_demo.py xxx.hap --resource_analysis # run demo with HarmonyOS hap and resource analysis
 ```
 
+### ArkTS Reverse
+
+#### Non-Logical Code
+
+```bash
+python examples\abc_decompile.py name.abc
+```
+
+#### Logical Code
+
+```bash
+python examples\dis_demo.py xxx.abc.dis # put isa.yaml from arkcompiler_ets_runtime to ./ohre/abcre/dis/isa.yaml
+```
+
+
+
 ## Contacts
 
 Please new an issue, participate in the discussion or make a PR.

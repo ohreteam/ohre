@@ -2,8 +2,8 @@ from typing import Any, Dict, Iterable, List, Tuple
 
 from ohre.abcre.dis.AsmTypes import AsmTypes
 from ohre.abcre.dis.ControlFlow import ControlFlow
-from ohre.abcre.dis.NAC_LV import NAC_LV
-from ohre.abcre.dis.NACBlocks import NACBlocks
+from ohre.abcre.dis.CODE_LV import CODE_LV
+from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.misc import Log, utils
 
 
@@ -17,14 +17,14 @@ class AsmMethod:
         self.class_func_name: str = ""
         self.func_type: str = ""
         self.args: List = list()
-        self.nac_blocks: NACBlocks | None = None
+        self.code_blocks: CodeBlocks | None = None
         insts = self._process_method(lines)
-        self.nac_blocks = NACBlocks(insts)
+        self.code_blocks = CodeBlocks(insts)
 
     def split_native_code_block(self):
-        assert self.nac_blocks.IR_lv == NAC_LV.NATIVE
-        self.nac_blocks = ControlFlow.split_native_code_block(self.nac_blocks)
-        self.nac_blocks.IR_lv = NAC_LV.NATIVE_BLOCK_SPLITED
+        assert self.code_blocks.IR_lv == CODE_LV.NATIVE
+        self.code_blocks = ControlFlow.split_native_code_block(self.code_blocks)
+        self.code_blocks.IR_lv = CODE_LV.NATIVE_BLOCK_SPLITED
 
     def _process_1st_line(self, line: str):
         parts = line.split(" ")
@@ -96,9 +96,9 @@ class AsmMethod:
     def debug_short(self) -> str:
         out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name} ret {self.return_type} \
 file: {self.file_name}\n\
-args({len(self.args)}) {self.args} nac_blocks({len(self.nac_blocks)})"
+args({len(self.args)}) {self.args} code_blocks({len(self.code_blocks)})"
         return out
 
     def debug_deep(self) -> str:
-        out = f"{self.debug_short()}\n{self.nac_blocks.debug_deep()}"
+        out = f"{self.debug_short()}\n{self.code_blocks.debug_deep()}"
         return out

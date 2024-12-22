@@ -107,7 +107,6 @@ class ISA:
 
 if __name__ == "__main__":
     ohre.set_log_print(True)
-    d = utils.read_dict_from_yaml_file(os.path.join(os.path.dirname(os.path.abspath(__file__)), "isa.yaml"))
     isa = ISA(os.path.join(os.path.dirname(os.path.abspath(__file__)), "isa.yaml"))
     # print(json.dumps(isa.ori_d["groups"], indent=4))
     assert isa.get_opcodes("deprecated.getiteratornext") == [0xfc02]
