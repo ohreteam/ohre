@@ -25,10 +25,11 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     #     print(f">> {asmstr}")
 
     # === reverse truly START
-    # print(f">> before ControlFlow build {dis_file.methods[0].debug_deep()}")
-    dis_file.methods[0].split_native_code_block()
-    print(f">> after ControlFlow build {dis_file.methods[0].debug_deep()}")
-    dis_file.methods[0].native_code_to_TAC()
+    FUNC_IDX = 7
+    # print(f">> before ControlFlow build {dis_file.methods[FUNC_IDX].debug_deep()}")
+    dis_file.methods[FUNC_IDX].split_native_code_block()
+    # print(f">> after ControlFlow build {dis_file.methods[FUNC_IDX].debug_deep()}")
+    dis_file.methods[FUNC_IDX].native_code_to_TAC()
     # for asm_method in dis_file.methods:
     #     asm_method.split_native_code_block()
     #     print(f">> CFed: {asm_method.debug_deep()}")

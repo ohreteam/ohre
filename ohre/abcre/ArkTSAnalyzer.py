@@ -1,6 +1,6 @@
 import argparse
 import time
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import ohre
 import ohre.abcre.core.Header

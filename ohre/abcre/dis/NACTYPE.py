@@ -40,7 +40,7 @@ class NACTYPE(BaseEnum):
     # default:
     UNKNOWN = 99
 
-    isa: ISA | None = None
+    isa: ISA = None
 
     @classmethod
     def get_NAC_type(cls, op: str) -> int:

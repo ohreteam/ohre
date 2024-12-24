@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import ohre.core.ohoperator as op
 from ohre.abcre.core.BaseRegion import BaseRegion

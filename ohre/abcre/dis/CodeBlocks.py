@@ -1,5 +1,5 @@
 import copy
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.CODE_LV import CODE_LV
 from ohre.abcre.dis.CodeBlock import CodeBlock
@@ -9,7 +9,7 @@ from ohre.misc import Log, utils
 
 
 class CodeBlocks():  # NAC block contained, build control flow graph inside a single CodeBlocks for one method
-    def __init__(self, in_l: List[List[str]] | List[CodeBlock], ir_lv=CODE_LV.NATIVE):
+    def __init__(self, in_l: Union[List[List[str]], List[CodeBlock]], ir_lv=CODE_LV.NATIVE):
         assert len(in_l) >= 0
         self.blocks: List[CodeBlock] = list()
         self.IR_level = ir_lv  # defaul: from native

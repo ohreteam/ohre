@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmArg import AsmArg
 from ohre.abcre.dis.TACTYPE import TACTYPE
@@ -14,9 +14,25 @@ class TAC():  # Three Address Code
     @classmethod
     def tac_assign(cls, dst: AsmArg, src0: AsmArg, src1: AsmArg = None, rop="", log: str = ""):
         if (src1 is None):
-            return TAC(TACTYPE.ASSIGN, [dst, src0])
+            return TAC(TACTYPE.ASSIGN, [dst, src0], log=log)
         assert src1 is not None and rop is not None and len(rop) > 0
-        return TAC(TACTYPE.ASSIGN_BI, [dst, src0, src1], rop=rop)
+        return TAC(TACTYPE.ASSIGN_BI, [dst, src0, src1], rop=rop, log=log)
+
+    @classmethod
+    def tac_cond_jmp(cls, dst: AsmArg, para0: AsmArg, para1: AsmArg, rop, log: str = ""):
+        return TAC(TACTYPE.COND_JMP, [dst, para0, para1], rop=rop, log=log)
+
+    @classmethod
+    def tac_uncn_jmp(cls, dst: AsmArg, log: str = ""):
+        return TAC(TACTYPE.UNCN_JMP, [dst], log=log)
+
+    @classmethod  # TODO: for debug, store some nac and just display it for debug
+    def tac_return(cls, paras: List[AsmArg] = None, log: str = ""):
+        return TAC(TACTYPE.UNKNOWN, paras, log=log)
+
+    @classmethod  # TODO: for debug, store some nac and just display it for debug
+    def tac_unknown(cls, paras: List[AsmArg] = None, log: str = ""):
+        return TAC(TACTYPE.UNKNOWN, paras, log=log)
 
     def __str__(self):
         return self.debug_short()

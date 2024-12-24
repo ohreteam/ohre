@@ -12,6 +12,8 @@ class AsmTypes(BaseEnum):
     TRUE = "true"  # AsmArg: value not valid
     FALSE = "false"  # AsmArg: value not valid
     ZERO = "zero"  # AsmArg: value not valid
+    LABEL = "label"  # AsmArg: value not valid
+    STR = "str"
     UNDEFINED = "undefined"
     UNKNOWN = "unknown"  # default value in this proj
 

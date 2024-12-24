@@ -17,6 +17,10 @@ local_readme.md
 resources.index
 poetry.lock
 .VSCodeCounter/
+diff.diff
+bin/
+pyvenv.cfg
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

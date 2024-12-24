@@ -1,4 +1,4 @@
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmMethod import AsmMethod
 from ohre.abcre.dis.AsmRecord import AsmRecord

@@ -1,7 +1,7 @@
 import copy
 import json
 import os
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import yaml
 
@@ -14,7 +14,7 @@ class ISA:
         self.ori_d: Dict = utils.read_dict_from_yaml_file(isa_file_path)
         assert self.ori_d is not None
 
-        self.prefixes: Dict | None = None
+        self.prefixes: Dict = None
         self.prefixes = self._get_prefixes_dict()
         assert self.prefixes is not None
         Log.info(f"[ISA] self.prefixes {len(self.prefixes)} {self.prefixes}")
@@ -80,7 +80,7 @@ class ISA:
                     "properties": properties, "namespace": namespace, "pseudo": pseudo, "semantics": semantics}
         return ret
 
-    def get_opcodes(self, opstr: str) -> List | None:
+    def get_opcodes(self, opstr: str) -> Union[List, None]:
         opcode_info_d = self.get_opstr_info_dict(opstr)
         if (opcode_info_d is None):
             return None
@@ -91,7 +91,7 @@ class ISA:
                 Log.warn(f"[ISA] opstr {opstr}, opcode_idx not in {opcode_info_d.keys()}")
                 return None
 
-    def get_opstr_info_dict(self, opstr: str) -> Dict | None:
+    def get_opstr_info_dict(self, opstr: str) -> Union[Dict, None]:
         if opstr in self.opstr2infod.keys():
             return self.opstr2infod[opstr]
         else:
