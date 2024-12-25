@@ -35,19 +35,19 @@ class TAC():  # Three Address Code
         return TAC(TACTYPE.UNKNOWN, paras, log=log)
 
     def __str__(self):
-        return self.debug_short()
+        return self._debug_str()
 
-    def debug_short(self):
+    def _debug_str(self):
         out = f"[{TACTYPE.get_code_name(self.optype)}]\t"
 
         for i in range(len(self.args)):
-            out += f"{self.args[i].debug_short()}, "
+            out += f"{self.args[i]._debug_str()}, "
         return out
 
-    def debug_deep(self):
+    def _debug_vstr(self):
         out = f"[{TACTYPE.get_code_name(self.optype)}]\t"
         for i in range(len(self.args)):
-            out += f"{self.args[i].debug_deep()} "
+            out += f"{self.args[i]._debug_vstr()} "
             if (i == 1 and self.rop is not None and len(self.rop) > 0):
                 out += f"({self.rop}) "
         if (self.log is not None and len(self.log) > 0):

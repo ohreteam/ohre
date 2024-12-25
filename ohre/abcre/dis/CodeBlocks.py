@@ -3,12 +3,11 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.CODE_LV import CODE_LV
 from ohre.abcre.dis.CodeBlock import CodeBlock
-from ohre.abcre.dis.NAC import NAC
-from ohre.abcre.dis.NACTYPE import NACTYPE
+from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.misc import Log, utils
 
 
-class CodeBlocks():  # NAC block contained, build control flow graph inside a single CodeBlocks for one method
+class CodeBlocks(DebugBase):  # NAC block contained, build control flow graph inside a single CodeBlocks for one method
     def __init__(self, in_l: Union[List[List[str]], List[CodeBlock]], ir_lv=CODE_LV.NATIVE):
         assert len(in_l) >= 0
         self.blocks: List[CodeBlock] = list()
@@ -18,9 +17,6 @@ class CodeBlocks():  # NAC block contained, build control flow graph inside a si
             self.blocks = copy.deepcopy(in_l)
         else:  # maybe list(str) in list # anyway, try init CodeBlock using element(asm codea str list) in list
             self.blocks: List[CodeBlock] = [CodeBlock(in_l)]
-
-    def __str__(self):
-        return self.debug_short()
 
     @property
     def len(self):
@@ -45,12 +41,12 @@ class CodeBlocks():  # NAC block contained, build control flow graph inside a si
     def __len__(self) -> int:
         return len(self.blocks)
 
-    def debug_short(self) -> str:
+    def _debug_str(self) -> str:
         out = f"CodeBlocks: blocks({len(self.blocks)}) {self.level_str}"
         return out
 
-    def debug_deep(self) -> str:
-        out = f"{self.debug_short()}\n"
+    def _debug_vstr(self) -> str:
+        out = f"{self._debug_str()}\n"
         for i in range(len(self.blocks)):
-            out += f"[{i}/{len(self.blocks)}]-block: {self.blocks[i].debug_deep()}\n"
+            out += f"[{i}/{len(self.blocks)}]-block: {self.blocks[i]._debug_vstr()}\n"
         return out

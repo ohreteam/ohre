@@ -17,12 +17,12 @@ class ISA:
         self.prefixes: Dict = None
         self.prefixes = self._get_prefixes_dict()
         assert self.prefixes is not None
-        Log.info(f"[ISA] self.prefixes {len(self.prefixes)} {self.prefixes}")
+        Log.info(f"[ISA] prefixes {len(self.prefixes)} {self.prefixes}")
 
         self.opstr2infod: Dict[str, Dict] | None = None
         self.opstr2infod = self._get_opstr_dict()
         assert self.opstr2infod is not None
-        Log.info(f"[ISA] self.opstr2infod {len(self.opstr2infod)} keys: {self.opstr2infod.keys()}")
+        Log.info(f"[ISA] opstr2infod len {len(self.opstr2infod)}")
 
     def _get_prefixes_dict(self) -> Dict:
         if (self.prefixes is not None):
@@ -108,7 +108,6 @@ class ISA:
 if __name__ == "__main__":
     ohre.set_log_print(True)
     isa = ISA(os.path.join(os.path.dirname(os.path.abspath(__file__)), "isa.yaml"))
-    # print(json.dumps(isa.ori_d["groups"], indent=4))
     assert isa.get_opcodes("deprecated.getiteratornext") == [0xfc02]
     assert isa.get_opcodes("callruntime.notifyconcurrentresult") == [0xfb00]
     for ins_str in ["mov", "callruntime.definefieldbyindex", "isin", "jequndefined"]:

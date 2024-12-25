@@ -22,7 +22,7 @@ class Annotation(BaseRegion):
     def __str__(self):
         out_elements = []
         for elem in self.elements:
-            out_elements.append(f"{elem.debug_short()}")
+            out_elements.append(f"{elem._debug_str()}")
         out_elements = ";".join(out_elements)
 
         out_element_types = ""
@@ -56,7 +56,7 @@ class AnnotationElement(BaseRegion):
 name_off {hex(self.name_off)} value {hex(self.get_value())}"
         return out
 
-    def debug_short(self) -> str:
+    def _debug_str(self) -> str:
         return f"{self.name.get_str()} {hex(self.value)}"
 
     def get_value(self, type_num):

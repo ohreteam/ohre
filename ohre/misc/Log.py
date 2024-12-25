@@ -6,7 +6,7 @@ from logging.handlers import RotatingFileHandler
 
 g_log = None
 DEBUG_LOCAL = True
-DEBUG_LEN = 500
+DEBUG_LEN = 300
 
 
 def debug_print(logstr: str, level: str = "debug"):

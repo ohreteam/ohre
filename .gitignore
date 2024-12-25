@@ -9,6 +9,7 @@ rules_local/
 *.log
 isa.yaml
 tmp/
+temp/
 tmp_extract/
 tmp_hap_extract/
 tmp_app_extract/

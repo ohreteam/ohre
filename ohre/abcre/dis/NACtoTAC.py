@@ -1,17 +1,23 @@
+import copy
+from typing import Any, Dict, Iterable, List, Tuple, Union
+
 from ohre.abcre.dis.AsmArg import AsmArg
+from ohre.abcre.dis.AsmMethod import AsmMethod
 from ohre.abcre.dis.AsmTypes import AsmTypes
 from ohre.abcre.dis.CODE_LV import CODE_LV
-from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.abcre.dis.CodeBlock import CodeBlock
+from ohre.abcre.dis.CodeBlocks import CodeBlocks
+from ohre.abcre.dis.DisFile import DisFile
 from ohre.abcre.dis.NAC import NAC
 from ohre.abcre.dis.TAC import TAC
 from ohre.misc import Log, utils
 
 
-class NativeToTAC:
+class NACtoTAC:
     @classmethod
-    def toTAC(cls, nac: NAC) -> TAC:
-        print(f"toTAC: nac: {nac.debug_deep()}")  # TODO: more tac builder plz
+    def toTAC(self, nac: NAC, ams_method: AsmMethod, dis_file: DisFile) -> Union[TAC, List[TAC]]:
+        print(f"nac_: {nac._debug_vstr()}")  # TODO: more tac builder plz
+
         if (nac.op == "mov"):
             return TAC.tac_assign(AsmArg.build_arg(nac.args[0]), AsmArg.build_arg(nac.args[1]))
         if (nac.op == "lda"):
@@ -26,28 +32,25 @@ class NativeToTAC:
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.UNDEFINED))
         if (nac.op == "sta"):
             return TAC.tac_assign(AsmArg.build_arg(nac.args[0]), AsmArg(AsmTypes.ACC))
-        if (nac.op == "ldobjbyname"):
-            return TAC.tac_assign(
-                AsmArg(AsmTypes.ACC),
-                AsmArg(AsmTypes.STR, value=nac.args[1]),
-                log=f"arg0: {nac.args[0]} todo: check ldobjbyname")
-        if (nac.op == "isfalse"):
-            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.FALSE), rop="==")
         if (nac.op == "callruntime.isfalse"):
             pass
-        if (nac.op == "copyrestargs"):
-            return TAC.tac_unknown([AsmArg(AsmTypes.IMM, value=nac.args[0])], log="todo: copyrestargs imm:u8")
         if (nac.op == "lda.str"):
-            pass
-        if (nac.op == "tryldglobalbyname"):
-            pass
-
-        if (nac.op == "stricteq"):
             pass
         if (nac.op == "ldundefined"):
             pass
+        # === inst: comparation instructions # START
+        if (nac.op == "stricteq"):
+            pass
+        # === inst: comparation instructions # END
 
-        # === inst about jump START
+        # === inst: unary operations # START
+        if (nac.op == "isfalse"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.FALSE), rop="==")
+        if (nac.op == "istrue"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.TRUE), rop="==")
+        # === inst: unary operations # END
+
+        # === inst: jump operations # START
         if (nac.op == "jnez"):  # TODO: jnez imm:i32 # a label str in *.dis file # support imm in future
             return TAC.tac_cond_jmp(
                 AsmArg(AsmTypes.LABEL, nac.args[0]),
@@ -62,36 +65,51 @@ class NativeToTAC:
                 "==")
         if (nac.op == "jmp"):
             return TAC.tac_uncn_jmp(AsmArg(AsmTypes.LABEL, nac.args[0]), log="todo: check label's existence")
-        # === inst about jump END
+        # === inst: jump operations # END
 
-        # === inst about call START
+        # === inst: call instructions # START
         if (nac.op == "callthis1"):
             pass
         if (nac.op == "callthisrange"):
             pass
-        # === inst about call END
+        # === inst: call instructions # END
 
-        # === inst about return START
+        # === inst: dynamic return # START
         if (nac.op == "returnundefined"):
             pass
         if (nac.op == "return"):
             pass
-        # === inst about return END
+        # === inst: dynamic return # END
 
-        Log.warn(f"toTAC failed, not support nac inst: {nac.debug_deep()}", False)  # to error when done
+        # === inst: object visitors # START
+        if (nac.op == "ldobjbyname"):
+            return TAC.tac_assign(
+                AsmArg(AsmTypes.ACC),
+                AsmArg(AsmTypes.STR, value=nac.args[1]),
+                log=f"arg0: {nac.args[0]} todo: check ldobjbyname")
+        if (nac.op == "ldexternalmodulevar"):
+            pass
+        if (nac.op == "tryldglobalbyname"):
+            pass
+        if (nac.op == "copyrestargs"):
+            return TAC.tac_unknown([AsmArg(AsmTypes.IMM, value=nac.args[0])], log="todo: copyrestargs imm:u8")
+        # === inst: object visitors # END
+
+        Log.warn(f"toTAC failed, not support nac inst: {nac._debug_vstr()}", False)  # to error when done
         return TAC.tac_unknown(
             [AsmArg(AsmTypes.UNKNOWN, nac.args[i]) for i in range(len(nac.args))],
             log=f"todo: {nac.op}")
 
     @classmethod
-    def native_code_to_TAC(cls, blocks: CodeBlocks) -> CodeBlocks:
-        assert blocks.level == CODE_LV.NATIVE_BLOCK_SPLITED
+    def trans_NAC_to_TAC(cls, ams_method: AsmMethod, dis_file: DisFile) -> CodeBlocks:
+        cbs = ams_method.code_blocks
+        assert cbs.level == CODE_LV.NATIVE_BLOCK_SPLITED
         cbs_l = list()
-        for block in blocks.blocks:
+        for block in cbs.blocks:
             tac_inst_l = list()
             for nac_inst in block.insts:
-                tac_inst = NativeToTAC.toTAC(nac_inst)  # TODO: may return a list of tac
-                print(f"toTAC: tac: {tac_inst.debug_deep()}")
+                tac_inst = NACtoTAC.toTAC(nac_inst, ams_method, dis_file)  # TODO: may return a list of tac
+                print(f"tac^: {tac_inst._debug_vstr()}")
                 tac_inst_l.append(tac_inst)
             cb = CodeBlock(tac_inst_l)
             cbs_l.append(cb)

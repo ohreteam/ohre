@@ -51,7 +51,6 @@ class NACTYPE(BaseEnum):
             return NACTYPE.LABEL
 
         info_d = cls.isa.get_opstr_info_dict(op)
-        # print(f"op {op} info_d {info_d}")
         assert info_d is not None and "title" in info_d.keys()
         if (_value_in_key_of_dict(info_d, "properties", "return")):
             return NACTYPE.RETURN

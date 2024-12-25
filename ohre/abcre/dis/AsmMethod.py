@@ -3,12 +3,12 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 from ohre.abcre.dis.AsmTypes import AsmTypes
 from ohre.abcre.dis.CODE_LV import CODE_LV
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
-from ohre.abcre.dis.NativeToTAC import NativeToTAC
 from ohre.abcre.dis.ControlFlow import ControlFlow
 from ohre.misc import Log, utils
+from ohre.abcre.dis.DebugBase import DebugBase
 
 
-class AsmMethod:
+class AsmMethod(DebugBase):
     # fields in Class
     def __init__(self, slotNumberIdx, lines: List[str]):
         assert len(lines) >= 2
@@ -16,9 +16,11 @@ class AsmMethod:
         self.return_type = "None"
         self.file_name: str = ""
         self.class_func_name: str = ""
+        self.class_name: str = ""
+        self.func_name: str = ""
         self.func_type: str = ""
         self.args: List = list()
-        self.code_blocks: CodeBlocks | None = None
+        self.code_blocks: Union[CodeBlocks, None] = None
         insts = self._process_method(lines)
         self.code_blocks = CodeBlocks(insts)
 
@@ -27,25 +29,23 @@ class AsmMethod:
         self.code_blocks = ControlFlow.split_native_code_block(self.code_blocks)
         self.code_blocks.set_level(CODE_LV.NATIVE_BLOCK_SPLITED)
 
-    def native_code_to_TAC(self):
-        assert self.code_blocks.level == CODE_LV.NATIVE_BLOCK_SPLITED
-        self.code_blocks = NativeToTAC.native_code_to_TAC(self.code_blocks)
-        self.code_blocks.set_level(CODE_LV.TAC)
-
     def _process_1st_line(self, line: str):
         parts = line.split(" ")
         assert parts[0] == ".function"
         self.return_type = parts[1].strip()
         file_func_name = parts[2].split("(")[0]
-        num = file_func_name.find(".ets")
-        if (not num > 0):
-            num = file_func_name.find(".src")
-        if (num > 0 and num < len(file_func_name) - 5):
-            self.file_name = file_func_name[:num + 4]
-            self.class_func_name = file_func_name[num + 4 + 1:]
+        file_postfix_idx = file_func_name.find(".ets")
+        if (not file_postfix_idx > 0):
+            file_postfix_idx = file_func_name.find(".src")
+        if (file_postfix_idx > 0 and file_postfix_idx < len(file_func_name) - 5):
+            self.file_name = file_func_name[:file_postfix_idx + 4]
+            self.class_func_name = file_func_name[file_postfix_idx + 4 + 1:]
         else:
             self.file_name = file_func_name
             self.class_func_name = file_func_name
+        if (self.file_name.startswith("&")):
+            self.file_name = self.file_name[1:]
+        # reverse find: something like <static>
         i = len(parts) - 1
         while (i >= 0):
             if (parts[i].startswith("<") and parts[i].endswith(">") and len(parts[i]) >= 3):
@@ -91,20 +91,17 @@ class AsmMethod:
         idx += 1
         while (idx < len(line)):
             start_idx = idx
-            idx = utils.find_next_delimiter(line, start_idx)
+            idx = utils.find_next_delimiter_single_line(line, start_idx)
             ret.append(line[start_idx: idx].strip())
             idx = idx + 1
         return ret
 
-    def __str__(self):
-        return self.debug_short()
-
-    def debug_short(self) -> str:
+    def _debug_str(self) -> str:
         out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name} \
 ret {self.return_type} file: {self.file_name}\n\
-args({len(self.args)}) {self.args} code_blocks({len(self.code_blocks)})"
+\targs({len(self.args)}) {self.args} code_blocks({len(self.code_blocks)})"
         return out
 
-    def debug_deep(self) -> str:
-        out = f"{self.debug_short()}\n{self.code_blocks.debug_deep()}"
+    def _debug_vstr(self) -> str:
+        out = f"{self._debug_str()}\n{self.code_blocks._debug_vstr()}"
         return out

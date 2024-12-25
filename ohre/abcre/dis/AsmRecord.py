@@ -1,21 +1,24 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmTypes import AsmTypes
+from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.misc import Log
 
 
-class AsmRecord:
+class AsmRecord(DebugBase):
     # fields in Class
     def __init__(self, lines: List[str]):
+        self.file_class_name: str = ""
+        self.file_name: str = ""
         self.class_name: str = ""
         self.fields: Dict[Tuple[str, Any]] = dict()  # k: field name; v: (type, value)
         for line in lines:
             line = line.strip()
             if ("}" in line):
-                return
+                break
             elif ("{" in line and ".record" in line):
                 parts = line.split(" ")
-                self.class_name = parts[1].split("@")[0]
+                self.file_class_name = parts[1].split("@")[0].strip()
             elif ("=" in line):
                 parts = line.split("=")
                 ty, name = parts[0].split(" ")[0].strip(), parts[0].split(" ")[1].strip()
@@ -27,9 +30,27 @@ class AsmRecord:
                 self.fields[name] = (ty, value)
             else:
                 Log.warn(f"invalid line in AsmRecord: {line},\nlines: {lines}")
+        # file+class name like: &entry.src.main.ets.entryability.EntryAbility&
+        if (self.file_class_name.startswith("&")):
+            self.file_class_name = self.file_class_name[1:]
+        if (self.file_class_name.endswith("&")):
+            self.file_class_name = self.file_class_name[:-1]
+        file_postfix_idx = self.file_class_name.find(".ets")
+        if (not file_postfix_idx > 0):
+            file_postfix_idx = self.file_class_name.find(".src")
+        if (file_postfix_idx > 0):
+            self.file_name = self.file_class_name[:file_postfix_idx + len(".ets")].strip()
+            self.class_name = self.file_class_name[file_postfix_idx + len(".ets") + 1:].strip()
 
-    def debug_deep(self):
-        out = f"AsmRecord {self.class_name}: "
+    def _debug_str(self):
+        out = f"AsmRecord: {self.file_class_name} {self.file_name} \
+class_name({len(self.class_name)}) {self.class_name}: "
         for field_name, (ty, value) in self.fields.items():
-            out += f"{field_name}({ty}) {value};"
+            if (isinstance(value, int)):
+                out += f"{field_name}({ty}) {hex(value)}; "
+            else:
+                out += f"{field_name}({ty}) {value}; "
         return out
+
+    def _debug_vstr(self):
+        return self._debug_str()

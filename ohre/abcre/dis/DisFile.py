@@ -1,9 +1,11 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+from ohre.abcre.dis.AsmLiteral import AsmLiteral
 from ohre.abcre.dis.AsmMethod import AsmMethod
 from ohre.abcre.dis.AsmRecord import AsmRecord
 from ohre.abcre.dis.AsmString import AsmString
-from ohre.misc import Log
+from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.misc import Log, utils
 
 
 class STATE:
@@ -22,11 +24,12 @@ def _is_delimiter(s: str) -> bool:
     return False
 
 
-class DisFile():
+class DisFile(DebugBase):
     def __init__(self, value):
         self.source_binary_name: str = ""
         self.language: str = ""
         self.lines: List[str] = list()
+        self.literals: List[AsmLiteral] = list()
         self.records: List[AsmRecord] = list()
         self.methods: List[AsmMethod] = list()
         self.asmstrs: List[AsmString] = list()
@@ -91,12 +94,20 @@ class DisFile():
                 Log.error(f"ERROR in _read_disheader, else hit. line {line}")
             l_n += 1
 
-    def _read_literals(self, l_n) -> Tuple[int, int]:
+    def _read_literals(self, l_n: int) -> Tuple[int, int]:
         while (l_n < len(self.lines)):
             line: str = self.lines[l_n].strip()
             if (_is_delimiter(line)):
                 return STATE.NEW_SEC, l_n + 1
-            l_n += 1
+            parts = line.split(" ")
+            if (parts[0].isdigit()):
+                l_idx, n_idx = utils.find_matching_symbols_multi_line(self.lines[l_n:], "{")
+                if (l_idx is not None):
+                    asm_lit = AsmLiteral(self.lines[l_n:l_n + l_idx + 1])
+                    self.literals.append(asm_lit)
+                l_n += l_idx + 1
+            else:
+                l_n += 1
         return None, l_n + 1
 
     def _read_records(self, l_n) -> Tuple[int, int]:
@@ -157,20 +168,17 @@ class DisFile():
             l_n += 1
         return None, l_n + 1
 
-    def __str__(self):
-        return self.debug_short()
-
-    def debug_short(self) -> str:
+    def _debug_str(self) -> str:
         out = f"DisFile: {self.source_binary_name} language {self.language} lines({len(self.lines)}) \
-records({len(self.records)}) methods({len(self.methods)}) asmstrs({len(self.asmstrs)})"
+literals({len(self.literals)}) records({len(self.records)}) methods({len(self.methods)}) asmstrs({len(self.asmstrs)})"
         return out
 
-    def debug_deep(self) -> str:
-        out = self.debug_short() + "\n"
+    def _debug_vstr(self) -> str:
+        out = self._debug_str() + "\n"
         for rec in self.records:
-            out += f">> {rec.debug_deep()}\n"
+            out += f">> {rec._debug_vstr()}\n"
         for method in self.methods:
-            out += f">> {method.debug_deep()}\n"
+            out += f">> {method._debug_vstr()}\n"
         for asmstr in self.asmstrs:
             out += f">> {asmstr}\n"
         return out

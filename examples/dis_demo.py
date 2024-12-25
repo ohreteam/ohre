@@ -2,6 +2,7 @@ import argparse
 
 import ohre
 from ohre.abcre.dis.ControlFlow import ControlFlow
+from ohre.abcre.dis.PandaReverser import PandaReverser
 from ohre.abcre.dis.DisFile import DisFile
 from ohre.misc import Log
 
@@ -13,23 +14,22 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     parser.add_argument("dis_path", type=str, help="path to the dis file (ark_disasm-ed abc)")
     arg = parser.parse_args()
     dis_path = arg.dis_path
-    dis_file = DisFile(dis_path)
+    dis_file: DisFile = DisFile(dis_path)
+    panda_re = PandaReverser(dis_file)
+    print(f"> panda_re: {panda_re}")
 
-    print(f"> {dis_file}")
-
-    # print(f"\n> {dis_file.debug_deep()}")
-    # for method in dis_file.methods:
-    #     print(f">> {method.debug_deep()}")
-
-    # for asmstr in dis_file.asmstrs:
-    #     print(f">> {asmstr}")
+    for lit in dis_file.literals:
+        print(f">> {lit}")
+    for method in dis_file.methods:
+        print(f">> {method}")
+    for record in dis_file.records:
+        print(f">> {record}")
+    for asmstr in dis_file.asmstrs:
+        print(f">> {asmstr}")
 
     # === reverse truly START
     FUNC_IDX = 7
-    # print(f">> before ControlFlow build {dis_file.methods[FUNC_IDX].debug_deep()}")
-    dis_file.methods[FUNC_IDX].split_native_code_block()
-    # print(f">> after ControlFlow build {dis_file.methods[FUNC_IDX].debug_deep()}")
-    dis_file.methods[FUNC_IDX].native_code_to_TAC()
-    # for asm_method in dis_file.methods:
-    #     asm_method.split_native_code_block()
-    #     print(f">> CFed: {asm_method.debug_deep()}")
+    # print(f">> before ControlFlow build {dis_file.methods[FUNC_IDX]._debug_vstr()}")
+    panda_re.split_native_code_block(FUNC_IDX)
+    print(f">> after ControlFlow build {panda_re.dis_file.methods[FUNC_IDX]._debug_vstr()}")
+    panda_re.trans_NAC_to_TAC(method_id=FUNC_IDX)

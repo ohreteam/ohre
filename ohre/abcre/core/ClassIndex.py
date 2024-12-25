@@ -20,6 +20,6 @@ class ClassIndex(BaseRegion):
             out += f" {hex(v)}"
         return out
 
-    def debug_deep(self):
-        # TODO: implement debug_deep in Class
+    def _debug_vstr(self):
+        # TODO: implement _debug_vstr in Class
         pass

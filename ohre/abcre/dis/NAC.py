@@ -1,9 +1,10 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.abcre.dis.NACTYPE import NACTYPE
 
 
-class NAC():  # N Address Code
+class NAC(DebugBase):  # N Address Code
     # Native representation of ark_disasm-ed ArkTS bytecode
     # corresponding to a single line in a panda function
 
@@ -17,10 +18,7 @@ class NAC():  # N Address Code
         for i in range(1, len(op_args)):
             self.args.append(op_args[i])
 
-    def __str__(self):
-        return self.debug_short()
-
-    def debug_short(self):
+    def _debug_str(self):
         out = f"{self.op} "
         for i in range(len(self.args)):
             if (i == len(self.args) - 1):
@@ -29,7 +27,7 @@ class NAC():  # N Address Code
                 out += f"{self.args[i]}, "
         return out
 
-    def debug_deep(self):
+    def _debug_vstr(self):
         out = f"({NACTYPE.get_code_name(self.type)}) {self.op} "
         for i in range(len(self.args)):
             if (i == len(self.args) - 1):
