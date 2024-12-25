@@ -6,7 +6,12 @@ setup(
     name="ohre",
     version=__version__,
     packages=find_packages(),
-    install_requires="yara-python>=4.5.0",
+    install_requires=[
+        "yara-python>=4.5.0",
+        "pyyaml>=6.0.2",
+        "leb128>=1.0.6",
+        "pendulum>=3.0.0"
+        ],
     author="https://github.com/ohreteam",
     description="ohre is a analyze and reverse tool of Open HarmonyOS / HarmonyOS NEXT package.",
     long_description=open("README.md").read(),
