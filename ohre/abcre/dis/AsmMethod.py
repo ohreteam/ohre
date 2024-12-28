@@ -15,19 +15,17 @@ class AsmMethod(DebugBase):
         self.slotNumberIdx: int = slotNumberIdx
         self.return_type = "None"
         self.file_name: str = ""
-        self.class_func_name: str = ""
-        self.class_name: str = ""
-        self.func_name: str = ""
-        self.func_type: str = ""
+        self.class_method_name: str = ""
+        self.class_name: str = ""  # TODO: split it accurately
+        self.method_name: str = ""  # TODO: split it accurately
+        self.method_type: str = ""
         self.args: List = list()
-        self.code_blocks: Union[CodeBlocks, None] = None
-        insts = self._process_method(lines)
-        self.code_blocks = CodeBlocks(insts)
 
-    def split_native_code_block(self):
-        assert self.code_blocks.level == CODE_LV.NATIVE
-        self.code_blocks = ControlFlow.split_native_code_block(self.code_blocks)
-        self.code_blocks.set_level(CODE_LV.NATIVE_BLOCK_SPLITED)
+        self.code_blocks: Union[CodeBlocks, None] = None
+        self.code_blocks = CodeBlocks(self._process_method(lines))
+
+        # for nac tac analysis
+        self.cur_module: str = ""
 
     def _process_1st_line(self, line: str):
         parts = line.split(" ")
@@ -39,17 +37,17 @@ class AsmMethod(DebugBase):
             file_postfix_idx = file_func_name.find(".src")
         if (file_postfix_idx > 0 and file_postfix_idx < len(file_func_name) - 5):
             self.file_name = file_func_name[:file_postfix_idx + 4]
-            self.class_func_name = file_func_name[file_postfix_idx + 4 + 1:]
+            self.class_method_name = file_func_name[file_postfix_idx + 4 + 1:]
         else:
             self.file_name = file_func_name
-            self.class_func_name = file_func_name
+            self.class_method_name = file_func_name
         if (self.file_name.startswith("&")):
             self.file_name = self.file_name[1:]
         # reverse find: something like <static>
         i = len(parts) - 1
         while (i >= 0):
             if (parts[i].startswith("<") and parts[i].endswith(">") and len(parts[i]) >= 3):
-                self.func_type = parts[i][1:-1]
+                self.method_type = parts[i][1:-1]
                 break
             else:
                 i -= 1
@@ -97,7 +95,7 @@ class AsmMethod(DebugBase):
         return ret
 
     def _debug_str(self) -> str:
-        out = f"AsmMethod: {self.slotNumberIdx} {self.func_type} {self.class_func_name} \
+        out = f"AsmMethod: {self.slotNumberIdx} {self.method_type} {self.class_method_name} \
 ret {self.return_type} file: {self.file_name}\n\
 \targs({len(self.args)}) {self.args} code_blocks({len(self.code_blocks)})"
         return out
@@ -105,3 +103,11 @@ ret {self.return_type} file: {self.file_name}\n\
     def _debug_vstr(self) -> str:
         out = f"{self._debug_str()}\n{self.code_blocks._debug_vstr()}"
         return out
+
+    def split_native_code_block(self):
+        assert self.code_blocks.level == CODE_LV.NATIVE
+        self.code_blocks = ControlFlow.split_native_code_block(self.code_blocks)
+        self.code_blocks.set_level(CODE_LV.NATIVE_BLOCK_SPLITED)
+
+    def set_cur_module(self, module_name: str):
+        self.cur_module = module_name

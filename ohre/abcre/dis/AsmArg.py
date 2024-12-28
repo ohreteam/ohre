@@ -4,13 +4,20 @@ from ohre.misc import Log, utils
 
 
 class AsmArg(DebugBase):
-    def __init__(self, arg_type: AsmTypes = AsmTypes.UNKNOWN, name="", value=None, obj_ref=None):
+    def __init__(self, arg_type: AsmTypes = AsmTypes.UNKNOWN, name: str = "", value=None, obj_ref=None):
         self.type = arg_type
         # name: e.g. for v0, type is VAR, name is v0(stored without truncating the prefix v)
-        self.name = name
+        self.name: str = name
         # value: may be set in the subsequent analysis
         self.value = value
         self.obj_ref = obj_ref
+
+    @property
+    def len(self):
+        return len(self.name)
+
+    def __len__(self) -> int:
+        return self.len
 
     @classmethod
     def build_arg(cls, s: str):
@@ -20,6 +27,14 @@ class AsmArg(DebugBase):
         if (s.startswith("a")):
             return AsmArg(AsmTypes.ARG, s)
         Log.error(f"build_arg failed: s={s}")
+
+    def build_next_arg(self):  # arg is AsmArg
+        # if self is v5, return v6; if self is a0, return a1; just num_part+=1
+        num_part: str = self.name[1:]
+        assert num_part.isdigit()
+        num = int(num_part)
+        num += 1
+        return AsmArg(self.type, f"{self.name[0]}{num}")
 
     def is_value_valid(self) -> bool:  # TODO: for some types, value is not valid, judge it
         pass

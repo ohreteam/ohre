@@ -28,7 +28,7 @@ class DisFile(DebugBase):
     def __init__(self, value):
         self.source_binary_name: str = ""
         self.language: str = ""
-        self.lines: List[str] = list()
+        self.lines: List[str] = list()  # TODO: delete it, dont store
         self.literals: List[AsmLiteral] = list()
         self.records: List[AsmRecord] = list()
         self.methods: List[AsmMethod] = list()
@@ -182,3 +182,29 @@ literals({len(self.literals)}) records({len(self.records)}) methods({len(self.me
         for asmstr in self.asmstrs:
             out += f">> {asmstr}\n"
         return out
+
+    def get_literal_by_addr(self, addr: int) -> Union[AsmLiteral, None]:
+        for lit in self.literals:
+            if (lit.address == addr):
+                return lit
+        return None
+
+    def get_external_module_name(
+            self, index: int, file_name: str = "", class_method_name: str = "", class_name: str = "") -> Union[str, None]:
+        hit_cnt = 0
+        hit_rec: AsmRecord = None
+        if (len(file_name) > 0 and len(class_method_name) > 0):
+            for rec in self.records:
+                if (file_name == rec.file_name and rec.class_name in class_method_name):
+                    hit_cnt += 1
+                    hit_rec = rec
+            if (hit_cnt == 1):
+                if ("moduleRecordIdx" in hit_rec.fields.keys()):
+                    ty, addr = hit_rec.fields["moduleRecordIdx"]
+                    lit = self.get_literal_by_addr(addr)
+                    if (lit is not None):
+                        return lit.module_request_array[index]
+            else:
+                Log.warn(f"get_external_module_name failed, hit_cnt {hit_cnt} \
+file_name {file_name} class_method_name {class_method_name}", True)
+        return None

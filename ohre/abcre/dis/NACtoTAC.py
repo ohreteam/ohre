@@ -15,7 +15,7 @@ from ohre.misc import Log, utils
 
 class NACtoTAC:
     @classmethod
-    def toTAC(self, nac: NAC, ams_method: AsmMethod, dis_file: DisFile) -> Union[TAC, List[TAC]]:
+    def toTAC(self, nac: NAC, asm_method: AsmMethod, dis_file: DisFile) -> Union[TAC, List[TAC]]:
         print(f"nac_: {nac._debug_vstr()}")  # TODO: more tac builder plz
 
         if (nac.op == "mov"):
@@ -71,7 +71,18 @@ class NACtoTAC:
         if (nac.op == "callthis1"):
             pass
         if (nac.op == "callthisrange"):
-            pass
+            # callthisrange reserved, para_cnt, this_ptr # acc: method obj # para(cnt): this_ptr para0 ...
+            arg_len = int(nac.args[1], 16)
+            paras_l = list()
+            this_p = AsmArg.build_arg(nac.args[2])
+            arg = this_p
+            for i in range(arg_len):
+                arg = arg.build_next_arg()
+                paras_l.append(arg)
+            return TAC.tac_call(
+                arg_len=AsmArg(AsmTypes.IMM, value=arg_len),
+                paras=paras_l,
+                this=this_p)
         # === inst: call instructions # END
 
         # === inst: dynamic return # START
@@ -88,7 +99,13 @@ class NACtoTAC:
                 AsmArg(AsmTypes.STR, value=nac.args[1]),
                 log=f"arg0: {nac.args[0]} todo: check ldobjbyname")
         if (nac.op == "ldexternalmodulevar"):
-            pass
+            index = int(nac.args[0], base=16)
+            module_name = dis_file.get_external_module_name(index, asm_method.file_name, asm_method.class_method_name)
+            if (module_name is not None and len(module_name) > 0):
+                asm_method.set_cur_module(module_name)
+                return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=module_name))
+            else:
+                asm_method.set_cur_module("module load failed")
         if (nac.op == "tryldglobalbyname"):
             pass
         if (nac.op == "copyrestargs"):
@@ -101,14 +118,14 @@ class NACtoTAC:
             log=f"todo: {nac.op}")
 
     @classmethod
-    def trans_NAC_to_TAC(cls, ams_method: AsmMethod, dis_file: DisFile) -> CodeBlocks:
-        cbs = ams_method.code_blocks
+    def trans_NAC_to_TAC(cls, asm_method: AsmMethod, dis_file: DisFile) -> CodeBlocks:
+        cbs = asm_method.code_blocks
         assert cbs.level == CODE_LV.NATIVE_BLOCK_SPLITED
         cbs_l = list()
         for block in cbs.blocks:
             tac_inst_l = list()
             for nac_inst in block.insts:
-                tac_inst = NACtoTAC.toTAC(nac_inst, ams_method, dis_file)  # TODO: may return a list of tac
+                tac_inst = NACtoTAC.toTAC(nac_inst, asm_method, dis_file)  # TODO: may return a list of tac
                 print(f"tac^: {tac_inst._debug_vstr()}")
                 tac_inst_l.append(tac_inst)
             cb = CodeBlock(tac_inst_l)
