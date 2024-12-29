@@ -10,6 +10,7 @@ from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.abcre.dis.DisFile import DisFile
 from ohre.abcre.dis.NAC import NAC
 from ohre.abcre.dis.TAC import TAC
+from ohre.abcre.dis.NACTYPE import NACTYPE
 from ohre.misc import Log, utils
 
 
@@ -17,6 +18,8 @@ class NACtoTAC:
     @classmethod
     def toTAC(self, nac: NAC, asm_method: AsmMethod, dis_file: DisFile) -> Union[TAC, List[TAC]]:
         print(f"nac_: {nac._debug_vstr()}")  # TODO: more tac builder plz
+        if (nac.type == NACTYPE.LABEL):
+            return TAC.tac_label(AsmArg(AsmTypes.LABEL, nac.op))
 
         if (nac.op == "mov"):
             return TAC.tac_assign(AsmArg.build_arg(nac.args[0]), AsmArg.build_arg(nac.args[1]))
@@ -48,6 +51,8 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.FALSE), rop="==")
         if (nac.op == "istrue"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.TRUE), rop="==")
+        if (nac.op == "neg"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), rop="-")
         # === inst: unary operations # END
 
         # === inst: jump operations # START
