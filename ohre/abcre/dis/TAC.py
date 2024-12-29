@@ -88,7 +88,7 @@ class TAC(DebugBase):  # Three Address Code
             out += f"{self.args[0]._debug_vstr()} args({self.args[1].value})"
             for i in range(self.args[1].value):
                 out += f" {self.args[i + 2]._debug_vstr()}"
-            if (len(self.this) > 0):
+            if (self.this is not None and len(self.this) > 0):
                 out += f" // this={self.this}"
         else:
             out += self._args_and_rop_common_debug_str()

@@ -29,6 +29,8 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.STR, value=nac.args[0]))
         if (nac.op == "ldai"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.IMM, value=nac.args[0]))
+        if (nac.op == "ldtrue"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.TRUE))
         if (nac.op == "ldfalse"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.FALSE))
         if (nac.op == "ldnull"):
@@ -82,6 +84,21 @@ class NACtoTAC:
         # === inst: call instructions # START
         if (nac.op == "callthis1"):
             pass
+        if (nac.op == "callargs1"):
+            return TAC.tac_call(
+                arg_len=AsmArg(AsmTypes.IMM, value=1),
+                paras=[AsmArg.build_arg(nac.args[1])],
+                log="todo: add acc=ret after this")
+        if (nac.op == "callargs2"):
+            return TAC.tac_call(
+                arg_len=AsmArg(AsmTypes.IMM, value=2),
+                paras=[AsmArg.build_arg(nac.args[1]), AsmArg.build_arg(nac.args[2])],
+                log="todo: add acc=ret after this")
+        if (nac.op == "callargs3"):
+            return TAC.tac_call(
+                arg_len=AsmArg(AsmTypes.IMM, value=3),
+                paras=[AsmArg.build_arg(nac.args[1]), AsmArg.build_arg(nac.args[2]), AsmArg.build_arg(nac.args[3])],
+                log="todo: add acc=ret after this")
         if (nac.op == "callthisrange"):
             # callthisrange reserved, para_cnt, this_ptr # acc: method obj # para(cnt): this_ptr para0 ...
             arg_len = int(nac.args[1], 16)
