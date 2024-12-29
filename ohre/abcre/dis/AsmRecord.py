@@ -11,7 +11,7 @@ class AsmRecord(DebugBase):
         self.file_class_name: str = ""
         self.file_name: str = ""
         self.class_name: str = ""
-        self.fields: Dict[Tuple[str, Any]] = dict()  # k: field name; v: (type, value)
+        self.fields: Dict[str, Tuple[str, Any]] = dict()  # k: str: field name; v: (type, value)
         for line in lines:
             line = line.strip()
             if ("}" in line):
@@ -43,7 +43,7 @@ class AsmRecord(DebugBase):
             self.class_name = self.file_class_name[file_postfix_idx + len(".ets") + 1:].strip()
 
     def _debug_str(self):
-        out = f"AsmRecord: {self.file_class_name} {self.file_name} \
+        out = f"AsmRecord: {self.file_class_name} file_name({len(self.file_name)}) {self.file_name} \
 class_name({len(self.class_name)}) {self.class_name}: "
         for field_name, (ty, value) in self.fields.items():
             if (isinstance(value, int)):

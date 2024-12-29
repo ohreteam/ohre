@@ -19,16 +19,16 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     print(f"> panda_re: {panda_re}")
 
     for lit in dis_file.literals:
-        print(f">> {lit}")
+        print(f">> {lit._debug_vstr()}")
     for method in dis_file.methods:
         print(f">> {method}")
     for record in dis_file.records:
-        print(f">> {record}")
+        print(f">> {record._debug_vstr()}")
     for asmstr in dis_file.asmstrs:
         print(f">> {asmstr}")
 
     # === reverse truly START
-    FUNC_IDX = 7
+    FUNC_IDX = 1
     # print(f">> before ControlFlow build {dis_file.methods[FUNC_IDX]._debug_vstr()}")
     panda_re.split_native_code_block(FUNC_IDX)
     print(f">> after ControlFlow build {panda_re.dis_file.methods[FUNC_IDX]._debug_vstr()}")
