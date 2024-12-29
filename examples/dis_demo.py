@@ -28,7 +28,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
         print(f">> {asmstr}")
 
     # === reverse truly START
-    FUNC_IDX = 12
+    FUNC_IDX = 16
     # print(f">> before ControlFlow build {dis_file.methods[FUNC_IDX]._debug_vstr()}")
     panda_re.split_native_code_block(FUNC_IDX)
     print(f">> after ControlFlow build {panda_re.dis_file.methods[FUNC_IDX]._debug_vstr()}")

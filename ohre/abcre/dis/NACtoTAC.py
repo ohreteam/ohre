@@ -29,6 +29,8 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.STR, value=nac.args[0]))
         if (nac.op == "ldai"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.IMM, value=nac.args[0]))
+        if (nac.op == "ldfalse"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.FALSE))
         if (nac.op == "ldnull"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.NULL))
         if (nac.op == "ldundefined"):
