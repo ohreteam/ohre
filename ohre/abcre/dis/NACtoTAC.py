@@ -57,6 +57,11 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), rop="-")
         # === inst: unary operations # END
 
+        # === inst: binary operations # START
+        if (nac.op == "eq"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), rop="==")
+        # === inst: binary operations # END
+
         # === inst: jump operations # START
         if (nac.op == "jnez"):  # TODO: jnez imm:i32 # a label str in *.dis file # support imm in future
             return TAC.tac_cond_jmp(
