@@ -11,4 +11,5 @@ class TACTYPE(BaseEnum):
     UNCN_JMP = 11  # 1 arg # unconditional
     RETURN = 20
     CALL = 21
+    LABEL = 22
     UNKNOWN = 99
