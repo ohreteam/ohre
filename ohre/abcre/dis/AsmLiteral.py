@@ -14,32 +14,37 @@ class AsmLiteral(DebugBase):
         self.address = int(first_line_parts[1], 16)
         self.module_request_array: Dict = None
         self.module_tags: List[Dict] = None
-        if (len(lines) == 1):
+        try:
+            for s in lines:
+                idx = s.find("MODULE_REQUEST_ARRAY: {")
+                if (idx >= 0):
+                    self._process_module_request_array(lines)
+                    return
             self._process_normal_literal(lines)
-        else:
-            self._process_module_request_array(lines)
+        except Exception as e:
+            Log.error(f"init ERROR in AsmLiteral, e {e}, lines {lines}")
 
     def _process_normal_literal(self, lines: List[str]):
         literal_content = ' '.join(lines)
-        s_idx = literal_content.find("{")+1
+        s_idx = literal_content.find("{") + 1
         e_idx = literal_content.find("[")
         element_amount_str = literal_content[s_idx:e_idx].strip()
         assert element_amount_str.isdigit(), f"Expected a digit for element amount, got {element_amount_str}"
         element_amount = int(element_amount_str)
 
-        s_idx = literal_content.find("[")+1
+        s_idx = literal_content.find("[") + 1
         e_idx = literal_content.find("]")
         element_content = literal_content[s_idx:e_idx]
         array_split_list = [x.strip() for x in element_content.strip().split(',') if len(x) > 0]
-        
+
         method_dict = {}
         if 'method' in element_content and 'method_affiliate' in element_content:
             cnt = 0
             while cnt < len(array_split_list):
                 if 'string' in array_split_list[cnt]:
                     method_string = array_split_list[cnt].split(':')[1].strip()[1:-1]
-                    method_name = array_split_list[cnt+1].split(':')[1].strip()
-                    method_aff = array_split_list[cnt+2].split(':')[1].strip()
+                    method_name = array_split_list[cnt + 1].split(':')[1].strip()
+                    method_aff = array_split_list[cnt + 2].split(':')[1].strip()
                     method_dict[method_string] = {'method': method_name, 'method_affiliate': method_aff}
                     cnt += 3
                 else:
@@ -50,7 +55,7 @@ class AsmLiteral(DebugBase):
             cnt = 0
             while cnt < len(array_split_list):
                 variable_string = array_split_list[cnt].split(':')[1].strip()[1:-1]
-                variable_value = array_split_list[cnt+1]
+                variable_value = array_split_list[cnt + 1]
                 if 'null_value' in variable_value:
                     variable_value = 'null_value'
                 else:
@@ -93,7 +98,7 @@ class AsmLiteral(DebugBase):
                 kv_s = module_tag_line.split(",")
                 d = dict()
                 for kv in kv_s:
-                    key, value = utils.find_single_kv(kv.strip(), ":")
+                    key, value = utils.find_single_kv(kv, ":")
                     if (key is not None and value is not None):
                         d[key] = value
                 if (len(d)):

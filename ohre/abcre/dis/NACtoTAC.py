@@ -84,7 +84,7 @@ class NACtoTAC:
         # === inst: call instructions # START
         if (nac.op == "callthis1"):
             pass
-        if (nac.op == "callargs1"):
+        if (nac.op == "callarg1"):
             return TAC.tac_call(
                 arg_len=AsmArg(AsmTypes.IMM, value=1),
                 paras=[AsmArg.build_arg(nac.args[1])],
@@ -116,9 +116,9 @@ class NACtoTAC:
 
         # === inst: dynamic return # START
         if (nac.op == "returnundefined"):
-            pass
+            return TAC.tac_return(AsmArg(AsmTypes.UNDEFINED))
         if (nac.op == "return"):
-            pass
+            return TAC.tac_return(AsmArg(AsmTypes.ACC))
         # === inst: dynamic return # END
 
         # === inst: object visitors # START
@@ -127,6 +127,11 @@ class NACtoTAC:
                 AsmArg(AsmTypes.ACC),
                 AsmArg(AsmTypes.STR, value=nac.args[1]),
                 log=f"arg0: {nac.args[0]} todo: check ldobjbyname")
+        if (nac.op == "tryldglobalbyname"):
+            return TAC.tac_assign(
+                AsmArg(AsmTypes.ACC),
+                AsmArg(AsmTypes.STR, value=nac.args[1]),
+                log=f"arg0: {nac.args[0]} todo: check tryldglobalbyname, not throw now")
         if (nac.op == "ldexternalmodulevar"):
             index = int(nac.args[0], base=16)
             module_name = dis_file.get_external_module_name(index, asm_method.file_name, asm_method.class_method_name)
@@ -135,11 +140,16 @@ class NACtoTAC:
                 return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=module_name))
             else:
                 asm_method.set_cur_module("module load failed")
-        if (nac.op == "tryldglobalbyname"):
-            pass
         if (nac.op == "copyrestargs"):
             return TAC.tac_unknown([AsmArg(AsmTypes.IMM, value=nac.args[0])], log="todo: copyrestargs imm:u8")
         # === inst: object visitors # END
+
+# === inst: definition instuctions # START
+        if (nac.op == "definefunc"):
+            return TAC.tac_assign(
+                AsmArg(AsmTypes.ACC),
+                AsmArg(AsmTypes.METHOD_OBJ, value=nac.args[1], paras_len=int(nac.args[2], 16)))
+        # === inst: definition instuctions # END
 
         Log.warn(f"toTAC failed, not support nac inst: {nac._debug_vstr()}", False)  # to error when done
         return TAC.tac_unknown(

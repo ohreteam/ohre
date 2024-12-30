@@ -1,16 +1,20 @@
+from typing import Any, Dict, Iterable, List, Tuple, Union
+
 from ohre.abcre.dis.AsmTypes import AsmTypes
 from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.misc import Log, utils
 
 
 class AsmArg(DebugBase):
-    def __init__(self, arg_type: AsmTypes = AsmTypes.UNKNOWN, name: str = "", value=None, obj_ref=None):
+    def __init__(self, arg_type: AsmTypes = AsmTypes.UNKNOWN,
+                 name: str = "", value=None, obj_ref=None, paras_len: int = None):
         self.type = arg_type
         # name: e.g. for v0, type is VAR, name is v0(stored without truncating the prefix v)
         self.name: str = name
         # value: may be set in the subsequent analysis
         self.value = value
         self.obj_ref = obj_ref
+        self.paras_len: Union[int, None] = paras_len  # for method object, store paras len here
 
     @property
     def len(self):
@@ -20,7 +24,7 @@ class AsmArg(DebugBase):
         return self.len
 
     @classmethod
-    def build_arg(cls, s: str):
+    def build_arg(cls, s: str):  # return VAR v0 v1... or ARG a0 a1...
         assert isinstance(s, str) and len(s) > 0
         if (s.startswith("v")):
             return AsmArg(AsmTypes.VAR, s)
@@ -45,6 +49,8 @@ class AsmArg(DebugBase):
             out += f"({self.value})"
         if (self.obj_ref is not None):
             out += f"//{self.obj_ref}"
+        if (self.paras_len is not None):
+            out += f"(paras_len={self.paras_len})"
         return out
 
     def _debug_vstr(self):

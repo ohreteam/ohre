@@ -15,6 +15,7 @@ class AsmTypes(BaseEnum):
     LABEL = "label"  # AsmArg: value not valid
     STR = "str"
     MODULE = "module"
+    METHOD_OBJ = "method_obj"
     UNDEFINED = "undefined"
     UNKNOWN = "unknown"  # default value in this proj
 

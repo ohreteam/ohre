@@ -32,6 +32,9 @@ class PandaReverser(DebugBase):
         else:
             pass
 
+    def method_len(self):
+        return len(self.dis_file.methods)
+
     def _debug_str(self) -> str:
         out = f"PandaReverser: {self.dis_file}"
         return out

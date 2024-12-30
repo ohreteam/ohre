@@ -40,9 +40,9 @@ class TAC(DebugBase):  # Three Address Code
     def tac_import(cls, module_name: AsmArg, log: str = ""):
         return TAC(TACTYPE.IMPORT, [AsmArg(AsmTypes.ACC), module_name], log=log)
 
-    @classmethod  # TODO: return
-    def tac_return(cls, paras: List[AsmArg] = None, log: str = ""):
-        return TAC(TACTYPE.UNKNOWN, paras, log=log)
+    @classmethod
+    def tac_return(cls, val: AsmArg, log: str = ""):
+        return TAC(TACTYPE.RETURN, [val], log=log)
 
     @classmethod
     def tac_call(cls, arg_len: AsmArg = None, paras: List[AsmArg] = None, this: AsmArg = None, log: str = ""):
@@ -85,11 +85,11 @@ class TAC(DebugBase):  # Three Address Code
         elif (self.optype == TACTYPE.IMPORT and len(self.args) >= 2):
             out += f"{self.args[0]._debug_vstr()} = {self.args[1]._debug_vstr()}"
         elif (self.optype == TACTYPE.CALL and len(self.args) >= 2):
-            out += f"{self.args[0]._debug_vstr()} args({self.args[1].value})"
-            for i in range(self.args[1].value):
-                out += f" {self.args[i + 2]._debug_vstr()}"
             if (self.this is not None and len(self.this) > 0):
-                out += f" // this={self.this}"
+                out += f"{self.this}->"
+            out += f"{self.args[0]._debug_vstr()} args({self.args[1].value}):"
+            for i in range(self.args[1].value):
+                out += f" {self.args[i + 2]._debug_vstr()},"
         else:
             out += self._args_and_rop_common_debug_str()
         if (self.log is not None and len(self.log) > 0):

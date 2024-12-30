@@ -20,14 +20,18 @@ class AsmMethod(DebugBase):
         self.method_name: str = ""  # TODO: split it accurately
         self.method_type: str = ""
         self.args: List = list()
+        self._process_method_1st_line(lines[0].strip())
 
         self.code_blocks: Union[CodeBlocks, None] = None
-        self.code_blocks = CodeBlocks(self._process_method(lines))
+        self.code_blocks = CodeBlocks(self._process_method_inst(lines))
 
         # for nac tac analysis
         self.cur_module: str = ""
 
-    def _process_1st_line(self, line: str):
+    def _split_class_method_name(self, record_names):
+        pass  # TODO: use record_names to split
+
+    def _process_method_1st_line(self, line: str):
         parts = line.split(" ")
         assert parts[0] == ".function"
         self.return_type = parts[1].strip()
@@ -59,9 +63,8 @@ class AsmMethod(DebugBase):
             ty, name = arg_pair.strip().split(" ")
             self.args.append((ty, name))
 
-    def _process_method(self, lines: List[str]) -> List[List[str]]:
+    def _process_method_inst(self, lines: List[str]) -> List[List[str]]:
         insts = list()
-        self._process_1st_line(lines[0].strip())
         for line in lines[1:]:
             line = line.strip()
             if (line.endswith(":")):
@@ -95,9 +98,8 @@ class AsmMethod(DebugBase):
         return ret
 
     def _debug_str(self) -> str:
-        out = f"AsmMethod: {self.slotNumberIdx} {self.method_type} {self.class_method_name} \
-ret {self.return_type} file: {self.file_name}\n\
-\targs({len(self.args)}) {self.args} code_blocks({len(self.code_blocks)})"
+        out = f"AsmMethod: {self.slotNumberIdx} {self.class_method_name} {self.method_type} \
+ret {self.return_type} [{self.file_name}] args({len(self.args)}) {self.args} cbs({len(self.code_blocks)})"
         return out
 
     def _debug_vstr(self) -> str:
