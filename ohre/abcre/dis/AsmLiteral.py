@@ -57,7 +57,6 @@ class AsmLiteral(DebugBase):
                 cnt += 1
 
             while cnt < len(array_split_list):
-                print(array_split_list[cnt], array_split_list[cnt+1])
                 variable_string = array_split_list[cnt].split(':')[1].strip()[1:-1]
                 variable_value = array_split_list[cnt+1]
                 if 'null_value' in variable_value:
