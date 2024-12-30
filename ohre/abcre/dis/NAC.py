@@ -14,6 +14,9 @@ class NAC(DebugBase):  # N Address Code
         self.type = NACTYPE.get_NAC_type(self.op)
         if (self.type == NACTYPE.LABEL and self.op.endswith(":")):
             self.op = self.op[:-1]
+        if (self.type == NACTYPE.TRYCATCH and self.op.endswith("catchall")):
+            # fetch catchall sutition, then need to get try_begin_label_0 and try_end_label_0
+            self.op = self.op[1:]
         self.args: list = list()
         for i in range(1, len(op_args)):
             self.args.append(op_args[i])

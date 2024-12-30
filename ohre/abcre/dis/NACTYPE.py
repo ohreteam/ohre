@@ -24,6 +24,7 @@ class NACTYPE(BaseEnum):
     RETURN = 6  # 1 arg
     IMPORT = 11
     LABEL = 12
+    TRYCATCH = 13
     NOP = 20
     # >= 30: need more analysis
     CMP_INST = 30  # comparation instructions
@@ -49,7 +50,8 @@ class NACTYPE(BaseEnum):
         op = op.strip()
         if (op.endswith(":")):
             return NACTYPE.LABEL
-
+        if (op.endswith("catchall")):
+            return NACTYPE.TRYCATCH
         info_d = cls.isa.get_opstr_info_dict(op)
         assert info_d is not None and "title" in info_d.keys()
         if (_value_in_key_of_dict(info_d, "properties", "return")):
