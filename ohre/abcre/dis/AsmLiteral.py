@@ -31,7 +31,7 @@ class AsmLiteral(DebugBase):
         e_idx = literal_content.find("]")
         element_content = literal_content[s_idx:e_idx]
         array_split_list = [x.strip() for x in element_content.strip().split(',') if len(x) > 0]
-        
+
         method_dict = {}
         if 'method' in element_content and 'method_affiliate' in element_content:
             cnt = 0
@@ -48,7 +48,16 @@ class AsmLiteral(DebugBase):
             method_dict["method_amount"] = method_amount
         else:
             cnt = 0
+            if element_amount % 2 == 1:
+                # need to fix in later version
+                first_string = array_split_list[cnt].split(':')[1]
+                if '"' in first_string:
+                    first_string = first_string.replace('"', '')
+                method_dict['Start_Element'] = first_string
+                cnt += 1
+
             while cnt < len(array_split_list):
+                print(array_split_list[cnt], array_split_list[cnt+1])
                 variable_string = array_split_list[cnt].split(':')[1].strip()[1:-1]
                 variable_value = array_split_list[cnt+1]
                 if 'null_value' in variable_value:
