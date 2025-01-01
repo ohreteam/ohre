@@ -25,7 +25,6 @@ class TAC(DebugBase):  # Three Address Code
         if (src1 is None and len(rop) > 0):  # e.g. acc = -acc
             return TAC(TACTYPE.ASSIGN, [dst, src0], rop=rop, log=log)
         assert src1 is not None and rop is not None and len(rop) > 0
-        print(f"ASSIGN(with 2 src): dst {dst} src0 {src0} src1 {src1} rop {rop}")
         return TAC(TACTYPE.ASSIGN, [dst, src0, src1], rop=rop, log=log)
 
     @classmethod

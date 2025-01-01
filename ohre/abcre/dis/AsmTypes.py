@@ -16,6 +16,7 @@ class AsmTypes(BaseEnum):
     STR = "str"
     MODULE = "module"
     METHOD_OBJ = "method_obj"
+    OBJECT = "object"
     UNDEFINED = "undefined"
     UNKNOWN = "unknown"  # default value in this proj
 

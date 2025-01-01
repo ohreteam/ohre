@@ -2,6 +2,7 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmTypes import AsmTypes
 from ohre.abcre.dis.CODE_LV import CODE_LV
+from ohre.abcre.dis.AsmRecord import AsmRecord
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.abcre.dis.ControlFlow import ControlFlow
 from ohre.misc import Log, utils
@@ -20,15 +21,29 @@ class AsmMethod(DebugBase):
         self.method_name: str = ""  # TODO: split it accurately
         self.method_type: str = ""
         self.args: List = list()
-        self._process_method_1st_line(lines[0].strip())
+
+        dot_function_idx = 0
+        while (dot_function_idx < len(lines)):
+            parts = lines[dot_function_idx].split(" ")
+            if (parts[0] == ".function"):
+                break
+            dot_function_idx += 1
+        if (dot_function_idx != 0):
+            print(f"not start with .function: {lines[:dot_function_idx]}")
+        self._process_method_1st_line(lines[dot_function_idx].strip())
 
         self.code_blocks: Union[CodeBlocks, None] = None
-        self.code_blocks = CodeBlocks(self._process_method_inst(lines))
+        self.code_blocks = CodeBlocks(self._process_method_inst(lines[dot_function_idx + 1:]))
 
         # for nac tac analysis
         self.cur_module: str = ""
+        print(f"init END {self._debug_str()}")
 
-    def _split_class_method_name(self, record_names):
+    @property
+    def level(self):
+        return self.code_blocks.level
+
+    def _split_class_method_name(self, records: List[AsmRecord]):
         pass  # TODO: use record_names to split
 
     def _process_method_1st_line(self, line: str):
@@ -65,41 +80,63 @@ class AsmMethod(DebugBase):
 
     def _process_method_inst(self, lines: List[str]) -> List[List[str]]:
         insts = list()
-        for line in lines[1:]:
-            line = line.strip()
+        l_n = 0
+        while (l_n < len(lines)):
+            line: str = lines[l_n].strip()
             if (line.endswith(":")):
                 if (len(line.split(" ")) == 1):  # single str in a single line endswith ":", maybe label?
                     tu = [line]
                     insts.append(tu)
+                    l_n += 1
+                    continue
                 else:
-                    Log.error(f"ERROR: {line} NOT tag?")
-            elif (len(line) == 0):  # skip empty line
-                continue
+                    Log.warn(f"warn: {line} should not be a tag", True)
+            if (len(line) == 0):  # skip empty line
+                l_n += 1
             elif (line == "}"):  # process END
                 return insts
             else:  # common situation
-                tu = self._process_common_inst(line)
+                tu, l_n = self._process_common_inst(lines, l_n)
                 insts.append(tu)
         return insts
 
-    def _process_common_inst(self, line: str) -> List[str]:
+    def _process_common_inst(self, lines: str, l_n: int) -> Tuple[List[str], int]:
+        line = lines[l_n].lstrip()
         line = line.strip()
         idx = line.find(" ")
         if (idx < 0):
-            ret = [line[:]]
-            return ret
+            ret = [line[:].strip()]  # only one word # opcode
+            return ret, l_n + 1
         ret = [line[:idx]]  # opcode
         idx += 1
+        print(f"line-{l_n}: opcode_end_idx {idx} line{len(line)} [{line}] l_n {l_n}")
+        opcode_end_idx = idx
+        while (True):
+            if (idx == -1):
+                idx = opcode_end_idx
+            idx = utils.find_next_delimiter_single_line(line, idx)
+            print(f"line-{l_n}: idx {idx} line{len(line)} [{line}]")
+            if (idx == len(line)):
+                break
+            elif (idx == -1):
+                l_n += 1
+                line = line + "\n" + lines[l_n]
+            else:
+                idx += 1
+        print(f"line-{l_n}: added, idx {idx} line{len(line)} [{line}]")
+
+        idx = opcode_end_idx
         while (idx < len(line)):
             start_idx = idx
             idx = utils.find_next_delimiter_single_line(line, start_idx)
             ret.append(line[start_idx: idx].strip())
             idx = idx + 1
-        return ret
+        print(f"end line-{l_n}: idx {idx} line{len(line)} [{line}] ret {ret} l_n {l_n}")
+        return ret, l_n + 1
 
     def _debug_str(self) -> str:
-        out = f"AsmMethod: {self.slotNumberIdx} {self.class_method_name} {self.method_type} \
-ret {self.return_type} [{self.file_name}] args({len(self.args)}) {self.args} cbs({len(self.code_blocks)})"
+        out = f"AsmMethod: {self.slotNumberIdx} {self.class_method_name} {self.method_type} ret {self.return_type} \
++[{self.file_name}] args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level}"
         return out
 
     def _debug_vstr(self) -> str:
@@ -113,3 +150,19 @@ ret {self.return_type} [{self.file_name}] args({len(self.args)}) {self.args} cbs
 
     def set_cur_module(self, module_name: str):
         self.cur_module = module_name
+
+
+if __name__ == "__main__":
+    temp = [
+        "L_ESSlotNumberAnnotation:",
+        "	u32 slotNumberIdx { 0x57 }",
+        ".function any com.x.x.entry@aaa.ets.b.c.d.e.func_name(any a0, any a1, any a2, any a3) <static> {",
+        "	lda.str \"\"\"",
+        "	lda.str \" ",
+        " to::\"",
+        "	lda.str \"a,b,c: ",
+        " to::\"",
+        "lda.str \"test3\"\"",
+        "defineclasswithbuffer 0x12, &entry.src.main.ets.pages.Index&.#~@0=#Index:(any,any,any,any,any,any,any,any,any), { 13 [ string:\"setInitiallyProvidedValue\", method:#~@0>#setInitiallyProvidedValue, method_affiliate:1, string:\"updateStateVars\", method:#~@0>#updateStateVars, method_affiliate:1, string:\"purgeVariableDependenciesOnElmtId\", method:#~@0>#purgeVariableDependenciesOnElmtId, method_affiliate:1, string:\"aboutToBeDeleted\", method:#~@0>#aboutToBeDeleted, method_affiliate:0, i32:4, ]}, 0x3, v7"
+    ]
+    method = AsmMethod(0x57, temp[2:])

@@ -42,6 +42,10 @@ class DisFile(DebugBase):
         else:
             Log.error(f"DisFile init ERROR: value type NOT supported, {type(value)} {value}")
         self._dis_process_main(lines)
+        for rec in self.records:
+            print(f"DEBUG:rec: {rec}")
+        for method in self.methods:
+            method._split_class_method_name(self.records)
 
     def _dis_process_main(self, lines: List[str]):
         process_list: List[Thread] = [Thread(target=self._read_disheader, args=(0, lines))]
@@ -161,7 +165,7 @@ class DisFile(DebugBase):
                 return
             elif (len(line) == 0):
                 l_n += 1
-            elif (line.startswith("[")): # single or multi line
+            elif (line.startswith("[")):  # single or multi line
                 l_idx, n_idx = utils.find_matching_symbols_multi_line(lines[l_n:], "[")
                 if (l_idx is not None):
                     asmstr = AsmString(lines[l_n:l_n + l_idx + 1])

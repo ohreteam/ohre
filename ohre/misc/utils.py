@@ -1,6 +1,8 @@
-from typing import Any, Dict, Iterable, List, Tuple, Union
-import yaml
 import copy
+from typing import Any, Dict, Iterable, List, Tuple, Union
+
+import yaml
+
 
 def is_uppercase_or_underscore(s: str):
     return all(c.isupper() or c.isdigit() or c == "_" for c in s)
@@ -24,25 +26,62 @@ def is_right_and_match_stack_top(stack_l: list, pair_left_char_l: list, pair_rig
     return False
 
 
-def is_left(pair_left_char_l, c):
+def is_left_and_not_quoted(stack_l: list, pair_left_char_l, c):
+    if (is_quoted(stack_l)):
+        return False  # quoted
     if (find_idx_in_list(pair_left_char_l, c) >= 0):
+        return True
+    return False
+
+
+def is_quoted(stack_l: list):
+    cnt = 0
+    for s in stack_l:
+        if (s == "\""):
+            cnt += 1
+    if (cnt % 2 == 1):
+        return True  # quoted
+    return False
+
+
+def all_quote_and_le_than(stack_l: list, num: int):
+    cnt = 0
+    for s in stack_l:
+        if (s != "\""):
+            return False
+        else:
+            cnt += 1
+    if (cnt >= num):
         return True
     return False
 
 
 def find_next_delimiter_single_line(line: str, start_idx: int = 0, delimiter: str = ",",
                                     pair_left_char_l: List = ["\"", "(", "[", "{"],
-                                    pair_right_char_l: List = ["\"", ")", "]", "}"]):
+                                    pair_right_char_l: List = ["\"", ")", "]", "}"]) -> int:
     # e.g. to get coressponding idx of '}' in such single line: {("[1(abc)*]11")}
+    line = line.strip()
     stack_l = list()
-    for idx in range(start_idx, len(line)):
-        if (is_right_and_match_stack_top(stack_l, pair_left_char_l, pair_right_char_l, line[idx])):
+    idx = start_idx
+    while (idx < len(line)):
+        if (idx + 2 < len(line) and line[idx] == "\"" and line[idx + 1] == "\"" and line[idx + 2] == "\""):
+            idx += 3  # e.g. lda.str """
+            continue
+        elif (is_quoted(stack_l) and line.find(delimiter, idx) == idx):  # load.str "a,b"
+            pass
+        # elif (is_quoted(stack_l) and line[idx] == "\""):  # load.str "a,b"
+        #     stack_l.append(line[idx])
+        elif (is_right_and_match_stack_top(stack_l, pair_left_char_l, pair_right_char_l, line[idx])):
             stack_l.pop()
-        elif (is_left(pair_left_char_l, line[idx])):
+        elif (is_left_and_not_quoted(stack_l, pair_left_char_l, line[idx])):
             stack_l.append(line[idx])
         elif (line.find(delimiter, idx) == idx and len(stack_l) == 0):
             return idx
+        idx += 1
+    if (len(stack_l) > 0):
+        return -1
     return len(line)
+
 
 def find_matching_symbols_multi_line(lines: List[str], start_char: str,
                                      pair_left_char_l: List = ["\"", "(", "[", "{"],
@@ -61,9 +100,10 @@ def find_matching_symbols_multi_line(lines: List[str], start_char: str,
             elif (lines[l_idx][n_idx] == start_char):
                 stack_l.append(lines[l_idx][n_idx])
                 start_char_hit = True
-            elif (is_left(pair_left_char_l, lines[l_idx][n_idx])):
+            elif (is_left_and_not_quoted(pair_left_char_l, lines[l_idx][n_idx])):
                 stack_l.append(lines[l_idx][n_idx])
     return None, None
+
 
 def read_dict_from_yaml_file(f_name: str) -> dict:
     ret = None
@@ -73,6 +113,7 @@ def read_dict_from_yaml_file(f_name: str) -> dict:
         except yaml.YAMLError as e:
             print(f"read yaml failed, e:{e}")
     return ret
+
 
 def find_single_kv(s: str, delimiter: str = ":") -> Tuple[Union[str, None], Union[str, None]]:
     # "1 : @ohos:hilog" to ("1", "@ohos:hilog") # only match the first delimiter
@@ -84,6 +125,7 @@ def find_single_kv(s: str, delimiter: str = ":") -> Tuple[Union[str, None], Unio
         return key, value
     else:
         return None, None
+
 
 def hexstr(value) -> str:
     ret = ""

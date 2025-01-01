@@ -39,15 +39,19 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.UNDEFINED))
         if (nac.op == "sta"):
             return TAC.tac_assign(AsmArg.build_arg(nac.args[0]), AsmArg(AsmTypes.ACC))
-        if (nac.op == "callruntime.isfalse"):
-            pass
-        if (nac.op == "lda.str"):
-            pass
-        if (nac.op == "ldundefined"):
-            pass
         # === inst: comparation instructions # START
         if (nac.op == "stricteq"):
-            pass
+            return TAC.tac_assign(
+                AsmArg(AsmTypes.ACC),
+                AsmArg(AsmTypes.ACC),
+                AsmArg.build_arg(nac.args[1]),
+                rop="===", log=f"stricteq arg0 {nac.args[0]}")
+        if (nac.op == "strictnoteq"):
+            return TAC.tac_assign(
+                AsmArg(AsmTypes.ACC),
+                AsmArg(AsmTypes.ACC),
+                AsmArg.build_arg(nac.args[1]),
+                rop="!==", log=f"strictnoteq arg0 {nac.args[0]}")
         # === inst: comparation instructions # END
 
         # === inst: unary operations # START
@@ -68,22 +72,49 @@ class NACtoTAC:
         if (nac.op == "jnez"):  # TODO: jnez imm:i32 # a label str in *.dis file # support imm in future
             return TAC.tac_cond_jmp(
                 AsmArg(AsmTypes.LABEL, nac.args[0]),
-                AsmArg(AsmTypes.ZERO),
                 AsmArg(AsmTypes.ACC),
+                AsmArg(AsmTypes.ZERO),
                 "!=")
         if (nac.op == "jeqz"):  # TODO: jeqz imm:i32 # a label str in *.dis file # support imm in future
             return TAC.tac_cond_jmp(
                 AsmArg(AsmTypes.LABEL, nac.args[0]),
-                AsmArg(AsmTypes.ZERO),
                 AsmArg(AsmTypes.ACC),
+                AsmArg(AsmTypes.ZERO),
                 "==")
         if (nac.op == "jmp"):
             return TAC.tac_uncn_jmp(AsmArg(AsmTypes.LABEL, nac.args[0]), log="todo: check label's existence")
         # === inst: jump operations # END
 
+        # === inst: call runtime functions # START
+        if (nac.op == "callruntime.isfalse"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.FALSE), rop="==")
+        if (nac.op == "callruntime.istrue"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.TRUE), rop="==")
+        # === inst: call runtime functions # END
+
         # === inst: call instructions # START
+        if (nac.op == "callthis0"):
+            return TAC.tac_call(
+                arg_len=AsmArg(AsmTypes.IMM, value=0), paras=[], this=AsmArg.build_arg(nac.args[1]))
         if (nac.op == "callthis1"):
-            pass
+            return TAC.tac_call(
+                arg_len=AsmArg(AsmTypes.IMM, value=1),
+                paras=[AsmArg.build_arg(nac.args[2])],
+                this=AsmArg.build_arg(nac.args[1]))
+        if (nac.op == "callthis2"):
+            return TAC.tac_call(
+                arg_len=AsmArg(AsmTypes.IMM, value=2),
+                paras=[AsmArg.build_arg(nac.args[2]), AsmArg.build_arg(nac.args[3])],
+                this=AsmArg.build_arg(nac.args[1]))
+        if (nac.op == "callthis3"):
+            return TAC.tac_call(
+                arg_len=AsmArg(AsmTypes.IMM, value=3),
+                paras=[AsmArg.build_arg(nac.args[2]), AsmArg.build_arg(nac.args[3]), AsmArg.build_arg(nac.args[4])],
+                this=AsmArg.build_arg(nac.args[1]))
+        if (nac.op == "callarg0"):
+            return TAC.tac_call(
+                arg_len=AsmArg(AsmTypes.IMM, value=0),
+                paras=[])
         if (nac.op == "callarg1"):
             return TAC.tac_call(
                 arg_len=AsmArg(AsmTypes.IMM, value=1),
@@ -121,10 +152,15 @@ class NACtoTAC:
             return TAC.tac_return(AsmArg(AsmTypes.ACC))
         # === inst: dynamic return # END
 
+        # === inst: object creaters # START
+        if (nac.op == "createemptyobject"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.OBJECT, value=None))
+        # === inst: object creaters # END
+
         # === inst: object visitors # START
         if (nac.op == "ldobjbyname"):
             return TAC.tac_assign(
-                AsmArg(AsmTypes.ACC),
+                AsmArg(AsmTypes.ACC, obj_ref=AsmArg(AsmTypes.ACC)),
                 AsmArg(AsmTypes.STR, value=nac.args[1]),
                 log=f"arg0: {nac.args[0]} todo: check ldobjbyname")
         if (nac.op == "tryldglobalbyname"):
@@ -144,7 +180,7 @@ class NACtoTAC:
             return TAC.tac_unknown([AsmArg(AsmTypes.IMM, value=nac.args[0])], log="todo: copyrestargs imm:u8")
         # === inst: object visitors # END
 
-# === inst: definition instuctions # START
+        # === inst: definition instuctions # START
         if (nac.op == "definefunc"):
             return TAC.tac_assign(
                 AsmArg(AsmTypes.ACC),
