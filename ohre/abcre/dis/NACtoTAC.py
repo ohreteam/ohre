@@ -9,8 +9,8 @@ from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.abcre.dis.DisFile import DisFile
 from ohre.abcre.dis.NAC import NAC
-from ohre.abcre.dis.TAC import TAC
 from ohre.abcre.dis.NACTYPE import NACTYPE
+from ohre.abcre.dis.TAC import TAC
 from ohre.misc import Log, utils
 
 

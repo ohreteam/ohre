@@ -21,6 +21,7 @@ class AsmMethod(DebugBase):
         self.method_name: str = ""  # TODO: split it accurately
         self.method_type: str = ""
         self.args: List = list()
+        self._process_method_1st_line(lines[0].strip())
 
         dot_function_idx = 0
         while (dot_function_idx < len(lines)):
