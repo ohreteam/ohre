@@ -39,3 +39,4 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     #     panda_re.split_native_code_block(idx)
     #     print(f">> [{idx}/{panda_re.method_len()}] CF built {panda_re.dis_file.methods[idx]._debug_vstr()}")
     #     panda_re.trans_NAC_to_TAC(method_id=idx)
+    panda_re._code_lifting_algorithms(FUNC_IDX)

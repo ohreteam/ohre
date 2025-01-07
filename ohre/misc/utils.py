@@ -24,10 +24,13 @@ def is_right_and_match_stack_top(stack_l: list, pair_left_char_l: list, pair_rig
     if (r_idx == l_idx):
         return True
     return False
+
+
 def is_left(pair_left_char_l, c):
     if (find_idx_in_list(pair_left_char_l, c) >= 0):
         return True
     return False
+
 
 def is_left_and_not_quoted(stack_l: list, pair_left_char_l, c):
     if (is_quoted(stack_l)):

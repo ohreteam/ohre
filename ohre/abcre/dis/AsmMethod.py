@@ -1,12 +1,15 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmTypes import AsmTypes
+from ohre.abcre.dis.AsmArg import AsmArg
 from ohre.abcre.dis.CODE_LV import CODE_LV
 from ohre.abcre.dis.AsmRecord import AsmRecord
+from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.abcre.dis.ControlFlow import ControlFlow
 from ohre.misc import Log, utils
 from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.abcre.dis.TAC import TAC
 
 
 def is_label_line(s: str):  # single str in a single line endswith ":", maybe label?
@@ -36,46 +39,65 @@ def find_line_end(lines: List[str], l_n: int):
 
 class AsmMethod(DebugBase):
     # fields in Class
-    def __init__(self, slotNumberIdx, lines: List[str]):
+    def __init__(self, slotNumberIdx: int, lines: List[str]):
         assert len(lines) >= 2
         self.slotNumberIdx: int = slotNumberIdx
+        self.concurrentModuleRequestIdx: List[int] = list()
         self.return_type = "None"
         self.file_class_method_name: str = ""  # remove the starting "&" if exists
         # the following names is part of this name
         self.file_class_name: str = ""
         self.method_name: str = ""
+
         self.method_type: str = ""
         self.args: List = list()
 
         dot_function_idx = 0
         L_ESConcurrentModuleRequestsAnnotation_flag = False
-        while (dot_function_idx < len(lines)):
+        while (dot_function_idx < len(lines) - 1):
             parts = lines[dot_function_idx].split(" ")
+            if (parts[0] == ".function"):
+                break
             if ("L_ESConcurrentModuleRequestsAnnotation" in lines[dot_function_idx]):
                 L_ESConcurrentModuleRequestsAnnotation_flag = True
             dot_function_idx += 1
-        if (dot_function_idx != 0):
-            Log.error(f"TODO: not start with .function: {lines[:dot_function_idx]}")
-            if (L_ESConcurrentModuleRequestsAnnotation_flag == False):
-                Log.error(f"  > d3bug not L_ESConcurrentModuleRequestsAnnotation_flag !!!")
+        if (dot_function_idx != 0 and L_ESConcurrentModuleRequestsAnnotation_flag == False):
+            Log.error(f"ERROR!!! not L_ESConcurrentModuleRequestsAnnotation_flag !!! {lines[0:dot_function_idx]}")
+        if (L_ESConcurrentModuleRequestsAnnotation_flag):
+            self._process_concurrent_module_reqs(lines[0:dot_function_idx])
+
         self._process_method_1st_line(lines[dot_function_idx].strip())
 
-        self.code_blocks: Union[CodeBlocks, None] = None
-        self.code_blocks = CodeBlocks(self._process_method_inst(lines[dot_function_idx + 1:]))
-
-        # for nac tac analysis
-        self.cur_module: str = ""
+        self.code_blocks: CodeBlocks = CodeBlocks(self._process_method_inst(lines[dot_function_idx + 1:]))
+        assert self.code_blocks is not None
 
     @property
     def level(self):
         return self.code_blocks.level
 
-    def _split_file_class_method_name(self, records: List[AsmRecord]):  # TODO: use record_names to split
+    @property
+    def level_str(self) -> str:
+        return CODE_LV.get_code_name(self.code_blocks.level)
+
+    @property
+    def name(self):
+        return self.method_name
+
+    def _insert_variable_virtual_block(self):
+        print(f"self.args({len(self.args)}) {self.args}")
+        tac_l = list()
+        for ty, name in self.args:
+            tac_l.append(TAC.tac_assign(AsmArg.build_arg(name), AsmArg(AsmTypes.UNKNOWN)))
+            if (ty != "any"):
+                Log.error(f"Var NOT any! {self.name} {ty} {name}")
+        self.code_blocks.insert_front(CodeBlock(tac_l, self.code_blocks.blocks[0]))
+
+    def _split_file_class_method_name(self, records: List[AsmRecord]):
+        # split 'file_class_method' to 'file_class' and 'method'
         class_name_match_len = 0
         for rec in records:
             if (len(rec.file_class_name) > 0 and self.file_class_method_name.startswith(rec.file_class_name)):
-                if (class_name_match_len < len(rec.file_class_name)):
-                    class_name_match_len = len(rec.file_class_name)
+                if (len(self.file_class_name) < len(rec.file_class_name)):
                     self.file_class_name = rec.file_class_name
 
                     idx = len(rec.file_class_name)
@@ -84,9 +106,18 @@ class AsmMethod(DebugBase):
                     if (self.file_class_method_name[idx] == "."):
                         idx += 1
                     self.method_name = self.file_class_method_name[idx:]
-        if (class_name_match_len == 0):
-            Log.error(
-                f"_split_file_class_method_name ERROR, NOT match, file_class_method_name {self.file_class_method_name}")
+        if (len(self.file_class_name) == 0):
+            Log.error(f"_split_file_class_method_name NOT match, file_class_method_name {self.file_class_method_name}")
+
+    def _process_concurrent_module_reqs(self, lines: List[str]):
+        for line in lines:
+            if ("concurrentModuleRequestIdx" in line):
+                start = line.find('{')
+                end = line.rfind('}')
+                items = line[start + 1:end].split(',')
+                self.concurrentModuleRequestIdx = [int(item.strip(), 16) for item in items]
+                return
+        Log.error(f"no concurrentModuleRequestIdx occur in _process_concurrent_module_reqs")
 
     def _process_method_1st_line(self, line: str):
         parts = line.split(" ")
@@ -154,6 +185,7 @@ class AsmMethod(DebugBase):
         e_idx = line_concat.rfind("\}")
         ret.append(line_concat[s_idx: e_idx])
         return ret, l_n_end
+
     def _process_common_inst(self, lines: str, l_n: int) -> Tuple[List[str], int]:
         line = lines[l_n].lstrip()
         idx = line.find(" ")
@@ -189,9 +221,9 @@ class AsmMethod(DebugBase):
         return ret, l_n + 1
 
     def _debug_str(self) -> str:
-        out = f"AsmMethod: {self.slotNumberIdx} {self.file_class_method_name} method_name {self.method_name} \
+        out = f"AsmMethod: {self.slotNumberIdx} {self.file_class_method_name} name {self.name} \
 {self.method_type} ret {self.return_type} [{self.file_class_name}] \
-args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level}"
+args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level_str}"
         return out
 
     def _debug_vstr(self) -> str:
@@ -202,9 +234,6 @@ args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level}"
         assert self.code_blocks.level == CODE_LV.NATIVE
         self.code_blocks = ControlFlow.split_native_code_block(self.code_blocks)
         self.code_blocks.set_level(CODE_LV.NATIVE_BLOCK_SPLITED)
-
-    def set_cur_module(self, module_name: str):
-        self.cur_module = module_name
 
 
 if __name__ == "__main__":

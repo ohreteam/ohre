@@ -123,6 +123,11 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), AsmArg(AsmTypes.ACC), rop="mod")
         # === inst: binary operations # END
 
+        # === throw instructions # START
+        if (nac.op == "throw.undefinedifholewithname"):
+            pass  # TODO: throw** inst
+        # === throw instructions # END
+
         # === inst: jump operations # START
         if (nac.op == "jnez"):  # TODO: jnez imm:i32 # a label str in *.dis file # support imm in future
             return TAC.tac_cond_jmp(
@@ -227,10 +232,9 @@ class NACtoTAC:
             index = int(nac.args[0], base=16)
             module_name = dis_file.get_external_module_name(index, asm_method.file_class_name)
             if (module_name is not None and len(module_name) > 0):
-                asm_method.set_cur_module(module_name)
                 return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=module_name))
             else:
-                asm_method.set_cur_module("module load failed")
+                Log.error(f"module load failed, nac: {nac}")
         if (nac.op == "copyrestargs"):
             return TAC.tac_unknown([AsmArg(AsmTypes.IMM, value=nac.args[0])], log="todo: copyrestargs imm:u8")
         # === inst: object visitors # END
@@ -245,7 +249,7 @@ class NACtoTAC:
         Log.warn(f"toTAC failed, not support nac inst: {nac._debug_vstr()}", False)  # to error when done
         return TAC.tac_unknown(
             [AsmArg(AsmTypes.UNKNOWN, nac.args[i]) for i in range(len(nac.args))],
-            log=f"todo: {nac.op}")
+            log=f"todo: {nac.op} {[nac.args[i] for i in range(len(nac.args))]}")
 
     @classmethod
     def trans_NAC_to_TAC(cls, asm_method: AsmMethod, dis_file: DisFile) -> CodeBlocks:
@@ -260,4 +264,4 @@ class NACtoTAC:
                 tac_inst_l.append(tac_inst)
             cb = CodeBlock(tac_inst_l)
             cbs_l.append(cb)
-        return CodeBlocks(cbs_l)
+        return CodeBlocks(cbs_l, ir_lv=CODE_LV.TAC)

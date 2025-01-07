@@ -132,6 +132,7 @@ class DisFile(DebugBase):
             if (lines[i].startswith("[offset:")):
                 cnt_str += 1
         self._debug = [cnt_lit, cnt_rec, cnt_met, cnt_str, cnt_debug]
+
     def _read_literals(self, l_n: int, lines: List[str]):
         while (l_n < len(lines)):
             line: str = lines[l_n].strip()
@@ -235,7 +236,7 @@ _debug {self._debug}"
 
     def get_abc_name(self) -> str:
         return self.source_binary_name
-    
+
     def get_literal_by_addr(self, addr: int) -> Union[AsmLiteral, None]:
         for lit in self.literals:
             if (lit.address == addr):

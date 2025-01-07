@@ -18,6 +18,9 @@ class CodeBlocks(DebugBase):  # NAC block contained, build control flow graph in
         else:  # maybe list(str) in list # anyway, try init CodeBlock using element(asm codea str list) in list
             self.blocks: List[CodeBlock] = [CodeBlock(in_l)]
 
+    def __iter__(self):
+        return iter(self.blocks)
+
     @property
     def len(self):
         return len(self.blocks)
@@ -50,3 +53,6 @@ class CodeBlocks(DebugBase):  # NAC block contained, build control flow graph in
         for i in range(len(self.blocks)):
             out += f"[{i}/{len(self.blocks)}]-block: {self.blocks[i]._debug_vstr()}\n"
         return out
+
+    def insert_front(self, code_block: CodeBlock):
+        self.blocks.insert(0, code_block)
