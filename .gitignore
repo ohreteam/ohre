@@ -6,7 +6,7 @@ rules_local/
 *.zip
 *.out
 *.dis
-*.log
+*.log.*
 isa.yaml
 tmp/
 temp/

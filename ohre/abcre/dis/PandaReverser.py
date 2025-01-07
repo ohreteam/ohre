@@ -22,7 +22,7 @@ class PandaReverser(DebugBase):
         elif (method_name is not None and len(method_name)):
             pass
         else:
-            pass
+            Log.error(f"split cbs paras NOT valid: method_id {method_id} method_name {method_name}")
 
     def trans_NAC_to_TAC(self, method_id: int = -1, method_name: str = None):
         if (isinstance(method_id, int) and method_id >= 0 and method_id < len(self.dis_file.methods)):
@@ -30,7 +30,7 @@ class PandaReverser(DebugBase):
         elif (method_name is not None and len(method_name)):
             pass
         else:
-            pass
+            Log.error(f"nac to tac paras NOT valid: method_id {method_id} method_name {method_name}")
 
     def method_len(self):
         return len(self.dis_file.methods)

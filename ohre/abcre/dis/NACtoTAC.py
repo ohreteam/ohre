@@ -21,25 +21,49 @@ class NACtoTAC:
         if (nac.type == NACTYPE.LABEL):
             return TAC.tac_label(AsmArg(AsmTypes.LABEL, nac.op))
 
-        if (nac.op == "mov"):
+        if (nac.op == "mov"):  # Dynamic move register-to-register
             return TAC.tac_assign(AsmArg.build_arg(nac.args[0]), AsmArg.build_arg(nac.args[1]))
-        if (nac.op == "lda"):
+        if (nac.op == "lda"):  # Dynamic load accumulator from register
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[0]))
-        if (nac.op == "lda.str"):
+        if (nac.op == "lda.str"):  # Load accumulator from string constant pool
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.STR, value=nac.args[0]))
         if (nac.op == "ldai"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.IMM, value=nac.args[0]))
+        if (nac.op == "fldai"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.IMM, value=nac.args[0]))
+        if (nac.op == "sta"):  # Dynamic store accumulator
+            return TAC.tac_assign(AsmArg.build_arg(nac.args[0]), AsmArg(AsmTypes.ACC))
+
+        # === inst: constant object loaders # START
+        if (nac.op == "ldnan"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.NAN))
+        if (nac.op == "ldinfinity"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.INF))
         if (nac.op == "ldtrue"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.TRUE))
         if (nac.op == "ldfalse"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.FALSE))
+        if (nac.op == "ldhole"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.HOLE))
         if (nac.op == "ldnull"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.NULL))
         if (nac.op == "ldundefined"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.UNDEFINED))
-        if (nac.op == "sta"):
-            return TAC.tac_assign(AsmArg.build_arg(nac.args[0]), AsmArg(AsmTypes.ACC))
+        # === inst: constant object loaders # END
+
         # === inst: comparation instructions # START
+        if (nac.op == "isin"):
+            return TAC.tac_assign(
+                AsmArg(AsmTypes.ACC),
+                AsmArg.build_arg(nac.args[1]),
+                AsmArg(AsmTypes.ACC),
+                rop="in", log=f"arg0 {nac.args[0]}")
+        if (nac.op == "instanceof"):
+            return TAC.tac_assign(
+                AsmArg(AsmTypes.ACC),
+                AsmArg.build_arg(nac.args[1]),
+                AsmArg(AsmTypes.ACC),
+                rop="instanceof", log=f"instanceof {nac.args[0]}")
         if (nac.op == "stricteq"):
             return TAC.tac_assign(
                 AsmArg(AsmTypes.ACC),
@@ -61,11 +85,42 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.TRUE), rop="==")
         if (nac.op == "neg"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), rop="-")
+        if (nac.op == "deprecated.neg"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), rop="-")
+        if (nac.op == "inc"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.IMM, value=1), rop="+")
+        if (nac.op == "deprecated.inc"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.IMM, value=1), rop="+")
+        if (nac.op == "dec"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.IMM, value=1), rop="-")
+        if (nac.op == "deprecated.dec"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.IMM, value=1), rop="-")
         # === inst: unary operations # END
 
         # === inst: binary operations # START
         if (nac.op == "eq"):
             return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), rop="==")
+        if (nac.op == "noteq"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), rop="!=")
+        if (nac.op == "less"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), AsmArg(AsmTypes.ACC), rop="<")
+        if (nac.op == "lesseq"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), AsmArg(AsmTypes.ACC), rop="<=")
+        if (nac.op == "greater"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), AsmArg(AsmTypes.ACC), rop=">")
+        if (nac.op == "greatereq"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), AsmArg(AsmTypes.ACC), rop=">=")
+
+        if (nac.op == "add2"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), AsmArg(AsmTypes.ACC), rop="+")
+        if (nac.op == "sub2"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), AsmArg(AsmTypes.ACC), rop="-")
+        if (nac.op == "mul2"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), AsmArg(AsmTypes.ACC), rop="*")
+        if (nac.op == "div2"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), AsmArg(AsmTypes.ACC), rop="/")
+        if (nac.op == "mod2"):
+            return TAC.tac_assign(AsmArg(AsmTypes.ACC), AsmArg.build_arg(nac.args[1]), AsmArg(AsmTypes.ACC), rop="mod")
         # === inst: binary operations # END
 
         # === inst: jump operations # START
@@ -170,7 +225,7 @@ class NACtoTAC:
                 log=f"arg0: {nac.args[0]} todo: check tryldglobalbyname, not throw now")
         if (nac.op == "ldexternalmodulevar"):
             index = int(nac.args[0], base=16)
-            module_name = dis_file.get_external_module_name(index, asm_method.file_name, asm_method.class_method_name)
+            module_name = dis_file.get_external_module_name(index, asm_method.file_class_name)
             if (module_name is not None and len(module_name) > 0):
                 asm_method.set_cur_module(module_name)
                 return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=module_name))

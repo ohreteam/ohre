@@ -33,6 +33,8 @@ class DisFile(DebugBase):
         self.records: List[AsmRecord] = list()
         self.methods: List[AsmMethod] = list()
         self.asmstrs: List[AsmString] = list()
+        self._debug: List = None
+
         lines: List[str] = list()
         if (isinstance(value, str)):
             file = open(value, "r", encoding="utf-8", errors="ignore")
@@ -41,36 +43,43 @@ class DisFile(DebugBase):
             file.close()
         else:
             Log.error(f"DisFile init ERROR: value type NOT supported, {type(value)} {value}")
+
         self._dis_process_main(lines)
-        for rec in self.records:
-            print(f"DEBUG:rec: {rec}")
         for method in self.methods:
-            method._split_class_method_name(self.records)
+            method._split_file_class_method_name(self.records)
 
     def _dis_process_main(self, lines: List[str]):
         process_list: List[Thread] = [Thread(target=self._read_disheader, args=(0, lines))]
         l_n = 0  # line number
+        lit_ln_start, rec_ln_start, met_ln_start, str_ln_start = 0, 0, 0, 0
         while (l_n < len(lines)):
             if (_is_delimiter(lines[l_n].strip())):
                 l_n += 1
                 state, l_n = self._read_section_type(l_n, lines)
                 if (state == STATE.LITERALS):
+                    lit_ln_start = l_n
                     process_list.append(Thread(target=self._read_literals, args=(l_n, lines)))
                 elif (state == STATE.RECORDS):
+                    rec_ln_start = l_n
                     process_list.append(Thread(target=self._read_records, args=(l_n, lines)))
                 elif (state == STATE.METHODS):
+                    met_ln_start = l_n
                     process_list.append(Thread(target=self._read_methods, args=(l_n, lines)))
                 elif (state == STATE.STRING):
+                    str_ln_start = l_n
                     process_list.append(Thread(target=self._read_strings, args=(l_n, lines)))
                 else:
                     Log.error(f"state ERROR, state {state} l_n {l_n}")
-            l_n += 1
+            else:
+                l_n += 1
+        process_list.append(Thread(target=self._count_parts, args=(
+            lines, lit_ln_start, rec_ln_start, met_ln_start, str_ln_start)))
         Log.info(f"DisFile process threads START, l_n {l_n} should >= {len(lines)}")
         for process in process_list:
             process.start()
         for process in process_list:
             process.join()  # wait for all process
-        Log.info(f"DisFile process END")
+        Log.info(f"DisFile process END, abc file name {self.source_binary_name}")
 
     def _read_section_type(self, l_n: int, lines: List[str]) -> Tuple[int, int]:
         line: str = lines[l_n].strip()
@@ -102,6 +111,27 @@ class DisFile(DebugBase):
                 Log.error(f"ERROR in _read_disheader, else hit. line {line}")
             l_n += 1
 
+    def _count_parts(self, lines: List[str], lit_ln_start, rec_ln_start, met_ln_start, str_ln_start):
+        # debug # for checking the subtotal of different parts
+        assert lit_ln_start < rec_ln_start and rec_ln_start < met_ln_start and met_ln_start < str_ln_start
+        cnt_lit, cnt_rec, cnt_met, cnt_str = 0, 0, 0, 0
+        cnt_debug = 0
+        for i in range(lit_ln_start, rec_ln_start):
+            parts = lines[i].split(" ")
+            if (len(parts) and parts[0].isdigit() and lines[i][0].isdigit()):
+                cnt_lit += 1
+        for i in range(rec_ln_start, met_ln_start):
+            if (lines[i].startswith(".record ")):
+                cnt_rec += 1
+        for i in range(met_ln_start, str_ln_start):
+            if (lines[i].startswith("L_ESSlotNumberAnnotation:")):
+                cnt_met += 1
+            if (lines[i] == "\n"):
+                cnt_debug += 1
+        for i in range(str_ln_start, len(lines)):
+            if (lines[i].startswith("[offset:")):
+                cnt_str += 1
+        self._debug = [cnt_lit, cnt_rec, cnt_met, cnt_str, cnt_debug]
     def _read_literals(self, l_n: int, lines: List[str]):
         while (l_n < len(lines)):
             line: str = lines[l_n].strip()
@@ -159,18 +189,27 @@ class DisFile(DebugBase):
                 l_n += 1
 
     def _read_strings(self, l_n: int, lines: List[str]):
+        def find_next_string_line(l_n: int, lines: List[str]) -> int:
+            l_n_end = l_n + 1
+            while (l_n_end < len(lines)):
+                if (lines[l_n_end].startswith("[offset:")):
+                    return l_n_end
+                l_n_end += 1
+            return len(lines)
         while (l_n < len(lines)):
             line: str = lines[l_n].strip()
             if (_is_delimiter(line)):
                 return
             elif (len(line) == 0):
                 l_n += 1
-            elif (line.startswith("[")):  # single or multi line
-                l_idx, n_idx = utils.find_matching_symbols_multi_line(lines[l_n:], "[")
-                if (l_idx is not None):
-                    asmstr = AsmString(lines[l_n:l_n + l_idx + 1])
-                    self.asmstrs.append(asmstr)
-                    l_n += l_idx + 1
+            elif (line.startswith("[offset:")):  # single or multi line
+                l_n_next = find_next_string_line(l_n, lines)
+                line_concat = lines[l_n]
+                for i in range(l_n + 1, l_n_next):
+                    line_concat += "\n" + lines[i]
+                asmstr = AsmString(line_concat)
+                self.asmstrs.append(asmstr)
+                l_n = l_n_next
             else:
                 Log.error(f"ERROR in _read_strings, else hit. l_n {l_n} line {line}")
                 l_n += 1
@@ -178,7 +217,8 @@ class DisFile(DebugBase):
 
     def _debug_str(self) -> str:
         out = f"DisFile: {self.source_binary_name} language {self.language} \
-literals({len(self.literals)}) records({len(self.records)}) methods({len(self.methods)}) asmstrs({len(self.asmstrs)})"
+literals({len(self.literals)}) records({len(self.records)}) methods({len(self.methods)}) asmstrs({len(self.asmstrs)}) \
+_debug {self._debug}"
         return out
 
     def _debug_vstr(self) -> str:
@@ -193,6 +233,9 @@ literals({len(self.literals)}) records({len(self.records)}) methods({len(self.me
             out += f">> {asmstr._debug_vstr()}\n"
         return out
 
+    def get_abc_name(self) -> str:
+        return self.source_binary_name
+    
     def get_literal_by_addr(self, addr: int) -> Union[AsmLiteral, None]:
         for lit in self.literals:
             if (lit.address == addr):
@@ -200,12 +243,12 @@ literals({len(self.literals)}) records({len(self.records)}) methods({len(self.me
         return None
 
     def get_external_module_name(
-            self, index: int, file_name: str = "", class_method_name: str = "", class_name: str = "") -> Union[str, None]:
+            self, index: int, file_class_name: str = "") -> Union[str, None]:
         hit_cnt = 0
         hit_rec: AsmRecord = None
-        if (len(file_name) > 0 and len(class_method_name) > 0):
+        if (len(file_class_name) > 0):
             for rec in self.records:
-                if (file_name == rec.file_name and rec.class_name in class_method_name):
+                if (file_class_name == rec.file_class_name):
                     hit_cnt += 1
                     hit_rec = rec
             if (hit_cnt == 1):
@@ -216,5 +259,5 @@ literals({len(self.literals)}) records({len(self.records)}) methods({len(self.me
                         return lit.module_request_array[index]
             else:
                 Log.warn(f"get_external_module_name failed, hit_cnt {hit_cnt} \
-file_name {file_name} class_method_name {class_method_name}", True)
+file_class_name {file_class_name}", True)
         return None

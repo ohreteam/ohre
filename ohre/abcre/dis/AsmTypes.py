@@ -9,6 +9,8 @@ class AsmTypes(BaseEnum):
     REG = "reg"  # register
     IMM = "imm"  # AsmArg: value is the actual value of immediate number
     NULL = "null"  # AsmArg: value not valid
+    INF = "inf" # infinity
+    NAN = "nan" # not a num
     TRUE = "true"  # AsmArg: value not valid
     FALSE = "false"  # AsmArg: value not valid
     ZERO = "zero"  # AsmArg: value not valid
@@ -18,6 +20,7 @@ class AsmTypes(BaseEnum):
     METHOD_OBJ = "method_obj"
     OBJECT = "object"
     UNDEFINED = "undefined"
+    HOLE = "hole"
     UNKNOWN = "unknown"  # default value in this proj
 
     def __init__(self):

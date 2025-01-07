@@ -24,7 +24,10 @@ def is_right_and_match_stack_top(stack_l: list, pair_left_char_l: list, pair_rig
     if (r_idx == l_idx):
         return True
     return False
-
+def is_left(pair_left_char_l, c):
+    if (find_idx_in_list(pair_left_char_l, c) >= 0):
+        return True
+    return False
 
 def is_left_and_not_quoted(stack_l: list, pair_left_char_l, c):
     if (is_quoted(stack_l)):
@@ -73,7 +76,7 @@ def find_next_delimiter_single_line(line: str, start_idx: int = 0, delimiter: st
         #     stack_l.append(line[idx])
         elif (is_right_and_match_stack_top(stack_l, pair_left_char_l, pair_right_char_l, line[idx])):
             stack_l.pop()
-        elif (is_left_and_not_quoted(stack_l, pair_left_char_l, line[idx])):
+        elif (is_left(pair_left_char_l, line[idx])):
             stack_l.append(line[idx])
         elif (line.find(delimiter, idx) == idx and len(stack_l) == 0):
             return idx
@@ -100,7 +103,7 @@ def find_matching_symbols_multi_line(lines: List[str], start_char: str,
             elif (lines[l_idx][n_idx] == start_char):
                 stack_l.append(lines[l_idx][n_idx])
                 start_char_hit = True
-            elif (is_left_and_not_quoted(pair_left_char_l, lines[l_idx][n_idx])):
+            elif (is_left(pair_left_char_l, lines[l_idx][n_idx])):
                 stack_l.append(lines[l_idx][n_idx])
     return None, None
 
