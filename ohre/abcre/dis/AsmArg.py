@@ -48,7 +48,7 @@ class AsmArg(DebugBase):
         if (self.value is not None):
             out += f"({self.value})"
         if (self.obj_ref is not None):
-            out += f"//{self.obj_ref}"
+            out += f"//ref:{self.obj_ref}"
         if (self.paras_len is not None):
             out += f"(paras_len={self.paras_len})"
         return out

@@ -16,7 +16,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     arg = parser.parse_args()
     dis_path = arg.dis_path
     dis_file: DisFile = DisFile(dis_path)
-    panda_re = PandaReverser(dis_file)
+    panda_re: PandaReverser = PandaReverser(dis_file)
     print(f"> panda_re: {panda_re}")
 
     for lit in dis_file.literals:
@@ -29,7 +29,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
         print(f">> {asmstr}")
 
     # === reverse truly START
-    FUNC_IDX = 5 # 5: onWindowStageCreate, call loadContent and pass a mothod as para; 7: mothod that used as para
+    FUNC_IDX = 5  # 5: onWindowStageCreate, call loadContent and pass a mothod as para; 7: mothod that used as para
     # print(f">> before CF {dis_file.methods[FUNC_IDX]._debug_vstr()}")
     panda_re.split_native_code_block(FUNC_IDX)
     print(f">> CF built {panda_re.dis_file.methods[FUNC_IDX]._debug_vstr()}")
@@ -39,3 +39,4 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     #     panda_re.split_native_code_block(idx)
     #     print(f">> [{idx}/{panda_re.method_len()}] CF built {panda_re.dis_file.methods[idx]._debug_vstr()}")
     #     panda_re.trans_NAC_to_TAC(method_id=idx)
+    panda_re._code_lifting_algorithms(FUNC_IDX)

@@ -23,7 +23,7 @@ class NACTYPE(BaseEnum):
     UNCN_THROW = 5  # 1 arg
     RETURN = 6  # 1 arg
     IMPORT = 11
-    LABEL = 12
+    LABEL = 22
     TRYCATCH = 13
     NOP = 20
     # >= 30: need more analysis
@@ -70,7 +70,6 @@ class NACTYPE(BaseEnum):
             return NACTYPE.UNCN_THROW
         elif ("call instructions" in info_d["title"] or "call runtime functions" in info_d["title"]):
             return NACTYPE.CALL
-        # TODO: future work
         elif ("comparation instructions" in info_d["title"]):
             return NACTYPE.CMP_INST
         elif ("object visitors" in info_d["title"].lower()):

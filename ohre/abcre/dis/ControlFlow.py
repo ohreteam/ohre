@@ -1,3 +1,5 @@
+from typing import Any, Dict, Iterable, List, Tuple, Union
+
 from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.abcre.dis.NACTYPE import NACTYPE
@@ -20,10 +22,17 @@ class ControlFlow():
         if (len(nac_block) not in delimited_id):
             delimited_id.append(len(nac_block))
 
-        final_nac_blocks: list = list()
+        final_nac_blocks: List[CodeBlock] = list()
         idx_start = 0
         for i in range(len(delimited_id)):
             idx_end = delimited_id[i]
             final_nac_blocks.append(nac_block.get_slice_block(idx_start, idx_end))
             idx_start = idx_end
+
+        for i in range(len(final_nac_blocks)):
+            if (i == len(final_nac_blocks) - 1):
+                final_nac_blocks[i].empty_next_cb()
+            else:
+                final_nac_blocks[i].empty_next_cb()
+                final_nac_blocks[i].add_next_cb(final_nac_blocks[i + 1])
         return CodeBlocks(final_nac_blocks)

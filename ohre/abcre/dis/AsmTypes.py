@@ -9,6 +9,8 @@ class AsmTypes(BaseEnum):
     REG = "reg"  # register
     IMM = "imm"  # AsmArg: value is the actual value of immediate number
     NULL = "null"  # AsmArg: value not valid
+    INF = "inf"  # infinity
+    NAN = "nan"  # not a num
     TRUE = "true"  # AsmArg: value not valid
     FALSE = "false"  # AsmArg: value not valid
     ZERO = "zero"  # AsmArg: value not valid
@@ -16,11 +18,16 @@ class AsmTypes(BaseEnum):
     STR = "str"
     MODULE = "module"
     METHOD_OBJ = "method_obj"
+    OBJECT = "object"
     UNDEFINED = "undefined"
-    UNKNOWN = "unknown"  # default value in this proj
+    HOLE = "hole"
+    UNKNOWN = "unknown"  # default value in this proj # maybe same as Any
 
     def __init__(self):
         super().__init__()
+
+    def is_var_like(self):
+        pass
 
     @classmethod
     def is_uint(cls, type_name: str):

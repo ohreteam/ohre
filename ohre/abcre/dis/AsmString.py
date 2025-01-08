@@ -6,10 +6,7 @@ from ohre.misc import Log
 
 
 class AsmString(DebugBase):
-    def __init__(self, lines: List[str]):
-        line = ""
-        for s in lines:
-            line += s
+    def __init__(self, line: str):
         line = line.strip()
         assert line[0] == "[" and line[-1] == "]"
         line = line[1:-1]

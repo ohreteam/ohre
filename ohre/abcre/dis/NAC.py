@@ -31,7 +31,7 @@ class NAC(DebugBase):  # N Address Code
         return out
 
     def _debug_vstr(self):
-        out = f"({NACTYPE.get_code_name(self.type)}) {self.op} "
+        out = f"({NACTYPE.get_code_name(self.type)})".ljust(12, " ") + f"{self.op} "
         for i in range(len(self.args)):
             if (i == len(self.args) - 1):
                 out += f"{self.args[i]}"

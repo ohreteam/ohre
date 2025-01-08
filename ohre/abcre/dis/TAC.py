@@ -1,9 +1,9 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmArg import AsmArg
-from ohre.abcre.dis.TACTYPE import TACTYPE
-from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.abcre.dis.AsmTypes import AsmTypes
+from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.abcre.dis.TACTYPE import TACTYPE
 
 
 class TAC(DebugBase):  # Three Address Code
@@ -18,6 +18,10 @@ class TAC(DebugBase):  # Three Address Code
         self.log: str = log
         self.this: str = this  # this pointer, maybe point to a object/module
 
+    @property
+    def type(self):
+        return self.optype
+
     @classmethod
     def tac_assign(cls, dst: AsmArg, src0: AsmArg, src1: AsmArg = None, rop="", log: str = ""):
         if (src1 is None and len(rop) == 0):
@@ -25,7 +29,6 @@ class TAC(DebugBase):  # Three Address Code
         if (src1 is None and len(rop) > 0):  # e.g. acc = -acc
             return TAC(TACTYPE.ASSIGN, [dst, src0], rop=rop, log=log)
         assert src1 is not None and rop is not None and len(rop) > 0
-        print(f"ASSIGN(with 2 src): dst {dst} src0 {src0} src1 {src1} rop {rop}")
         return TAC(TACTYPE.ASSIGN, [dst, src0, src1], rop=rop, log=log)
 
     @classmethod
@@ -57,7 +60,7 @@ class TAC(DebugBase):  # Three Address Code
         return TAC(TACTYPE.UNKNOWN, paras, log=log)
 
     def _debug_str(self):
-        out = f"[{TACTYPE.get_code_name(self.optype)}]\t"
+        out = f""
         for i in range(len(self.args)):
             out += f"{self.args[i]._debug_str()}, "
         return out
@@ -71,7 +74,7 @@ class TAC(DebugBase):  # Three Address Code
         return out
 
     def _debug_vstr(self):
-        out = f"[{TACTYPE.get_code_name(self.optype)}]\t"
+        out = f"[{TACTYPE.get_code_name(self.optype)}]".ljust(12, " ")
         if (self.optype == TACTYPE.ASSIGN):
             if (len(self.args) == 2 and len(self.rop) == 0):
                 out += f"{self.args[0]._debug_vstr()} = {self.args[1]._debug_vstr()}"
