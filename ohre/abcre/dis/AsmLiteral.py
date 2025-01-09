@@ -35,17 +35,33 @@ class AsmLiteral(DebugBase):
         s_idx = literal_content.find("[") + 1
         e_idx = literal_content.find("]")
         element_content = literal_content[s_idx:e_idx]
-        array_split_list = [x.strip() for x in element_content.strip().split(',') if len(x) > 0]
+        modified_content = element_content
+        s_cnt = 0
+        change_flag = 0
+        for i in element_content:
+            if i == '"':
+                change_flag = abs(1-change_flag)
+                s_cnt += 1
+            elif i == ',' and change_flag == 1:
+                modified_content = modified_content[:s_cnt] + \
+                    '<comma>'+modified_content[s_cnt+1:]
+                s_cnt += 7
+            else:
+                s_cnt += 1
+
+        array_split_list = [x.strip() for x in modified_content.strip().split(',') if len(x) > 0]
 
         method_dict = {}
         if 'method' in element_content and 'method_affiliate' in element_content:
             cnt = 0
             while cnt < len(array_split_list):
                 if 'string' in array_split_list[cnt]:
-                    method_string = array_split_list[cnt].split(':')[1].strip()[1:-1]
-                    method_name = array_split_list[cnt + 1].split(':')[1].strip()
-                    method_aff = array_split_list[cnt + 2].split(':')[1].strip()
-                    method_dict[method_string] = {'method': method_name, 'method_affiliate': method_aff}
+                    method_string = array_split_list[cnt].split(':')[
+                        1].strip()[1:-1]
+                    method_name = array_split_list[cnt+1].split(':')[1].strip()
+                    method_aff = array_split_list[cnt+2].split(':')[1].strip()
+                    method_dict[method_string] = {
+                        'method': method_name, 'method_affiliate': method_aff}
                     cnt += 3
                 else:
                     cnt += 1
@@ -53,17 +69,27 @@ class AsmLiteral(DebugBase):
             method_dict["method_amount"] = method_amount
         else:
             cnt = 0
-            while cnt < len(array_split_list):
-                variable_string = array_split_list[cnt].split(':')[1].strip()[1:-1]
-                variable_value = array_split_list[cnt + 1]
+            array_len = len(array_split_list)
+            if element_amount % 2 == 1:
+                array_len -= 1
+            while cnt < array_len:
+                variable_string = array_split_list[cnt].split(':')[1].strip()
+                if '"' in variable_string:
+                    variable_string = variable_string.replace('"', '')
+                variable_value = array_split_list[cnt+1]
                 if 'null_value' in variable_value:
                     variable_value = 'null_value'
                 else:
                     variable_value = variable_value.split(":")[1].strip()
                     if '"' in variable_value:
-                        variable_value = variable_value.replace('"', '')
+                        variable_value = variable_value.replace('"', '').replace('<comma>',',')
                 cnt += 2
                 method_dict[variable_string] = variable_value
+            if element_amount % 2 == 1:
+                variable_string = array_split_list[cnt].split(':')[1].strip()
+                if '"' in variable_string:
+                    variable_string = variable_string.replace('"', '')
+                method_dict[variable_string] = ''
         self.module_tags = [method_dict]
 
     def _process_module_request_array(self, lines: List[str]):
