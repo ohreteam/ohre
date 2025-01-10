@@ -1,11 +1,14 @@
+from typing import Any, Dict, Iterable, List, Tuple, Union
+
 from ohre.abcre.dis.AsmMethod import AsmMethod
+from ohre.misc import Log, utils
 
 
-def get_def_var(meth: AsmMethod):
+def _update_method_current_cb_use_vars(meth: AsmMethod):
     for cb in meth.code_blocks:
         print(f"get_def_var processing {cb}")
-
-
-def getLivingVar(meth: AsmMethod):
-    print(f"getLivingVar-START {meth.name} {meth.level_str}")
-    def_vars = get_def_var(meth)
+        use_vars: set = set()
+        for inst in cb.insts:
+            def_inst, use_inst = inst.get_def_use()
+            use_vars.update(use_inst)
+        cb.set_use_vars(use_vars)

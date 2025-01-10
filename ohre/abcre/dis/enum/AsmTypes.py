@@ -6,7 +6,6 @@ class AsmTypes(BaseEnum):
     ACC = "acc"
     VAR = "v"  # e.g. v0, v1, v2
     ARG = "a"  # e.g. a0, a1, a2
-    REG = "reg"  # register
     IMM = "imm"  # AsmArg: value is the actual value of immediate number
     NULL = "null"  # AsmArg: value not valid
     INF = "inf"  # infinity
@@ -17,8 +16,10 @@ class AsmTypes(BaseEnum):
     LABEL = "label"  # AsmArg: value not valid
     STR = "str"
     MODULE = "module"
-    METHOD_OBJ = "method_obj"
+    METHOD = "method"
+    METHOD_OBJ = "method_obj"  # TODO: merge it with method?
     OBJECT = "object"
+    ARRAY = "array"
     UNDEFINED = "undefined"
     HOLE = "hole"
     UNKNOWN = "unknown"  # default value in this proj # maybe same as Any

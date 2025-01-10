@@ -1,7 +1,6 @@
 import argparse
 
 import ohre
-from ohre.abcre.dis.ControlFlow import ControlFlow
 from ohre.abcre.dis.PandaReverser import PandaReverser
 from ohre.abcre.dis.DisFile import DisFile
 from ohre.misc import Log
@@ -34,9 +33,9 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     panda_re.split_native_code_block(FUNC_IDX)
     print(f">> CF built {panda_re.dis_file.methods[FUNC_IDX]._debug_vstr()}")
     panda_re.trans_NAC_to_TAC(method_id=FUNC_IDX)
+    panda_re._code_lifting_algorithms(FUNC_IDX)
 
     # for idx in range(panda_re.method_len()):
     #     panda_re.split_native_code_block(idx)
     #     print(f">> [{idx}/{panda_re.method_len()}] CF built {panda_re.dis_file.methods[idx]._debug_vstr()}")
     #     panda_re.trans_NAC_to_TAC(method_id=idx)
-    panda_re._code_lifting_algorithms(FUNC_IDX)

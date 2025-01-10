@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.DebugBase import DebugBase
-from ohre.abcre.dis.NACTYPE import NACTYPE
+from ohre.abcre.dis.enum.NACTYPE import NACTYPE
 
 
 class NAC(DebugBase):  # N Address Code

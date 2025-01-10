@@ -53,6 +53,8 @@ class NACTYPE(BaseEnum):
         if (op.endswith("catchall")):
             return NACTYPE.TRYCATCH
         info_d = cls.isa.get_opstr_info_dict(op)
+        if (info_d is None or "title" not in info_d.keys()):
+            Log.error(f"get_NAC_type ERROR! op({len(op)}) is {op}")
         assert info_d is not None and "title" in info_d.keys()
         if (_value_in_key_of_dict(info_d, "properties", "return")):
             return NACTYPE.RETURN
