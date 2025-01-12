@@ -2,7 +2,7 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
-from ohre.abcre.dis.NACTYPE import NACTYPE
+from ohre.abcre.dis.enum.NACTYPE import NACTYPE
 from ohre.misc import Log, utils
 
 
@@ -31,8 +31,8 @@ class ControlFlow():
 
         for i in range(len(final_nac_blocks)):
             if (i == len(final_nac_blocks) - 1):
-                final_nac_blocks[i].empty_next_cb()
+                final_nac_blocks[i].empty_next_cbs()
             else:
-                final_nac_blocks[i].empty_next_cb()
+                final_nac_blocks[i].empty_next_cbs()
                 final_nac_blocks[i].add_next_cb(final_nac_blocks[i + 1])
         return CodeBlocks(final_nac_blocks)

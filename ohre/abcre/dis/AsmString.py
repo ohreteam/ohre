@@ -1,6 +1,6 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
-from ohre.abcre.dis.AsmTypes import AsmTypes
+from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.misc import Log
 

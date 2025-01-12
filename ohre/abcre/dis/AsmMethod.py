@@ -1,15 +1,15 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
-from ohre.abcre.dis.AsmTypes import AsmTypes
 from ohre.abcre.dis.AsmArg import AsmArg
-from ohre.abcre.dis.CODE_LV import CODE_LV
 from ohre.abcre.dis.AsmRecord import AsmRecord
 from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.abcre.dis.ControlFlow import ControlFlow
-from ohre.misc import Log, utils
 from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.abcre.dis.enum.AsmTypes import AsmTypes
+from ohre.abcre.dis.enum.CODE_LV import CODE_LV
 from ohre.abcre.dis.TAC import TAC
+from ohre.misc import Log, utils
 
 
 def is_label_line(s: str):  # single str in a single line endswith ":", maybe label?
@@ -90,7 +90,9 @@ class AsmMethod(DebugBase):
             tac_l.append(TAC.tac_assign(AsmArg.build_arg(name), AsmArg(AsmTypes.UNKNOWN)))
             if (ty != "any"):
                 Log.error(f"Var NOT any! {self.name} {ty} {name}")
-        self.code_blocks.insert_front(CodeBlock(tac_l, self.code_blocks.blocks[0]))
+        cb_1st = CodeBlock(tac_l)
+        cb_1st.add_next_cb(self.code_blocks.blocks[0])
+        self.code_blocks.insert_front(cb_1st)
 
     def _split_file_class_method_name(self, records: List[AsmRecord]):
         # split 'file_class_method' to 'file_class' and 'method'
@@ -150,7 +152,9 @@ class AsmMethod(DebugBase):
             if (is_label_line(line)):
                 insts.append([line])
                 l_n += 1
-            if (len(line.strip()) == 0):  # skip empty line
+            elif (len(line.strip()) == 0):  # skip empty line
+                l_n += 1
+            elif (".catchall" in line.strip()):  # skip empty line
                 l_n += 1
             elif (is_method_end_line(line)):  # process END
                 return insts
@@ -234,6 +238,16 @@ args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level_s
         assert self.code_blocks.level == CODE_LV.NATIVE
         self.code_blocks = ControlFlow.split_native_code_block(self.code_blocks)
         self.code_blocks.set_level(CODE_LV.NATIVE_BLOCK_SPLITED)
+
+    def get_insts_total(self):
+        return self.code_blocks.get_insts_total()
+
+    def get_args(self, start_pos: int = 0) -> List[AsmArg]:
+        ret: List[AsmArg] = list()
+        for i in range(start_pos, len(self.args)):
+            ty, name = self.args[i]
+            ret.append(AsmArg.build_arg(name))
+        return ret
 
 
 if __name__ == "__main__":

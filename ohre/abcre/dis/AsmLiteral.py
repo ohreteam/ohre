@@ -1,6 +1,6 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
-from ohre.abcre.dis.CODE_LV import CODE_LV
+from ohre.abcre.dis.enum.CODE_LV import CODE_LV
 from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.misc import Log, utils
 

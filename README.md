@@ -67,7 +67,7 @@ python examples\abc_decompile.py name.abc
 #### Logical Code
 
 ```bash
-python examples\dis_demo.py xxx.abc.dis # put isa.yaml from arkcompiler_ets_runtime to ./ohre/abcre/dis/isa.yaml
+python examples\dis_demo.py xxx.abc.dis # put isa.yaml from arkcompiler_ets_runtime to ./ohre/abcre/dis/enum/isa.yaml
 ```
 
 

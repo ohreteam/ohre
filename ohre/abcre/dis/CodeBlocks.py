@@ -1,7 +1,7 @@
 import copy
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
-from ohre.abcre.dis.CODE_LV import CODE_LV
+from ohre.abcre.dis.enum.CODE_LV import CODE_LV
 from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.misc import Log, utils
@@ -56,3 +56,9 @@ class CodeBlocks(DebugBase):  # NAC block contained, build control flow graph in
 
     def insert_front(self, code_block: CodeBlock):
         self.blocks.insert(0, code_block)
+
+    def get_insts_total(self) -> int:
+        total = 0
+        for cb in self.blocks:
+            total += cb.get_insts_len()
+        return total
