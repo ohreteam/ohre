@@ -35,7 +35,11 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     panda_re.trans_NAC_to_TAC(method_id=FUNC_IDX)
     panda_re._code_lifting_algorithms(FUNC_IDX)
 
+    # nac_total = panda_re.get_insts_total()
     # for idx in range(panda_re.method_len()):
     #     panda_re.split_native_code_block(idx)
     #     print(f">> [{idx}/{panda_re.method_len()}] CF built {panda_re.dis_file.methods[idx]._debug_vstr()}")
     #     panda_re.trans_NAC_to_TAC(method_id=idx)
+    # tac_total = panda_re.get_insts_total()
+    # todo_tac = panda_re.get_tac_unknown_count()
+    # print(f"todo_tac {todo_tac}/tac {tac_total} {todo_tac/tac_total:.4f} / nac {nac_total} {todo_tac/nac_total:.4f}")

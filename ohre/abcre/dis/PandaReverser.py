@@ -3,10 +3,11 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 from ohre.abcre.dis.AsmMethod import AsmMethod
 from ohre.abcre.dis.AsmRecord import AsmRecord
 from ohre.abcre.dis.AsmString import AsmString
-from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.abcre.dis.DisFile import DisFile
+from ohre.abcre.dis.enum.AsmTypes import AsmTypes
+from ohre.abcre.dis.enum.TACTYPE import TACTYPE
 from ohre.abcre.dis.lifting.DeadCodeElimination import DeadCodeElimination
 from ohre.abcre.dis.lifting.PeepholeOptimization import PeepholeOptimization
 from ohre.abcre.dis.NACtoTAC import NACtoTAC
@@ -34,6 +35,21 @@ class PandaReverser(DebugBase):
             pass
         else:
             Log.error(f"to tac paras NOT valid: method_id {method_id} file_class_method_name {file_class_method_name}")
+
+    def get_tac_unknown_count(self):
+        cnt = 0
+        for met in self.dis_file.methods:
+            for cb in met.code_blocks:
+                for inst in cb.insts:
+                    if (inst.type == TACTYPE.UNKNOWN):
+                        cnt += 1
+        return cnt
+
+    def get_insts_total(self):
+        cnt = 0
+        for met in self.dis_file.methods:
+            cnt += met.get_insts_total()
+        return cnt
 
     def _code_lifting_algorithms(self, method_id: int = -1):
         if (isinstance(method_id, int) and method_id >= 0 and method_id < len(self.dis_file.methods)):

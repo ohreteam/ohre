@@ -38,16 +38,16 @@ def DCE_cb(cb: CodeBlock):  # DCE is short for DeadCodeElimination
     used_after: set = cb.get_all_next_cbs_use_vars()
     pending_delete_inst_idxs: set = set()
     for i in range(cb.get_insts_len() - 1, -1, -1):
-        def_inst, use_inst = cb.insts[i].get_def_use()
-        used_after.update(use_inst)
+        def_vars_inst, use_vars_inst = cb.insts[i].get_def_use()
+        used_after.update(use_vars_inst)
         used_after_flag = False  # var def in this inst is used after this inst or not
-        for var in def_inst:
+        for var in def_vars_inst:
             if (var in used_after):
                 used_after_flag = True
                 break
         if (used_after_flag == False):
             pending_delete_inst_idxs.add(i)
-        print(f"{i} {cb.insts[i]} \t def: {def_inst} use: {use_inst} used_after? {used_after_flag}")
+        print(f"{i} {cb.insts[i]} \t def: {def_vars_inst} use: {use_vars_inst} used_after? {used_after_flag}")
     cb.set_use_vars(used_after)
 
     # Step-2: determine: if idxs in pending delete inst idxs actually need to be deleted

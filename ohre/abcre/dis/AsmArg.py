@@ -12,7 +12,7 @@ class AsmArg(DebugBase):
         # name: e.g. for v0, type is VAR, name is v0(stored without truncating the prefix v)
         self.name: str = name
         # value: may be set in the subsequent analysis
-        self.value = value
+        self.value = value  # if type is ARRAY, value is AsmArg list
         self.ref_base = ref_base  # AsmArg
         self.paras_len: Union[int, None] = paras_len  # for method object, store paras len here
 
@@ -53,6 +53,9 @@ class AsmArg(DebugBase):
     def __repr__(self):
         return f"Arg({self._debug_str()})"
 
+    def set_ref(self, ref_ed_arg):
+        self.ref_base = ref_ed_arg
+
     @classmethod
     def build_arg(cls, s: str):  # return VAR v0 v1... or ARG a0 a1...
         assert isinstance(s, str) and len(s) > 0
@@ -65,7 +68,15 @@ class AsmArg(DebugBase):
         Log.error(f"build_arg failed: s={s}")
 
     @classmethod
-    def build_arr(cls, args: List, name: str = ""):
+    def build_acc(cls):  # return AsmArg(AsmTypes.ACC)
+        return cls.ACC()
+
+    @classmethod
+    def ACC(cls):  # return AsmArg(AsmTypes.ACC)
+        return AsmArg(AsmTypes.ACC)
+
+    @classmethod
+    def build_arr(cls, args: List, name: str = ""):  # element of args should be AsmArg
         return AsmArg(AsmTypes.ARRAY, name=name, value=list(args))
 
     @classmethod
@@ -89,28 +100,62 @@ class AsmArg(DebugBase):
             return True
         return False
 
+    def get_all_args_recursively(self, include_self: bool = True) -> List:
+        out = list()
+        if (include_self):
+            out.append(self)
+        if (isinstance(self.ref_base, AsmArg)):
+            out.append(self.ref_base)
+        if (self.value is not None and isinstance(self.value, Iterable)):  # if type is ARRAY
+            for v in self.value:
+                if (isinstance(v, AsmArg)):
+                    out.append(v)
+        return out
+
+    def _common_error_check(self):
+        if (self.type == AsmTypes.FIELD):
+            if (self.ref_base is None or len(self.name) == 0):
+                Log.error(f"[ArgCC] A filed without ref_base or name len==0: name {self.name} len {len(self.name)}")
+        if (self.type == AsmTypes.MODULE):
+            if (len(self.name) == 0):
+                Log.error(f"[ArgCC] A module without name: len {len(self.name)}")
+        if (self.type == AsmTypes.METHOD):
+            if (len(self.name) == 0):
+                Log.error(f"[ArgCC] A method without name: len {len(self.name)}")
+        if (self.type == AsmTypes.LABEL):
+            if (len(self.name) == 0):
+                Log.error(f"[ArgCC] A label without name: len {len(self.name)}")
+
     def _debug_str(self):
+        self._common_error_check()
         out = ""
-        if (len(self.name)):
-            out += f"{self.name}"
+        if (self.type == AsmTypes.FIELD):
+            if (self.ref_base is not None):
+                out += f"{self.ref_base}[{self.name}]"
         else:
-            out = f"{AsmTypes.get_code_name(self.type)}"
+            if (self.ref_base is not None):
+                out += f"{self.ref_base}->"
+            out += f"{self.name}"
+            if (len(self.name) == 0):
+                out += f"{AsmTypes.get_code_name(self.type)}"
         if (self.value is not None):
             out += f"({self.value})"
-        if (self.ref_base is not None):
-            out += f"//ref:{self.ref_base}"
         if (self.paras_len is not None):
             out += f"(paras_len={self.paras_len})"
         return out
 
     def _debug_vstr(self):
-        out = f"{AsmTypes.get_code_name(self.type)}"
-        if (len(self.name) > 0):
-            out += f"-{self.name}"
+        self._common_error_check()
+        out = ""
+        if (self.type == AsmTypes.FIELD):
+            if (self.ref_base is not None):
+                out += f"{self.ref_base}[{AsmTypes.get_code_name(self.type)}-{self.name}]"
+        else:
+            if (self.ref_base is not None):
+                out += f"{self.ref_base}->"
+            out += f"{AsmTypes.get_code_name(self.type)}-{self.name}"
         if (self.value is not None):
             out += f"({self.value})"
-        if (self.ref_base is not None):
-            out += f"//ref:{self.ref_base}"
         if (self.paras_len is not None):
             out += f"(paras_len={self.paras_len})"
         return out

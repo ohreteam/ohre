@@ -18,8 +18,9 @@ class AsmTypes(BaseEnum):
     MODULE = "module"
     METHOD = "method"
     METHOD_OBJ = "method_obj"  # TODO: merge it with method?
+    FIELD = "field"  # TODO: actually some old tac builder should use field # property of a object
     OBJECT = "object"
-    ARRAY = "array"
+    ARRAY = "array"  # value is also arg
     UNDEFINED = "undefined"
     HOLE = "hole"
     UNKNOWN = "unknown"  # default value in this proj # maybe same as Any

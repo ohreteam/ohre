@@ -3,10 +3,10 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmArg import AsmArg
 from ohre.abcre.dis.DebugBase import DebugBase
-from ohre.abcre.dis.NAC import NAC
 from ohre.abcre.dis.enum.NACTYPE import NACTYPE
-from ohre.abcre.dis.TAC import TAC
 from ohre.abcre.dis.enum.TACTYPE import TACTYPE
+from ohre.abcre.dis.NAC import NAC
+from ohre.abcre.dis.TAC import TAC
 
 
 class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
@@ -26,7 +26,7 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
             self.next_cb_list = set()
         else:
             self.next_cb_list = next_cb_list
-        
+
         self.use_vars: set[AsmArg] = None
 
     def get_slice_block(self, idx_start: int, idx_end: int):
@@ -68,7 +68,6 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
 
     def get_insts_len(self) -> int:
         return len(self.insts)
-
 
     def __len__(self) -> int:
         return len(self.insts)

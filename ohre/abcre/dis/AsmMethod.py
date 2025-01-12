@@ -1,15 +1,15 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
-from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.abcre.dis.AsmArg import AsmArg
-from ohre.abcre.dis.enum.CODE_LV import CODE_LV
 from ohre.abcre.dis.AsmRecord import AsmRecord
 from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
 from ohre.abcre.dis.ControlFlow import ControlFlow
-from ohre.misc import Log, utils
 from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.abcre.dis.enum.AsmTypes import AsmTypes
+from ohre.abcre.dis.enum.CODE_LV import CODE_LV
 from ohre.abcre.dis.TAC import TAC
+from ohre.misc import Log, utils
 
 
 def is_label_line(s: str):  # single str in a single line endswith ":", maybe label?
@@ -242,7 +242,7 @@ args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level_s
     def get_insts_total(self):
         return self.code_blocks.get_insts_total()
 
-    def get_args(self, start_pos: int = 0):
+    def get_args(self, start_pos: int = 0) -> List[AsmArg]:
         ret: List[AsmArg] = list()
         for i in range(start_pos, len(self.args)):
             ty, name = self.args[i]
