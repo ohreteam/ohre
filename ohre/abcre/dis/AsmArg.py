@@ -28,17 +28,10 @@ class AsmArg(DebugBase):
     def __eq__(self, rhs):
         if isinstance(rhs, AsmArg):
             if (self.type == rhs.type and self.name == rhs.name):
-                if (self.ref_base is None and rhs.ref_base is None):
+                if (self.ref_base == rhs.ref_base and self.value == rhs.value and self.paras_len == rhs.paras_len):
                     return True
-                elif (self.ref_base is None and rhs.ref_base is not None):
+                else:
                     return False
-                elif (self.ref_base is not None and rhs.ref_base is None):
-                    return False
-                else:  # both is NOT None
-                    if (self.ref_base == rhs.ref_base):
-                        return True
-                    else:
-                        return False
             else:
                 return False
         return False
@@ -56,12 +49,27 @@ class AsmArg(DebugBase):
     def set_ref(self, ref_ed_arg):
         self.ref_base = ref_ed_arg
 
+    def is_has_ref(self) -> bool:
+        if (self.ref_base is not None):
+            return True
+        else:
+            return False
+
+    def is_no_ref(self) -> bool:
+        return not self.is_has_ref()
+
     @classmethod
     def build_arg(cls, s: str):  # return VAR v0 v1... or ARG a0 a1...
         assert isinstance(s, str) and len(s) > 0
         if (s.startswith("v")):
             return AsmArg(AsmTypes.VAR, s)
         if (s.startswith("a")):
+            if (s == "a0"):
+                return cls.build_FunctionObject()
+            elif (s == "a1"):
+                return cls.build_NewTarget()
+            elif (s == "a2"):
+                return cls.build_this()
             return AsmArg(AsmTypes.ARG, s)
         if (s.startswith("tmp")):
             return AsmArg(AsmTypes.VAR, s)
@@ -80,9 +88,19 @@ class AsmArg(DebugBase):
         return AsmArg(AsmTypes.ARRAY, name=name, value=list(args))
 
     @classmethod
+    def build_FunctionObject(cls):
+        # FunctionObject always stored at a0
+        return AsmArg(AsmTypes.ARG, name="FunctionObject")
+
+    @classmethod
+    def build_NewTarget(cls):
+        # NewTarget always stored at a1
+        return AsmArg(AsmTypes.ARG, name="NewTarget")
+
+    @classmethod
     def build_this(cls):
         # this always stored at a2
-        return AsmArg(AsmTypes.ARG, name="a2")
+        return AsmArg(AsmTypes.ARG, name="this")
 
     def build_next_arg(self):  # arg is AsmArg
         # if self is v5, return v6; if self is a0, return a1; just num_part+=1
@@ -126,14 +144,16 @@ class AsmArg(DebugBase):
             if (len(self.name) == 0):
                 Log.error(f"[ArgCC] A label without name: len {len(self.name)}")
 
-    def _debug_str(self):
+    def _debug_str(self, print_ref: bool = True):
         self._common_error_check()
         out = ""
         if (self.type == AsmTypes.FIELD):
-            if (self.ref_base is not None):
+            if (print_ref and self.ref_base is not None):
                 out += f"{self.ref_base}[{self.name}]"
+            else:
+                out += f"[field:{self.name}]"
         else:
-            if (self.ref_base is not None):
+            if (print_ref and self.ref_base is not None):
                 out += f"{self.ref_base}->"
             out += f"{self.name}"
             if (len(self.name) == 0):
@@ -144,14 +164,16 @@ class AsmArg(DebugBase):
             out += f"(paras_len={self.paras_len})"
         return out
 
-    def _debug_vstr(self):
+    def _debug_vstr(self, print_ref: bool = True):
         self._common_error_check()
         out = ""
         if (self.type == AsmTypes.FIELD):
-            if (self.ref_base is not None):
+            if (print_ref and self.ref_base is not None):
                 out += f"{self.ref_base}[{AsmTypes.get_code_name(self.type)}-{self.name}]"
+            else:
+                out += f"[{AsmTypes.get_code_name(self.type)}-{self.name}]"
         else:
-            if (self.ref_base is not None):
+            if (print_ref and self.ref_base is not None):
                 out += f"{self.ref_base}->"
             out += f"{AsmTypes.get_code_name(self.type)}-{self.name}"
         if (self.value is not None):

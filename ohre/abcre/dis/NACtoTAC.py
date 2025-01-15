@@ -132,15 +132,12 @@ class NACtoTAC:
             error_type = int(nac.args[0], 16)
             tmp_var = AsmArg.build_arg("tmp0")
             inst0 = TAC.tac_call(
-                arg_len=AsmArg(AsmTypes.IMM, value=1),
-                paras=[AsmArg.build_this()],
-                ret_store_to=tmp_var,
-                call_addr=AsmArg(AsmTypes.METHOD, name="__is_super_called_correctly"), log="a2 is ptr this")
+                arg_len=AsmArg(AsmTypes.IMM, value=1), paras=[AsmArg.ACC()], ret_store_to=tmp_var,
+                call_addr=AsmArg(AsmTypes.METHOD, name="__is_super_called_correctly"))
             inst1 = TAC.tac_cond_throw(
                 para0=tmp_var,
                 para1=AsmArg(AsmTypes.FALSE),
-                rop="==", exception=AsmArg(AsmTypes.IMM, value=error_type),
-                log="assume that calling super() incorretly will return False")
+                rop="==", exception=AsmArg(AsmTypes.IMM, value=error_type))
             return [inst0, inst1]
         # === throw instructions # END
 
@@ -158,7 +155,7 @@ class NACtoTAC:
                 AsmArg(AsmTypes.ZERO),
                 "==")
         if (nac.op == "jmp"):
-            return TAC.tac_uncn_jmp(AsmArg(AsmTypes.LABEL, nac.args[0]), log="todo: check label's existence")
+            return TAC.tac_uncn_jmp(AsmArg(AsmTypes.LABEL, nac.args[0]))  # TODO: check label's existence
         # === inst: jump operations # END
 
         # === inst: call runtime functions # START
@@ -190,20 +187,14 @@ class NACtoTAC:
         if (nac.op == "callarg0"):
             return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=0), paras=[])
         if (nac.op == "callarg1"):
-            return TAC.tac_call(
-                arg_len=AsmArg(AsmTypes.IMM, value=1),
-                paras=[AsmArg.build_arg(nac.args[1])],
-                log="todo: add acc=ret after this")
+            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1), paras=[AsmArg.build_arg(nac.args[1])])
         if (nac.op == "callargs2"):
-            return TAC.tac_call(
-                arg_len=AsmArg(AsmTypes.IMM, value=2),
-                paras=[AsmArg.build_arg(nac.args[1]), AsmArg.build_arg(nac.args[2])],
-                log="todo: add acc=ret after this")
+            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=2),
+                                paras=[AsmArg.build_arg(nac.args[1]), AsmArg.build_arg(nac.args[2])])
         if (nac.op == "callargs3"):
             return TAC.tac_call(
                 arg_len=AsmArg(AsmTypes.IMM, value=3),
-                paras=[AsmArg.build_arg(nac.args[1]), AsmArg.build_arg(nac.args[2]), AsmArg.build_arg(nac.args[3])],
-                log="todo: add acc=ret after this")
+                paras=[AsmArg.build_arg(nac.args[1]), AsmArg.build_arg(nac.args[2]), AsmArg.build_arg(nac.args[3])])
         if (nac.op == "callthisrange"):
             # callthisrange reserved, para_cnt, this_ptr # acc: method obj # para(cnt): this_ptr para0 ...
             arg_len = int(nac.args[1], 16)
@@ -213,10 +204,7 @@ class NACtoTAC:
             for i in range(arg_len):
                 arg = arg.build_next_arg()
                 paras_l.append(arg)
-            return TAC.tac_call(
-                arg_len=AsmArg(AsmTypes.IMM, value=arg_len),
-                paras=paras_l,
-                this=this_p)
+            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=arg_len), paras=paras_l, this=this_p)
         if (nac.op == "supercallspread"):
             args_arr = AsmArg.build_arg(nac.args[1])
             return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=0), paras=[args_arr],
@@ -271,13 +259,10 @@ class NACtoTAC:
 
         # === inst: object visitors # START
         if (nac.op == "ldobjbyname"):
-            return TAC.tac_assign(
-                AsmArg.ACC(),
-                AsmArg(AsmTypes.FIELD, value=nac.args[1], ref_base=AsmArg.ACC()),
-                log=f"arg0: {nac.args[0]} todo: check ldobjbyname")
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.OBJECT, name=nac.args[1], ref_base=AsmArg.ACC()))
         if (nac.op == "tryldglobalbyname"):
             return TAC.tac_assign(
-                AsmArg.ACC(), AsmArg(AsmTypes.STR, value=nac.args[1]),
+                AsmArg.ACC(), AsmArg(AsmTypes.OBJECT, name=nac.args[1]),
                 log=f"arg0: {nac.args[0]} todo: check tryldglobalbyname, not throw now")
         if (nac.op == "ldexternalmodulevar"):
             index = int(nac.args[0], base=16)
@@ -287,7 +272,7 @@ class NACtoTAC:
             else:
                 Log.error(f"module load failed, nac: {nac}")
         if (nac.op == "copyrestargs"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arr(meth.get_args(), "copyrestargs"))
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arr(meth.get_args(), "arr_copyrestargs"))
         if (nac.op == "stownbyname" or nac.op == "stobjbyname"):
             dest = AsmArg(AsmTypes.FIELD, name=nac.args[1], ref_base=AsmArg.build_arg(nac.args[2]))
             return TAC.tac_assign(dest, AsmArg.ACC(), log=f"stownbyname/stobjbyname arg2[arg1] = acc")
@@ -331,9 +316,9 @@ class NACtoTAC:
         cbs = meth.code_blocks
         assert cbs.level == CODE_LV.NATIVE_BLOCK_SPLITED
         cbs_l = list()
-        for block in cbs.blocks:
+        for i in range(len(cbs.blocks)):
             tac_inst_l = list()
-            for nac_inst in block.insts:
+            for nac_inst in cbs.blocks[i].insts:
                 tac_s = NACtoTAC.toTAC(nac_inst, meth, dis_file)
                 if (tac_s is None):
                     continue
@@ -344,6 +329,4 @@ class NACtoTAC:
                     for tac in tac_s:
                         print(f"tac^: {tac._debug_vstr()}")
                         tac_inst_l.append(tac)
-            cb = CodeBlock(tac_inst_l)
-            cbs_l.append(cb)
-        return CodeBlocks(cbs_l, ir_lv=CODE_LV.TAC)
+            cbs.blocks[i].insts = tac_inst_l

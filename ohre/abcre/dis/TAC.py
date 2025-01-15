@@ -8,7 +8,8 @@ from ohre.misc import Log, utils
 
 
 class TAC(DebugBase):  # Three Address Code
-    def __init__(self, optype=TACTYPE.UNKNOWN, args: List[AsmArg] = None, rop="", log: str = "", this: AsmArg = None):
+    def __init__(self, optype=TACTYPE.UNKNOWN, args: List[AsmArg] = None,
+                 rop: str = "", log: str = "", this: AsmArg = None):
         self.optype = optype
         # === if optype == TACTYPE.CALL # e.g. acc = this->acc(a0, a1...)
         # args[0]: return value stored to # usually acc
@@ -18,7 +19,7 @@ class TAC(DebugBase):  # Three Address Code
         # this[opt]: this pointer
         self.args: List[AsmArg] = args  # NOTE: if optype is NOT UNKNOWN, def var must be args[0] if exists
         # rhs op # e.g. acc = a1 + v1 (rop is `+`) acc = -acc (rop is `-`) #  # NOTE: maybe a roptype class?
-        self.rop = rop
+        self.rop: str = rop
         self.log: str = log
         self.this: AsmArg = this  # this pointer, maybe point to a object/module
 
@@ -29,6 +30,10 @@ class TAC(DebugBase):  # Three Address Code
     @property
     def type_str(self) -> str:
         return TACTYPE.get_code_name(self.optype)
+
+    @property
+    def args_len(self) -> int:
+        return len(self.args)
 
     @classmethod
     def tac_assign(cls, dst: AsmArg, src0: AsmArg, src1: AsmArg = None, rop="", log: str = ""):
@@ -93,14 +98,17 @@ class TAC(DebugBase):  # Three Address Code
             Log.error(f"self.args[0] is None at a CALL inst. return value store to None?")
         if (self.this is not None and len(self.this) > 0):
             out += f"{self.this}->"
-        out += f"{self.args[1]}("
+        out += f"{self.args[1]._debug_str(print_ref=False)}("
         for i in range(3, len(self.args)):
-            out += f"{self.args[i]}, "
+            if (i == self.args_len - 1):
+                out += f"{self.args[i]}"
+            else:
+                out += f"{self.args[i]}, "
         out += ")"
         if (self.args[2] is not None):  # arg len
-            out += f" // args({self.args[2].value})"
+            out += f" // call-args({self.args[2].value})"
         else:
-            out += f" // args len is None"
+            out += f" // call-args len is None"
         return out
 
     def _debug_vstr_call(self):
@@ -111,14 +119,17 @@ class TAC(DebugBase):  # Three Address Code
             Log.error(f"self.args[0] is None at a CALL inst. return value store to None?")
         if (self.this is not None and len(self.this) > 0):
             out += f"{self.this._debug_vstr()}->"
-        out += f"{self.args[1]}("
-        for i in range(3, len(self.args)):
-            out += f"{self.args[i]._debug_vstr()}, "
+        out += f"{self.args[1]._debug_vstr(print_ref=True)}("
+        for i in range(3, self.args_len):
+            if (i == self.args_len - 1):
+                out += f"{self.args[i]._debug_vstr()}"
+            else:
+                out += f"{self.args[i]._debug_vstr()}, "
         out += ")"
         if (self.args[2] is not None):  # arg len
-            out += f" // args({self.args[2].value})"
+            out += f" // call-args({self.args[2].value})"
         else:
-            out += f" // args len is None"
+            out += f" // call-args len is None"
         return out
 
     def _debug_str(self):
@@ -136,14 +147,20 @@ class TAC(DebugBase):  # Three Address Code
             out += f"{self.args[0]} = {self.args[1]._debug_vstr()}"
         elif (self.optype == TACTYPE.CALL and len(self.args) >= 3):
             out += self._debug_str_call()
+        elif (self.optype == TACTYPE.COND_JMP and len(self.args) == 3):
+            out += f"if({self.args[1]} {self.rop} {self.args[2]}): jmp {self.args[0]}"
+        elif (self.optype == TACTYPE.UNCN_JMP and len(self.args) == 1):
+            out += f"jmp {self.args[0]}"
         elif (self.optype == TACTYPE.COND_THR and len(self.args) == 3):
             out += f"if({self.args[0]} {self.rop} {self.args[1]}): throw {self.args[2]}"
         elif (self.optype == TACTYPE.UNCN_THR and len(self.args) == 1):
             out += f"throw {self.args[0]}"
         elif (self.optype == TACTYPE.RETURN and len(self.args) == 1):
             out += f"return {self.args[0]}"
+        elif (self.optype == TACTYPE.LABEL and len(self.args) == 1):
+            out += f"{self.args[0]}:"
         else:
-            out += self._args_and_rop_common_debug_vstr()
+            out += f"{self._args_and_rop_common_debug_vstr()} // TAC-else-HIT"
         if (self.log is not None and len(self.log) > 0):
             out += f" // {self.log}"
         if (self.optype == TACTYPE.UNKNOWN):
@@ -167,11 +184,22 @@ class TAC(DebugBase):  # Three Address Code
             out += f"{self.args[0]._debug_vstr()} = {self.args[1]._debug_vstr()}"
         elif (self.optype == TACTYPE.CALL and len(self.args) >= 2):
             out += self._debug_vstr_call()
+        elif (self.optype == TACTYPE.COND_JMP and len(self.args) == 3):
+            out += f"if({self.args[1]._debug_vstr()} {self.rop} {self.args[2]._debug_vstr()}): \
+jmp {self.args[0]._debug_vstr()}"
+        elif (self.optype == TACTYPE.UNCN_JMP and len(self.args) == 1):
+            out += f"jmp {self.args[0]._debug_vstr()}"
         elif (self.optype == TACTYPE.COND_THR and len(self.args) == 3):
             out += f"if({self.args[0]._debug_vstr()} {self.rop} {self.args[1]._debug_vstr()}): \
 throw {self.args[2]._debug_vstr()}"
+        elif (self.optype == TACTYPE.UNCN_THR and len(self.args) == 1):
+            out += f"throw {self.args[0]._debug_vstr()}"
+        elif (self.optype == TACTYPE.RETURN and len(self.args) == 1):
+            out += f"return {self.args[0]._debug_vstr()}"
+        elif (self.optype == TACTYPE.LABEL and len(self.args) == 1):
+            out += f"{self.args[0]._debug_vstr()}:"
         else:
-            out += self._args_and_rop_common_debug_vstr()
+            out += f"{self._args_and_rop_common_debug_vstr()} // TAC-else-HIT"
         if (self.log is not None and len(self.log) > 0):
             out += f" // {self.log}"
         if (self.optype == TACTYPE.UNKNOWN):
@@ -233,6 +261,8 @@ throw {self.args[2]._debug_vstr()}"
             for arg in self.args:
                 def_vars.update(arg.get_all_args_recursively())
                 use_vars.update(arg.get_all_args_recursively())
+        if (len(def_vars) > 1 and self.optype != TACTYPE.UNKNOWN):
+            print(f"DEBUG it! {len(def_vars)} {self._debug_vstr()} def_vars {def_vars} {use_vars}")
         return def_vars, use_vars
 
     def get_def_use_list(self) -> Tuple[list, list]:
@@ -258,7 +288,57 @@ throw {self.args[2]._debug_vstr()}"
         return False
 
     def replace_def_var(self, new_var: AsmArg):
-        if (len(self.args) >= 1):
+        if (len(self.args) >= 1 and self.is_arg0_def()):
             self.args[0] = new_var
         else:
-            Log.error(f"replace_def_var ERROR, self.args len={len(self.args)}")
+            Log.error(f"replace_def_var ERROR, self.args len={len(self.args)} is_arg0_def {self.is_arg0_def()}")
+
+    def replace_use_var(self, old_var: AsmArg, new_var: AsmArg, include_ref: bool = True):
+        # if arg==old_var or arg.ref==old_var, change it to new_var
+        if (self.is_arg0_def()):
+            i = 1
+        else:
+            i = 0
+        while (i < self.args_len):
+            if (self.args[i] == old_var):
+                self.args[i] = new_var
+                print(f"replace_use_var i={i} old_var {old_var} new_var {new_var}")
+            elif (include_ref and self.args[i].is_has_ref() and self.args[i].ref_base == old_var):
+                self.args[i].set_ref(new_var)
+                print(f"replace_use_var-ref i={i} old_var {old_var._debug_vstr()} new_var {new_var}")
+            i += 1
+        if (self.type == TACTYPE.CALL and self.this is not None):
+            if (self.this == old_var):
+                print(f"replace_use_var-this old_var {self.this} new_var {new_var}; {self._debug_str()}")
+                self.this = new_var
+
+    def is_arg0_def(self) -> bool:
+        if (self.optype == TACTYPE.ASSIGN or self.optype == TACTYPE.IMPORT):
+            return True
+        if (self.optype == TACTYPE.CALL and self.args[0] is not None):
+            return True
+        return False
+
+    def is_simple_assgin(self) -> bool:  # like a = b;  NOT a = rop b OR a = b rop c
+        if (self.optype == TACTYPE.ASSIGN and len(self.args) == 2 and len(self.rop) == 0):
+            return True
+        return False
+
+    def copy_propagation(self, var2val: Dict[AsmArg, AsmArg], include_ref: bool = True):
+        if (self.is_arg0_def()):
+            i = 1
+        else:
+            i = 0
+        while (i < self.args_len):
+            if (self.args[i] in var2val.keys()):
+                print(f"copy_propagation  {self.args[i]} => {var2val[self.args[i]]}; {self._debug_str()}")
+                self.args[i] = var2val[self.args[i]]
+            elif (include_ref and self.args[i].is_has_ref() and self.args[i].ref_base in var2val.keys()):
+                print(f"copy_propagation-ref {self.args[i]._debug_vstr()} => \
+{var2val[self.args[i].ref_base]._debug_vstr()}; {self._debug_str()}")
+                self.args[i].set_ref(var2val[self.args[i].ref_base])
+            i += 1
+        if (self.type == TACTYPE.CALL and self.this is not None):
+            if (self.this in var2val.keys()):
+                print(f"copy_propagation-this  {self.this} => {var2val[self.this]}; {self._debug_str()}")
+                self.this = var2val[self.this]

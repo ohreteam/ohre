@@ -9,7 +9,6 @@ from ohre.misc import Log, utils
 
 class CodeBlocks(DebugBase):  # NAC block contained, build control flow graph inside a single CodeBlocks for one method
     def __init__(self, in_l: Union[List[List[str]], List[CodeBlock]], ir_lv=CODE_LV.NATIVE):
-        assert len(in_l) >= 0
         self.blocks: List[CodeBlock] = list()
         self.IR_level = ir_lv  # defaul: from native
 
@@ -55,6 +54,7 @@ class CodeBlocks(DebugBase):  # NAC block contained, build control flow graph in
         return out
 
     def insert_front(self, code_block: CodeBlock):
+        self.blocks[0].add_prev_cb(code_block)
         self.blocks.insert(0, code_block)
 
     def get_insts_total(self) -> int:

@@ -67,7 +67,7 @@ class AsmMethod(DebugBase):
             self._process_concurrent_module_reqs(lines[0:dot_function_idx])
 
         self._process_method_1st_line(lines[dot_function_idx].strip())
-
+        # code_blocks: code must start at [0]
         self.code_blocks: CodeBlocks = CodeBlocks(self._process_method_inst(lines[dot_function_idx + 1:]))
         assert self.code_blocks is not None
 
@@ -84,7 +84,6 @@ class AsmMethod(DebugBase):
         return self.method_name
 
     def _insert_variable_virtual_block(self):
-        print(f"self.args({len(self.args)}) {self.args}")
         tac_l = list()
         for ty, name in self.args:
             tac_l.append(TAC.tac_assign(AsmArg.build_arg(name), AsmArg(AsmTypes.UNKNOWN)))
@@ -227,7 +226,8 @@ class AsmMethod(DebugBase):
     def _debug_str(self) -> str:
         out = f"AsmMethod: {self.slotNumberIdx} {self.file_class_method_name} name {self.name} \
 {self.method_type} ret {self.return_type} [{self.file_class_name}] \
-args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level_str}"
+args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level_str} \
+insts total {self.get_insts_total()}"
         return out
 
     def _debug_vstr(self) -> str:
@@ -235,9 +235,13 @@ args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level_s
         return out
 
     def split_native_code_block(self):
-        assert self.code_blocks.level == CODE_LV.NATIVE
-        self.code_blocks = ControlFlow.split_native_code_block(self.code_blocks)
-        self.code_blocks.set_level(CODE_LV.NATIVE_BLOCK_SPLITED)
+        if (self.code_blocks.level == CODE_LV.NATIVE):
+            self.code_blocks = ControlFlow.split_native_code_block(self.code_blocks)
+        else:
+            Log.error(f"split_native_code_block: CODE_LV is NOT NATIVE, {self.code_blocks.level_str}")
+
+    def set_level(self, level):
+        self.code_blocks.set_level(level)
 
     def get_insts_total(self):
         return self.code_blocks.get_insts_total()
