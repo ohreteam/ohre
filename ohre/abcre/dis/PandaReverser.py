@@ -79,7 +79,7 @@ class PandaReverser(DebugBase):
                 DeadCodeElimination(meth)
                 PeepholeOptimization(meth)
                 new_insts_len = meth.get_insts_total()
-
+            DeadCodeElimination(meth)
             debug_out = f""
             for cb in meth.code_blocks:
                 debug_out += f" {cb}"

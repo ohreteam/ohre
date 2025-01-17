@@ -3,7 +3,7 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 from ohre.abcre.dis.AsmMethod import AsmMethod
 from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.enum.TACTYPE import TACTYPE
-from ohre.abcre.dis.lifting.LivingVar import _update_method_cbs_def_use_vars
+from ohre.abcre.dis.lifting.LivingVar import _update_cbs_def_use_vars_reverse
 from ohre.abcre.dis.TAC import TAC
 
 
@@ -11,7 +11,7 @@ def PeepholeOptimization(meth: AsmMethod):
     print(f"PHO-START {meth.name} {meth.level_str}")
     for cb in meth.code_blocks:
         PHO_cb(cb)
-        _update_method_cbs_def_use_vars(meth)
+        _update_cbs_def_use_vars_reverse(meth)
         PHO_cb_reverse(cb)  # e.g. a=xxx; b=a; a not used later
         print(f"PHO_cb-END {cb._debug_vstr()}")
     print(f"PHO-END {meth.name} {meth.level_str}")
@@ -59,11 +59,10 @@ def PHO_cb(cb: CodeBlock):
                 and curr_inst.args[0] == next_inst.args[0] and next_inst.args[0] in next_use):
             arg_in = curr_inst.args[1]  # var B
             if (arg_in.is_no_ref()):
-                print(f"d3bug HIT! curr_inst;next_inst {curr_inst}; {next_inst};")
                 next_inst.replace_use_var(curr_inst.args[0], arg_in)
-                print(f"d3bug HIT! curr_inst;next_inst {curr_inst}; {next_inst}; NEW")
                 new_idx2inst[i + 1] = next_inst
                 idx_old2new[i], idx_old2new[i + 1] = None, i + 1
+                NOT_change = False
     update_cb_insts(cb, idx_old2new, new_idx2inst)
 
 

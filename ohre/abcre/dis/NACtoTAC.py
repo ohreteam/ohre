@@ -2,6 +2,7 @@ import copy
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmArg import AsmArg
+from ohre.abcre.dis.AsmLiteral import AsmLiteral
 from ohre.abcre.dis.AsmMethod import AsmMethod
 from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.CodeBlocks import CodeBlocks
@@ -26,11 +27,11 @@ class NACtoTAC:
         if (nac.op == "lda"):  # Dynamic load accumulator from register
             return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[0]))
         if (nac.op == "lda.str"):  # Load accumulator from string constant pool
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.STR, value=nac.args[0]))
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.STR, value=utils.strip_sted_str(nac.args[0])))
         if (nac.op == "ldai"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.IMM, value=nac.args[0]))
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.IMM, value=int(nac.args[0], 16)))
         if (nac.op == "fldai"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.IMM, value=nac.args[0]))
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.IMM, value=float(nac.args[0])))
         if (nac.op == "sta"):  # Dynamic store accumulator
             return TAC.tac_assign(AsmArg.build_arg(nac.args[0]), AsmArg.ACC())
 
@@ -49,6 +50,8 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.NULL))
         if (nac.op == "ldundefined"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.UNDEFINED))
+        if (nac.op == "asyncfunctionenter"):
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.METHOD_OBJ, name="__asyncfunctionenter"))
         # === inst: constant object loaders # END
 
         # === inst: comparation instructions # START
@@ -123,11 +126,11 @@ class NACtoTAC:
 
         # === throw instructions # START
         if (nac.op == "throw"):
-            return TAC.tac_uncn_throw(exception=AsmArg.ACC(), log="TODO: split cb at uncn throw")
+            return TAC.tac_uncn_throw(exception=AsmArg.ACC())
         if (nac.op == "throw.undefinedifholewithname"):
             return TAC.tac_cond_throw(
                 para0=AsmArg.ACC(), para1=AsmArg(AsmTypes.HOLE), rop="==",
-                exception=AsmArg(AsmTypes.STR, value=nac.args[0]))
+                exception=AsmArg(AsmTypes.STR, value=utils.strip_sted_str(nac.args[0])))
         if (nac.op == "throw.ifsupernotcorrectcall"):
             error_type = int(nac.args[0], 16)
             tmp_var = AsmArg.build_arg("tmp0")
@@ -155,7 +158,7 @@ class NACtoTAC:
                 AsmArg(AsmTypes.ZERO),
                 "==")
         if (nac.op == "jmp"):
-            return TAC.tac_uncn_jmp(AsmArg(AsmTypes.LABEL, nac.args[0]))  # TODO: check label's existence
+            return TAC.tac_uncn_jmp(AsmArg(AsmTypes.LABEL, nac.args[0]))
         # === inst: jump operations # END
 
         # === inst: call runtime functions # START
@@ -244,7 +247,7 @@ class NACtoTAC:
 
         # === inst: object creaters # START
         if (nac.op == "createemptyobject"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.OBJECT, value=None))
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_object(None))
         if (nac.op == "newobjrange"):
             arg_len = int(nac.args[1], 16)
             call_addr = AsmArg.build_arg(nac.args[2])
@@ -255,15 +258,21 @@ class NACtoTAC:
                 paras.append(arg)
             return TAC.tac_call(ret_store_to=AsmArg.ACC(), call_addr=call_addr,
                                 arg_len=AsmArg(AsmTypes.IMM, value=int(nac.args[1], 16)), paras=paras)
+        if (nac.op == "createobjectwithbuffer"):
+            kv_dict = AsmLiteral.literal_get_key_value("{" + nac.args[1] + "}")
+            arg_obj = AsmArg.build_object(kv_dict)
+            print(f"createobjectwithbuffer-arg_obj {type(arg_obj)} {arg_obj}")
+            return TAC.tac_assign(AsmArg.ACC(), arg_obj, log="createobjectwithbuffer d3bug")
         # === inst: object creaters # END
 
         # === inst: object visitors # START
         if (nac.op == "ldobjbyname"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.OBJECT, name=nac.args[1], ref_base=AsmArg.ACC()))
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_object(
+                None, name=utils.strip_sted_str(nac.args[1]), ref_base=AsmArg.ACC()))
         if (nac.op == "tryldglobalbyname"):
             return TAC.tac_assign(
-                AsmArg.ACC(), AsmArg(AsmTypes.OBJECT, name=nac.args[1]),
-                log=f"arg0: {nac.args[0]} todo: check tryldglobalbyname, not throw now")
+                AsmArg.ACC(), AsmArg.build_object(None, name=utils.strip_sted_str(nac.args[1])),
+                log=f"// todo: check tryldglobalbyname, not throw now")
         if (nac.op == "ldexternalmodulevar"):
             index = int(nac.args[0], base=16)
             module_name = dis_file.get_external_module_name(index, meth.file_class_name)
@@ -273,11 +282,20 @@ class NACtoTAC:
                 Log.error(f"module load failed, nac: {nac}")
         if (nac.op == "copyrestargs"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arr(meth.get_args(), "arr_copyrestargs"))
-        if (nac.op == "stownbyname" or nac.op == "stobjbyname"):
-            dest = AsmArg(AsmTypes.FIELD, name=nac.args[1], ref_base=AsmArg.build_arg(nac.args[2]))
-            return TAC.tac_assign(dest, AsmArg.ACC(), log=f"stownbyname/stobjbyname arg2[arg1] = acc")
+        if (nac.op == "stownbyname" or nac.op == "stobjbyname"):  # arg2[arg1] = acc
+            dest = AsmArg(AsmTypes.FIELD, name=utils.strip_sted_str(nac.args[1]),
+                          ref_base=AsmArg.build_arg(utils.strip_sted_str(nac.args[2])))
+            return TAC.tac_assign(dest, AsmArg.ACC())
         if (nac.op == "stmodulevar"):
             pass  # TODO: global var related
+        if (nac.op == "asyncfunctionresolve"):
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=1), [AsmArg.build_arg(nac.args[0]), AsmArg.ACC()],
+                                ret_store_to=AsmArg.ACC(),
+                                call_addr=AsmArg(AsmTypes.METHOD, name="__asyncfunctionresolve"))
+        if (nac.op == "asyncfunctionreject"):
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=2), [AsmArg.build_arg(nac.args[0]), AsmArg.ACC()],
+                                ret_store_to=AsmArg.ACC(),
+                                call_addr=AsmArg(AsmTypes.METHOD, name="__asyncfunctionreject"))
         # === inst: object visitors # END
 
         # === inst: definition instuctions # START
@@ -286,21 +304,24 @@ class NACtoTAC:
                 AsmArg.ACC(),
                 AsmArg(AsmTypes.METHOD_OBJ, value=nac.args[1], paras_len=int(nac.args[2], 16)))
         if (nac.op == "definemethod"):
-            method_obj = AsmArg(AsmTypes.METHOD_OBJ, value=nac.args[1], paras_len=int(nac.args[2], 16))
-            inst0 = TAC.tac_assign(
-                AsmArg(AsmTypes.FIELD, name="HomeObject", ref_base=method_obj),
-                AsmArg.ACC(), log="definemethod inst0")
-            inst1 = TAC.tac_assign(
-                AsmArg.ACC(),
-                AsmArg(AsmTypes.METHOD_OBJ, value=nac.args[1], paras_len=int(nac.args[2], 16)),
-                log="definemethod inst1")
+            paras_len = int(nac.args[2], 16)
+            method_obj = AsmArg(AsmTypes.METHOD_OBJ, value=nac.args[1], paras_len=paras_len)
+            inst0 = TAC.tac_assign(AsmArg(AsmTypes.FIELD, name="HomeObject", ref_base=method_obj), AsmArg.ACC())
+            inst1 = TAC.tac_assign(AsmArg.ACC(),
+                                   AsmArg(AsmTypes.METHOD_OBJ, value=nac.args[1], paras_len=paras_len))
             return [inst0, inst1]
+        if (nac.op == "definegettersetterbyvalue"):
+            # definegettersetterbyvalue v1: object, v2: key of v1, v3: getter METHOD_OBJ, v4: setter METHOD_OBJ
+            # acc-in: bool, Whether to set a name for the accessor # acc-out:
+            # return [inst0, inst1]
+            pass
         # === inst: definition instuctions # END
 
         # === inst: iterator instructions # START
         if (nac.op == "definepropertybyname"):
-            dest = AsmArg(AsmTypes.FIELD, name=nac.args[1], ref_base=AsmArg.build_arg(nac.args[2]))
-            return TAC.tac_assign(dest, AsmArg.ACC(), log=f"stownbyname/stobjbyname arg2[arg1] = acc")
+            dest = AsmArg(AsmTypes.FIELD, name=utils.strip_sted_str(nac.args[1]),
+                          ref_base=AsmArg.build_arg(utils.strip_sted_str(nac.args[2])))
+            return TAC.tac_assign(dest, AsmArg.ACC())
         # === inst: iterator instructions # END
 
         if (nac.op == "nop"):

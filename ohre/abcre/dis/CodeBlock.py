@@ -32,6 +32,42 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
 
         self.use_vars: set[AsmArg] = None
         self.def_vars: set[AsmArg] = None
+        self.var2val: Dict[AsmArg, AsmArg] = dict()
+
+    def set_var2val(self, var2val: Dict[AsmArg, AsmArg]):
+        self.var2val = var2val
+
+    def get_var2val(self):
+        return self.var2val
+
+    def empty_var2val(self):
+        self.var2val = dict()
+
+    def get_all_prev_cbs_var2val(self, get_current_cb=False, definite_flag=True) -> Dict[AsmArg, AsmArg]:
+        # recursively
+        # definite_flag: if True, when var def more than 1 with different value, let var undef
+        ret = dict()
+        if (get_current_cb):
+            ret.update(self.get_var2val())
+        for cb in self.prev_cb_list:
+            prev_cbs_var2val = cb.get_all_prev_cbs_var2val(True, True)
+            for var, val in prev_cbs_var2val.items():
+                if (val is None and definite_flag):  # val maybe a return value of call
+                    if (val in ret.keys()): # val is None means val is undef-ed
+                        del ret[var]
+                    continue
+                if (val.is_unknown()):
+                    continue  # maybe a para of function
+                if (definite_flag):
+                    if (var not in ret.keys()):
+                        ret[var] = val
+                    elif (var in ret.keys() and ret[var] == val):  # same value
+                        continue
+                    else:  # var exist but not same val
+                        del ret[var]
+                else:
+                    ret[var] = val
+        return ret
 
     def get_slice_block(self, idx_start: int, idx_end: int):
         return CodeBlock(copy.deepcopy(self.insts[idx_start: idx_end]))

@@ -184,8 +184,8 @@ class AsmMethod(DebugBase):
         idx = utils.find_next_delimiter_single_line(line_concat, s_idx)
         ret.append(line_concat[s_idx: idx].strip())  # reserved number
 
-        s_idx = line_concat.find("\{", idx) + 1
-        e_idx = line_concat.rfind("\}")
+        s_idx = line_concat.find("{", idx) + 1
+        e_idx = line_concat.rfind("}")
         ret.append(line_concat[s_idx: e_idx])
         return ret, l_n_end
 

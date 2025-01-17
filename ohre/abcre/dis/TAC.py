@@ -206,7 +206,7 @@ throw {self.args[2]._debug_vstr()}"
             out += " //!UNKNOWN TAC"
         return out
 
-    def get_def_use(self) -> Tuple[set, set]:
+    def get_def_use(self) -> Tuple[set[AsmArg], set[AsmArg]]:
         def_vars, use_vars = set(), set()
         if (self.type == TACTYPE.ASSIGN):
             if (len(self.args) == 2):  # a=b # a[c] = b : b used, a,c def
@@ -218,6 +218,9 @@ throw {self.args[2]._debug_vstr()}"
                 use_vars.update(self.args[2].get_all_args_recursively())
             else:
                 Log.error(f"get_def_use ERROR {self.type_str} {self._debug_vstr()}")
+            # NOTE: if v10[xxx] = yyy, xxx is def-ed, v10 is def-ed, and v10 is also used here
+            if (self.args[0].is_has_ref()):
+                use_vars.update(self.args[0].ref_base.get_all_args_recursively())
         elif (self.type == TACTYPE.IMPORT):  # acc = module(x)
             if (len(self.args) == 2):
                 def_vars.update(self.args[0].get_all_args_recursively())
@@ -261,11 +264,9 @@ throw {self.args[2]._debug_vstr()}"
             for arg in self.args:
                 def_vars.update(arg.get_all_args_recursively())
                 use_vars.update(arg.get_all_args_recursively())
-        if (len(def_vars) > 1 and self.optype != TACTYPE.UNKNOWN):
-            print(f"DEBUG it! {len(def_vars)} {self._debug_vstr()} def_vars {def_vars} {use_vars}")
         return def_vars, use_vars
 
-    def get_def_use_list(self) -> Tuple[list, list]:
+    def get_def_use_list(self) -> Tuple[list[AsmArg], list[AsmArg]]:
         def_vars, use_vars = self.get_def_use()
         return list(def_vars), list(use_vars)
 
@@ -329,16 +330,17 @@ throw {self.args[2]._debug_vstr()}"
             i = 1
         else:
             i = 0
+        print(f"copy_propagation i={i} inst {self._debug_vstr()} var2val {var2val}")
         while (i < self.args_len):
-            if (self.args[i] in var2val.keys()):
+            if (utils.in_and_not_None(self.args[i], var2val)):
                 print(f"copy_propagation  {self.args[i]} => {var2val[self.args[i]]}; {self._debug_str()}")
                 self.args[i] = var2val[self.args[i]]
-            elif (include_ref and self.args[i].is_has_ref() and self.args[i].ref_base in var2val.keys()):
-                print(f"copy_propagation-ref {self.args[i]._debug_vstr()} => \
+            elif (include_ref and self.args[i].is_has_ref() and utils.in_and_not_None(self.args[i].ref_base, var2val)):
+                print(f"copy_propagation-ref {self.args[i].ref_base._debug_vstr()} => \
 {var2val[self.args[i].ref_base]._debug_vstr()}; {self._debug_str()}")
                 self.args[i].set_ref(var2val[self.args[i].ref_base])
             i += 1
         if (self.type == TACTYPE.CALL and self.this is not None):
-            if (self.this in var2val.keys()):
+            if (utils.in_and_not_None(self.this, var2val)):
                 print(f"copy_propagation-this  {self.this} => {var2val[self.this]}; {self._debug_str()}")
                 self.this = var2val[self.this]

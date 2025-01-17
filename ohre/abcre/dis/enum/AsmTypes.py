@@ -3,6 +3,7 @@ from ohre.abcre.enum.BaseEnum import BaseEnum
 
 class AsmTypes(BaseEnum):
     uint_types = {"u8", "u16", "u32", "u64"}
+    int_types = {"i8", "i16", "i32", "i64"}
     ACC = "acc"
     VAR = "v"  # e.g. v0, v1, v2
     ARG = "a"  # e.g. a0, a1, a2
@@ -18,7 +19,7 @@ class AsmTypes(BaseEnum):
     MODULE = "module"
     METHOD = "method"
     METHOD_OBJ = "method_obj"  # TODO: merge it with method?
-    FIELD = "field"  # TODO: actually some old tac builder should use field # property of a object
+    FIELD = "field"  # TODO: support assign inst with field
     OBJECT = "object"
     ARRAY = "array"  # value is also arg
     UNDEFINED = "undefined"
@@ -33,6 +34,14 @@ class AsmTypes(BaseEnum):
 
     @classmethod
     def is_uint(cls, type_name: str):
+        if (type_name in cls.uint_types):
+            return True
+        return False
+
+    @classmethod
+    def is_int(cls, type_name: str):
+        if (type_name in cls.int_types):
+            return True
         if (type_name in cls.uint_types):
             return True
         return False

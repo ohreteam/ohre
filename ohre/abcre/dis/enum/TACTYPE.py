@@ -14,3 +14,6 @@ class TACTYPE(BaseEnum):
     CALL = 21  # at least 2 args: acc, arg_len # def var: arg[0]
     LABEL = 22  # 1 arg: label's name # no def var
     UNKNOWN = 99
+    
+# NOTE: if a tac inst will def a arg, that def arg must be def-ed after all other args used
+# if a tac inst has define something, then it must store to arg[0], and all other args is read-only(means used)

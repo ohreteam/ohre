@@ -1,9 +1,16 @@
 import argparse
+import os
+import subprocess
 
 import ohre
-from ohre.abcre.dis.PandaReverser import PandaReverser
 from ohre.abcre.dis.DisFile import DisFile
+from ohre.abcre.dis.PandaReverser import PandaReverser
+from ohre.core import oh_app, oh_hap
 from ohre.misc import Log
+
+TMP_HAP_EXTRACT = "tmp_hap_extract"
+TMP_APP_EXTRACT = "tmp_app_extract"
+ARK_DISASM = "path2ark_disasm"
 
 if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo.py name.abc.dis
     Log.init_log("abcre", ".")
@@ -11,10 +18,18 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     ohre.set_log_print(True)
     Log.info(f"START {__file__}")
     parser = argparse.ArgumentParser()
-    parser.add_argument("dis_path", type=str, help="path to the dis file (ark_disasm-ed abc)")
+    parser.add_argument("in_path", type=str, help="path to the dis file (ark_disasm-ed abc) or hap/app")
     arg = parser.parse_args()
-    dis_path = arg.dis_path
-    dis_file: DisFile = DisFile(dis_path)
+    in_path = arg.in_path
+    if (in_path.endswith(".dis")):
+        dis_file: DisFile = DisFile(in_path)
+    elif (in_path.endswith(".hap")):
+        hhap = oh_hap.oh_hap(in_path)
+        hhap.extract_all_to(TMP_HAP_EXTRACT)
+        abc_file = os.path.join(TMP_HAP_EXTRACT, "ets", "modules.abc")
+        dis_file = f"{os.path.splitext(os.path.basename(in_path))[0]}.abc.dis" # os.path.splitext(file_name)[0]
+        result = subprocess.run([ARK_DISASM, abc_file, dis_file], capture_output=True, text=True)
+        dis_file: DisFile = DisFile(dis_file)
     panda_re: PandaReverser = PandaReverser(dis_file)
     print(f"> panda_re: {panda_re}")
 
@@ -45,6 +60,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     # tac_total = panda_re.get_insts_total()
     # for idx in range(panda_re.method_len()):
     #     panda_re._code_lifting_algorithms(method_id=idx)
+    #     print(f">> [{idx}/{panda_re.method_len()}] after lift {panda_re.dis_file.methods[idx]._debug_vstr()}")
     # todo_tac = panda_re.get_tac_unknown_count()
     # final_tac_total = panda_re.get_insts_total()
     # print(f"todo_tac {todo_tac}/{tac_total} {todo_tac/tac_total:.4f} / nac {nac_total} {todo_tac/nac_total:.4f}")
