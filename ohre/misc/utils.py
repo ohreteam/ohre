@@ -148,6 +148,21 @@ def hexstr(value) -> str:
     return ret
 
 
+def strip_sted_str(in_str: str, start_str: str = "\"", end_str: str = "\""):
+    out = in_str
+    if (in_str.startswith(start_str)):
+        out = out[len(start_str):]
+    if (in_str.endswith(end_str)):
+        out = out[:-len(end_str)]
+    return out
+
+
+def in_and_not_None(key, d: Dict):
+    if (key in d.keys() and d[key] is not None):
+        return True
+    return False
+
+
 if __name__ == "__main__":
     temp = """newlexenvwithname 0x2, { 5 [ i32:2, string:"4newTarget", i32:0, string:"this", i32:1, ]}"""
     idx = find_next_delimiter_single_line(temp, 17)
