@@ -34,6 +34,8 @@ class DisFile(DebugBase):
         self.methods: List[AsmMethod] = list()
         self.asmstrs: List[AsmString] = list()
         self._debug: List = None
+        self.lex_env: List = list()
+        self.cur_lex_level: int = 0
 
         lines: List[str] = list()
         if (isinstance(value, str)):
@@ -262,3 +264,22 @@ _debug {self._debug}"
                 Log.warn(f"get_external_module_name failed, hit_cnt {hit_cnt} \
 file_class_name {file_class_name}", True)
         return None
+
+    def get_lexical_environment_name(
+            self, slots: int, file_class_method_name: str = "") -> Union[str, None]:
+        slots_number = slots
+        lex_env_layer = [None] * slots_number
+        self.lex_env.append(lex_env_layer)
+        self.cur_lex_level += 1
+        return self.cur_lex_level
+
+    def get_lex_env(
+            self, lexenv_layer: int, slot_index: int
+    ):
+        fetch_lex_env_index = self.cur_lex_level - 1 - lexenv_layer
+        if fetch_lex_env_index >= 0:
+            return self.lex_env[fetch_lex_env_index][slot_index]
+        else:
+            Log.warn(f"get_lex_env failed, cur_lex {self.cur_lex_level}.\
+                     Wanted fetch level {fetch_lex_env_index}")
+            return None
