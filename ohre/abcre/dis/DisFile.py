@@ -40,8 +40,7 @@ class DisFile(DebugBase):
         lines: List[str] = list()
         if (isinstance(value, str)):
             file = open(value, "r", encoding="utf-8", errors="ignore")
-            for line in file:
-                lines.append(line)
+            lines = file.readlines()
             file.close()
         else:
             Log.error(f"DisFile init ERROR: value type NOT supported, {type(value)} {value}")
@@ -265,7 +264,7 @@ _debug {self._debug}"
 file_class_name {file_class_name}", True)
         return None
 
-    def get_lexical_environment_name(
+    def create_lexical_environment(
             self, slots: int, file_class_method_name: str = "") -> Union[str, None]:
         slots_number = slots
         lex_env_layer = [None] * slots_number

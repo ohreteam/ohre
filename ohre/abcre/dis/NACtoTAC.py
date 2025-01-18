@@ -265,7 +265,7 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg.ACC(), arg_obj, log="createobjectwithbuffer d3bug")
         if (nac.op == "newlexenv"):
             slots = int(nac.args[0], base=16)
-            cur_lexenv_level = dis_file.get_lexical_environment_name(slots, meth.file_class_method_name)
+            cur_lexenv_level = dis_file.create_lexical_environment(slots, meth.file_class_method_name)
             return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV, value=cur_lexenv_level))
         # === inst: object creaters # END
 
