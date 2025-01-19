@@ -286,7 +286,8 @@ file_class_name {file_class_name}", True)
                     variable_name = variable_name[1].replace('"','')
                 else:
                     Log.warn(f"newlexenvwithname failed. literal id format is {literal_content[cnt+1]}")
-                lex_env_layer[i] = f"[variable: {variable_name} value: {variable_value}]"
+                # lex_env_layer[i] = f"[variable: {variable_name} value: {variable_value}]"
+                lex_env_layer[i] = variable_name
                 cnt += 2
         self.lex_env.append(lex_env_layer)
         self.cur_lex_level += 1
