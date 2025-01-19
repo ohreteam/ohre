@@ -265,7 +265,7 @@ file_class_name {file_class_name}", True)
         return None
 
     def create_lexical_environment(
-            self, slots: int, file_class_method_name: str = "", literal_id=None) -> Union[str, None]:
+            self, slots: int, literal_id=None) -> Union[str, None]:
         slots_number = slots
         lex_env_layer = [None] * slots_number
         if literal_id:
@@ -281,12 +281,16 @@ file_class_name {file_class_name}", True)
                     variable_value = literal_value[1].replace('"', '')
                 else:
                     Log.warn(f"newlexenvwithname failed. literal id format is {literal_content[cnt]}")
-                variable_name = literal_content[cnt+1].strip()
-                lex_env_layer[i] = variable_value
+                variable_name = literal_content[cnt+1].strip().split(':')
+                if len(variable_name)==2:
+                    variable_name = variable_name[1].replace('"','')
+                else:
+                    Log.warn(f"newlexenvwithname failed. literal id format is {literal_content[cnt+1]}")
+                lex_env_layer[i] = f"[variable: {variable_name} value: {variable_value}]"
                 cnt += 2
         self.lex_env.append(lex_env_layer)
         self.cur_lex_level += 1
-        return self.cur_lex_level
+        return self.lex_env[-1]
 
     def get_lex_env(
             self, lexenv_layer: int, slot_index: int
