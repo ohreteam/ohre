@@ -52,6 +52,9 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.UNDEFINED))
         if (nac.op == "asyncfunctionenter"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.METHOD_OBJ, name="__asyncfunctionenter"))
+        if (nac.op == 'poplexenv'):
+            dis_file.pop_lex_env()
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV))
         # === inst: constant object loaders # END
 
         # === inst: comparation instructions # START
@@ -263,6 +266,15 @@ class NACtoTAC:
             arg_obj = AsmArg.build_object(kv_dict)
             print(f"createobjectwithbuffer-arg_obj {type(arg_obj)} {arg_obj}")
             return TAC.tac_assign(AsmArg.ACC(), arg_obj, log="createobjectwithbuffer d3bug")
+        if (nac.op == "newlexenv"):
+            slots = int(nac.args[0], base=16)
+            cur_lex_env = dis_file.create_lexical_environment(slots)
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV, value=str(cur_lex_env)))
+        if (nac.op == "newlexenvwithname"):
+            slots = int(nac.args[0], base=16)
+            literal_id = nac.args[1]
+            cur_lex_env = dis_file.create_lexical_environment(slots,literal_id=literal_id)
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV, value=str(cur_lex_env)))
         # === inst: object creaters # END
 
         # === inst: object visitors # START
@@ -296,6 +308,16 @@ class NACtoTAC:
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=2), [AsmArg.build_arg(nac.args[0]), AsmArg.ACC()],
                                 ret_store_to=AsmArg.ACC(),
                                 call_addr=AsmArg(AsmTypes.METHOD, name="__asyncfunctionreject"))
+        if (nac.op == "stlexvar"):
+            lexenv_layer = int(nac.args[0], base=16)
+            slot_index = int(nac.args[1], base=16)
+            dest = AsmArg(AsmTypes.LEXENV, value=[lexenv_layer, slot_index])
+            return TAC.tac_assign(dest, AsmArg.ACC())
+        if (nac.op == 'ldlexvar'):
+            lexenv_layer = int(nac.args[0], base=16)
+            slot_index = int(nac.args[1], base=16)
+            lex_value = dis_file.get_lex_env(lexenv_layer, slot_index)
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV, value=lex_value))
         # === inst: object visitors # END
 
         # === inst: definition instuctions # START

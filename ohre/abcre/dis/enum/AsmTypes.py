@@ -24,6 +24,7 @@ class AsmTypes(BaseEnum):
     ARRAY = "array"  # value is also arg
     UNDEFINED = "undefined"
     HOLE = "hole"
+    LEXENV = "lexenv"
     UNKNOWN = "unknown"  # default value in this proj # maybe same as Any
 
     def __init__(self):

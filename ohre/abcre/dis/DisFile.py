@@ -34,12 +34,13 @@ class DisFile(DebugBase):
         self.methods: List[AsmMethod] = list()
         self.asmstrs: List[AsmString] = list()
         self._debug: List = None
+        self.lex_env: List = list()
+        self.cur_lex_level: int = 0
 
         lines: List[str] = list()
         if (isinstance(value, str)):
             file = open(value, "r", encoding="utf-8", errors="ignore")
-            for line in file:
-                lines.append(line)
+            lines = file.readlines()
             file.close()
         else:
             Log.error(f"DisFile init ERROR: value type NOT supported, {type(value)} {value}")
@@ -262,3 +263,50 @@ _debug {self._debug}"
                 Log.warn(f"get_external_module_name failed, hit_cnt {hit_cnt} \
 file_class_name {file_class_name}", True)
         return None
+
+    def create_lexical_environment(
+            self, slots: int, literal_id=None) -> Union[str, None]:
+        slots_number = slots
+        lex_env_layer = [None] * slots_number
+        if literal_id:
+            print(literal_id)
+            left_s = literal_id.find('[')
+            right_s = literal_id.find(']')
+            literal_content = literal_id[left_s:right_s+1]
+            literal_content = literal_content.split(',')
+            cnt = 0
+            for i in range(slots_number):
+                literal_value = literal_content[cnt].strip().split(':')
+                if len(literal_value) == 2:
+                    variable_value = literal_value[1].replace('"', '')
+                else:
+                    Log.warn(f"newlexenvwithname failed. literal id format is {literal_content[cnt]}")
+                variable_name = literal_content[cnt+1].strip().split(':')
+                if len(variable_name)==2:
+                    variable_name = variable_name[1].replace('"','')
+                else:
+                    Log.warn(f"newlexenvwithname failed. literal id format is {literal_content[cnt+1]}")
+                # lex_env_layer[i] = f"[variable: {variable_name} value: {variable_value}]"
+                lex_env_layer[i] = variable_name
+                cnt += 2
+        self.lex_env.append(lex_env_layer)
+        self.cur_lex_level += 1
+        return self.lex_env[-1]
+
+    def get_lex_env(
+            self, lexenv_layer: int, slot_index: int
+    ):
+        fetch_lex_env_index = self.cur_lex_level - 1 - lexenv_layer
+        if fetch_lex_env_index >= 0:
+            return self.lex_env[fetch_lex_env_index][slot_index]
+        else:
+            Log.warn(f"get_lex_env failed, cur_lex {self.cur_lex_level}.\
+                     Wanted fetch level {fetch_lex_env_index}")
+            return None
+
+    def pop_lex_env(self):
+        if len(self.lex_env) == 0:
+            Log.warn(f"pop_lex_env failed, self.lex_env is empty")
+        else:
+            self.lex_env.pop()
+            self.cur_lex_level -= 1
