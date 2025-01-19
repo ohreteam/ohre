@@ -265,9 +265,25 @@ file_class_name {file_class_name}", True)
         return None
 
     def create_lexical_environment(
-            self, slots: int, file_class_method_name: str = "") -> Union[str, None]:
+            self, slots: int, file_class_method_name: str = "", literal_id=None) -> Union[str, None]:
         slots_number = slots
         lex_env_layer = [None] * slots_number
+        if literal_id:
+            print(literal_id)
+            left_s = literal_id.find('[')
+            right_s = literal_id.find(']')
+            literal_content = literal_id[left_s:right_s+1]
+            literal_content = literal_content.split(',')
+            cnt = 0
+            for i in range(slots_number):
+                literal_value = literal_content[cnt].strip().split(':')
+                if len(literal_value) == 2:
+                    variable_value = literal_value[1].replace('"', '')
+                else:
+                    Log.warn(f"newlexenvwithname failed. literal id format is {literal_content[cnt]}")
+                variable_name = literal_content[cnt+1].strip()
+                lex_env_layer[i] = variable_value
+                cnt += 2
         self.lex_env.append(lex_env_layer)
         self.cur_lex_level += 1
         return self.cur_lex_level
@@ -282,3 +298,10 @@ file_class_name {file_class_name}", True)
             Log.warn(f"get_lex_env failed, cur_lex {self.cur_lex_level}.\
                      Wanted fetch level {fetch_lex_env_index}")
             return None
+
+    def pop_lex_env(self):
+        if len(self.lex_env) == 0:
+            Log.warn(f"pop_lex_env failed, self.lex_env is empty")
+        else:
+            self.lex_env.pop()
+            self.cur_lex_level -= 1
