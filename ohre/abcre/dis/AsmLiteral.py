@@ -55,7 +55,7 @@ class AsmLiteral(DebugBase):
         if 'method' in element_content and 'method_affiliate' in element_content:
             cnt = 0
             while cnt < len(array_split_list):
-                if 'string' in array_split_list[cnt]:
+                if 'string' in array_split_list[cnt] and 'method' in array_split_list[cnt+1]:
                     method_string = array_split_list[cnt].split(':')[
                         1].strip()[1:-1]
                     method_name = array_split_list[cnt + 1].split(':')[1].strip()
@@ -63,6 +63,13 @@ class AsmLiteral(DebugBase):
                     method_dict[method_string] = {
                         'method': method_name, 'method_affiliate': method_aff}
                     cnt += 3
+                elif 'string' in array_split_list[cnt] and 'method' not in array_split_list[cnt+1]:
+                    variable_string = array_split_list[cnt].split(':')[1].replace('"', '').strip()
+                    variable_value = array_split_list[cnt+1].split(':')[1].replace('"', '').strip()
+                    if 'null_value' in array_split_list[cnt+1]:
+                        variable_value = 'null_value'
+                    method_dict[variable_string] = variable_value
+                    cnt += 2
                 else:
                     cnt += 1
             method_amount = array_split_list[-1].split(':')[1]
@@ -73,9 +80,10 @@ class AsmLiteral(DebugBase):
             if element_amount % 2 == 1:
                 array_len -= 1
             while cnt < array_len:
-                variable_string = array_split_list[cnt].split(':')[1].strip()
-                if '"' in variable_string:
-                    variable_string = variable_string.replace('"', '')
+                variable_string = array_split_list[cnt].split(':')[1].strip().replace('"', '')
+                if len(variable_string) == 0:
+                    cnt += 2
+                    continue
                 variable_value = array_split_list[cnt + 1]
                 if 'null_value' in variable_value:
                     variable_value = 'null_value'

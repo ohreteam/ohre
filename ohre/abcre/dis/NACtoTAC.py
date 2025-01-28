@@ -285,6 +285,12 @@ class NACtoTAC:
             return TAC.tac_assign(
                 AsmArg.ACC(), AsmArg.build_object(None, name=utils.strip_sted_str(nac.args[1])),
                 log=f"// todo: check tryldglobalbyname, not throw now")
+        if (nac.op == "trystglobalbyname"):
+            return TAC.tac_assign(
+                AsmArg.build_object(None, name=utils.strip_sted_str(nac.args[1])),
+                AsmArg.ACC(),
+                log = f"// todo: check trystglobalbyname, not throw now"
+            )
         if (nac.op == "ldexternalmodulevar"):
             index = int(nac.args[0], base=16)
             module_name = dis_file.get_external_module_name(index, meth.file_class_name)
