@@ -21,7 +21,7 @@ class AsmArg(DebugBase):
             Log.error(f"AsmArg value is NOT valid, type {self.type_str} value {type(value)} {value}")
 
     @property
-    def len(self):
+    def len(self) -> int:
         if (len(self.name) > 0):
             return len(self.name)
         return len(self.type)
@@ -70,7 +70,7 @@ class AsmArg(DebugBase):
                 return True
         return False
 
-    def set_object_key_value(self, key: str, value: str, create=False):
+    def set_object_key_value(self, key: str, value: str, create=False) -> bool:
         if (self.type != AsmTypes.OBJECT):
             return False
         for arg in self.value:
@@ -258,7 +258,7 @@ class AsmArg(DebugBase):
             if (len(self.name) != 0 or (not isinstance(self.value, str))):
                 Log.error(f"[ArgCC] A str with name: {self.name} or value not str: {type(self.value)} {self.value}")
 
-    def _debug_str_obj(self, detail: bool = False, print_ref: bool = True):
+    def _debug_str_obj(self, detail: bool = False, print_ref: bool = True) -> str:
         out = "obj{"
         if (print_ref and self.ref_base is not None):
             out += f"{self.ref_base}->"
@@ -275,7 +275,7 @@ class AsmArg(DebugBase):
             out += "{" + self.value + "}"
         return out + "}"
 
-    def _debug_str(self, print_ref: bool = True):
+    def _debug_str(self, print_ref: bool = True) -> str:
         self._common_error_check()
 
         if (self.type == AsmTypes.OBJECT):
@@ -301,7 +301,7 @@ class AsmArg(DebugBase):
             out += f"(paras_len={self.paras_len})"
         return out
 
-    def _debug_vstr(self, print_ref: bool = True):
+    def _debug_vstr(self, print_ref: bool = True) -> str:
         self._common_error_check()
         out = ""
         if (self.type == AsmTypes.OBJECT):

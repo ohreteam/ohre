@@ -12,7 +12,7 @@ from ohre.abcre.dis.TAC import TAC
 from ohre.misc import Log, utils
 
 
-def is_label_line(s: str):  # single str in a single line endswith ":", maybe label?
+def is_label_line(s: str) -> bool:  # single str in a single line endswith ":", maybe label?
     s = s.strip()
     if (s.endswith(":")):
         if (len(s.split(" ")) == 1):  # single str in a single line endswith ":", maybe label?
@@ -20,13 +20,13 @@ def is_label_line(s: str):  # single str in a single line endswith ":", maybe la
     return False
 
 
-def is_method_end_line(s: str):
+def is_method_end_line(s: str) -> bool:
     if (s.strip() == "}"):  # process END
         return True
     return False
 
 
-def find_line_end(lines: List[str], l_n: int):
+def find_line_end(lines: List[str], l_n: int) -> int:
     l_n_end = l_n + 1
     while (l_n_end < len(lines)):
         if (is_label_line(lines[l_n_end]) or is_method_end_line(lines[l_n_end])):
@@ -84,11 +84,11 @@ class AsmMethod(DebugBase):
         return CODE_LV.get_code_name(self.code_blocks.level)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.method_name
 
     @property
-    def inst_len(self):
+    def inst_len(self) -> int:
         return self.get_insts_total()
 
     def _insert_variable_virtual_block(self):
@@ -257,7 +257,7 @@ args({len(self.args)}) {args_out} cbs({len(self.code_blocks)}) {self.level_str} 
     def set_level(self, level):
         self.code_blocks.set_level(level)
 
-    def get_insts_total(self):
+    def get_insts_total(self) -> int:
         return self.code_blocks.get_insts_total()
 
     def get_args(self, start_pos: int = 0) -> List[AsmArg]:

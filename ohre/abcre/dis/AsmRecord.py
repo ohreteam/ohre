@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
-from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.misc import Log
 
 
@@ -42,7 +42,7 @@ class AsmRecord(DebugBase):
             self.file_name = self.file_class_name[:file_postfix_idx + len(".ets")].strip()
             self.class_name = self.file_class_name[file_postfix_idx + len(".ets") + 1:].strip()
 
-    def _debug_str(self):
+    def _debug_str(self) -> str:
         out = f"AsmRecord: {self.file_class_name} file_name({len(self.file_name)}) {self.file_name} \
 class_name({len(self.class_name)}) {self.class_name}: "
         for field_name, (ty, value) in self.fields.items():
@@ -52,7 +52,7 @@ class_name({len(self.class_name)}) {self.class_name}: "
                 out += f"{field_name}({ty}) {value}; "
         return out
 
-    def _debug_vstr(self):
+    def _debug_vstr(self) -> str:
         return self._debug_str()
 
 

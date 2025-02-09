@@ -20,7 +20,7 @@ class CodeBlocks(DebugBase):  # NAC block contained, build control flow graph in
         return iter(self.blocks)
 
     @property
-    def len(self):
+    def len(self) -> int:
         return len(self.blocks)
 
     @property

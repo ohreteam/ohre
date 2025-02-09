@@ -7,7 +7,7 @@ from ohre.abcre.dis.enum.TACTYPE import TACTYPE
 from ohre.misc import Log, utils
 
 
-def in_and_not_None(key, d: Dict):
+def in_and_not_None(key, d: Dict) -> bool:
     if (key in d.keys() and d[key] is not None):
         if (isinstance(d[key], AsmArg)):
             if (not d[key].is_unknown()):
@@ -36,7 +36,7 @@ class TAC(DebugBase):  # Three Address Code
         self.this: AsmArg = this  # this pointer, maybe point to a object/module
 
     @property
-    def type(self):
+    def type(self) -> TACTYPE:
         return self.optype
 
     @property

@@ -37,7 +37,7 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
     def set_var2val(self, var2val: Dict[AsmArg, AsmArg]):
         self.var2val = var2val
 
-    def get_var2val(self):
+    def get_var2val(self) -> Dict[AsmArg, AsmArg]:
         return self.var2val
 
     def empty_var2val(self):

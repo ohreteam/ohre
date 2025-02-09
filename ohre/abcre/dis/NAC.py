@@ -21,7 +21,7 @@ class NAC(DebugBase):  # N Address Code
         for i in range(1, len(op_args)):
             self.args.append(op_args[i])
 
-    def _debug_str(self):
+    def _debug_str(self) -> str:
         out = f"{self.op} "
         for i in range(len(self.args)):
             if (i == len(self.args) - 1):
@@ -30,7 +30,7 @@ class NAC(DebugBase):  # N Address Code
                 out += f"{self.args[i]}, "
         return out
 
-    def _debug_vstr(self):
+    def _debug_vstr(self) -> str:
         out = f"({NACTYPE.get_code_name(self.type)})".ljust(12, " ") + f"{self.op} "
         for i in range(len(self.args)):
             if (i == len(self.args) - 1):
