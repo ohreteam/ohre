@@ -82,14 +82,14 @@ class AsmArg(DebugBase):
     def set_ref(self, ref_ed_arg):
         self.ref_base = ref_ed_arg
 
-    def is_has_ref(self) -> bool:
+    def has_ref(self) -> bool:
         if (self.ref_base is not None):
             return True
         else:
             return False
 
     def is_no_ref(self) -> bool:
-        return not self.is_has_ref()
+        return not self.has_ref()
 
     @classmethod
     def build_arg(cls, s: str):  # return VAR v0 v1... or ARG a0 a1...
@@ -109,12 +109,16 @@ class AsmArg(DebugBase):
         Log.error(f"build_arg failed: s={s}")
 
     @classmethod
-    def build_acc(cls):  # return AsmArg(AsmTypes.ACC)
+    def build_acc(cls):
         return cls.ACC()
 
     @classmethod
-    def ACC(cls):  # return AsmArg(AsmTypes.ACC)
+    def ACC(cls):
         return AsmArg(AsmTypes.ACC)
+
+    @classmethod
+    def NULL(cls):
+        return AsmArg(AsmTypes.NULL)
 
     @classmethod
     def build_arr(cls, args: List, name: str = ""):  # element of args should be AsmArg
@@ -122,7 +126,7 @@ class AsmArg(DebugBase):
 
     @classmethod
     def build_object(cls, in_kv: Dict = None, name: str = "", ref_base=None):  # element of args should be AsmArg
-        obj_value_l = list()
+        obj_value_l: List[AsmArg] = list()
         if (isinstance(in_kv, Iterable)):
             for k, v in in_kv.items():
                 if (isinstance(v, int)):
@@ -130,7 +134,7 @@ class AsmArg(DebugBase):
                 elif (isinstance(v, float)):
                     obj_value_l.append(AsmArg(AsmTypes.IMM, name=k, value=v))
                 elif (isinstance(v, str)):
-                    obj_value_l.append(AsmArg(AsmTypes.STR, name=k, value=v))
+                    obj_value_l.append(AsmArg(AsmTypes.FIELD, name=k, value=v))
                 elif (v is None):
                     obj_value_l.append(AsmArg(AsmTypes.UNDEFINED, name=k, value=None))
                 else:
@@ -181,6 +185,10 @@ class AsmArg(DebugBase):
             if (isinstance(self.value, Iterable)):
                 return True
             return False
+        if (self.type == AsmTypes.FIELD):
+            if (isinstance(self.value, str) or isinstance(self.value, None)):
+                return True
+            return False
         if (self.type == AsmTypes.ARRAY):
             if (isinstance(self.value, list)):
                 return True
@@ -203,6 +211,11 @@ class AsmArg(DebugBase):
 
     def is_field(self) -> bool:
         if (self.type == AsmTypes.FIELD):
+            return True
+        return False
+
+    def is_null(self) -> bool:
+        if (self.type == AsmTypes.NULL):
             return True
         return False
 
@@ -230,8 +243,8 @@ class AsmArg(DebugBase):
 
     def _common_error_check(self):
         if (self.type == AsmTypes.FIELD):
-            if (self.ref_base is None or len(self.name) == 0):
-                Log.error(f"[ArgCC] A filed without ref_base or name len==0: name {self.name} len {len(self.name)}")
+            if (len(self.name) == 0):
+                Log.error(f"[ArgCC] A filed name len==0: name {self.name} len {len(self.name)}")
         if (self.type == AsmTypes.MODULE):
             if (len(self.name) == 0):
                 Log.error(f"[ArgCC] A module without name: len {len(self.name)}")
@@ -241,10 +254,13 @@ class AsmArg(DebugBase):
         if (self.type == AsmTypes.LABEL):
             if (len(self.name) == 0):
                 Log.error(f"[ArgCC] A label without name: len {len(self.name)}")
+        if (self.type == AsmTypes.STR):
+            if (len(self.name) != 0 or (not isinstance(self.value, str))):
+                Log.error(f"[ArgCC] A str with name: {self.name} or value not str: {type(self.value)} {self.value}")
 
-    def _debug_str_obj(self, detail=False):
-        out = ""
-        if (self.ref_base is not None):
+    def _debug_str_obj(self, detail: bool = False, print_ref: bool = True):
+        out = "obj{"
+        if (print_ref and self.ref_base is not None):
             out += f"{self.ref_base}->"
         if (detail):
             out += f"OBJ:{self.name}"
@@ -257,13 +273,17 @@ class AsmArg(DebugBase):
             out += "}"
         elif (self.value is not None):
             out += "{" + self.value + "}"
-        return out
+        return out + "}"
 
     def _debug_str(self, print_ref: bool = True):
         self._common_error_check()
-        out = ""
+
         if (self.type == AsmTypes.OBJECT):
-            return self._debug_str_obj()
+            return self._debug_str_obj(print_ref=print_ref)
+        if (self.type == AsmTypes.STR and self.value is not None):
+            return f"\"{self.value}\""
+
+        out = ""
         if (self.type == AsmTypes.FIELD):
             if (print_ref and self.ref_base is not None):
                 out += f"{self.ref_base}[{self.name}]"

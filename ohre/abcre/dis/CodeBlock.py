@@ -46,27 +46,22 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
     def get_all_prev_cbs_var2val(self, get_current_cb=False, definite_flag=True) -> Dict[AsmArg, AsmArg]:
         # recursively
         # definite_flag: if True, when var def more than 1 with different value, let var undef
+        assert definite_flag == True  # TODO: support definite_flag==False in future
         ret = dict()
         if (get_current_cb):
             ret.update(self.get_var2val())
         for cb in self.prev_cb_list:
             prev_cbs_var2val = cb.get_all_prev_cbs_var2val(True, True)
             for var, val in prev_cbs_var2val.items():
-                if (val is None and definite_flag):  # val maybe a return value of call
-                    if (val in ret.keys()): # val is None means val is undef-ed
-                        del ret[var]
-                    continue
-                if (val.is_unknown()):
-                    continue  # maybe a para of function
                 if (definite_flag):
                     if (var not in ret.keys()):
                         ret[var] = val
                     elif (var in ret.keys() and ret[var] == val):  # same value
                         continue
-                    else:  # var exist but not same val
-                        del ret[var]
+                    else:
+                        ret[var] = None  # None means value conflicted, treat this var as undef-ed
                 else:
-                    ret[var] = val
+                    pass
         return ret
 
     def get_slice_block(self, idx_start: int, idx_end: int):
@@ -135,15 +130,19 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
     def len(self):
         return self.get_insts_len()
 
+    @property
+    def inst_len(self):
+        return self.len
+
     def __len__(self) -> int:
         return self.get_insts_len()
 
     def _get_short_str_in_list(self, l: List) -> str:
         if (len(l) == 0):
             return ""
-        out = f"CB({len(l[0].insts)})"
+        out = f"{len(l[0].insts)}"
         for i in range(1, len(l)):
-            out += f",CB({len(l[i].insts)})"
+            out += f",{len(l[i].insts)}"
         return out
 
     def _debug_str(self) -> str:
@@ -162,7 +161,7 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
         out = self._debug_str() + "\n"
         for i in range(len(self.insts)):
             if (self.insts[i].type == TACTYPE.LABEL):
-                out += f"{i}".ljust(4, "-") + f"{self.insts[i]._debug_str()}\n"
+                out += f"{i}".ljust(3, "-") + f" {self.insts[i]._debug_str()}\n"
             else:
                 out += f"{i}".ljust(4, " ") + f"{self.insts[i]._debug_str()}\n"
         return out.strip()

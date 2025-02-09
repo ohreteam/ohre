@@ -1,4 +1,3 @@
-import copy
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 import yaml
@@ -155,12 +154,6 @@ def strip_sted_str(in_str: str, start_str: str = "\"", end_str: str = "\""):
     if (in_str.endswith(end_str)):
         out = out[:-len(end_str)]
     return out
-
-
-def in_and_not_None(key, d: Dict):
-    if (key in d.keys() and d[key] is not None):
-        return True
-    return False
 
 
 if __name__ == "__main__":

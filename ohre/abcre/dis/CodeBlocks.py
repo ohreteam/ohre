@@ -1,9 +1,8 @@
-import copy
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
-from ohre.abcre.dis.enum.CODE_LV import CODE_LV
 from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.abcre.dis.enum.CODE_LV import CODE_LV
 from ohre.misc import Log, utils
 
 
@@ -13,7 +12,7 @@ class CodeBlocks(DebugBase):  # NAC block contained, build control flow graph in
         self.IR_level = ir_lv  # defaul: from native
 
         if (isinstance(in_l[0], CodeBlock)):  # CodeBlock in list
-            self.blocks = copy.deepcopy(in_l)
+            self.blocks = in_l
         else:  # maybe list(str) in list # anyway, try init CodeBlock using element(asm codea str list) in list
             self.blocks: List[CodeBlock] = [CodeBlock(in_l)]
 
@@ -32,7 +31,11 @@ class CodeBlocks(DebugBase):  # NAC block contained, build control flow graph in
     def level_str(self) -> str:
         return CODE_LV.get_code_name(self.IR_level)
 
-    def set_level(self, level):
+    @property
+    def inst_len(self):
+        return self.get_insts_total()
+
+    def set_level(self, level) -> bool:
         if (level >= self.IR_level):
             self.IR_level = level
             return True
@@ -44,7 +47,7 @@ class CodeBlocks(DebugBase):  # NAC block contained, build control flow graph in
         return len(self.blocks)
 
     def _debug_str(self) -> str:
-        out = f"CodeBlocks: blocks({len(self.blocks)}) {self.level_str}"
+        out = f"CodeBlocks: blocks({len(self.blocks)}) {self.level_str} insts-{self.inst_len}"
         return out
 
     def _debug_vstr(self) -> str:

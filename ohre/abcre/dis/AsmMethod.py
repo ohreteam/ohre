@@ -72,6 +72,10 @@ class AsmMethod(DebugBase):
         assert self.code_blocks is not None
 
     @property
+    def module_name(self) -> str:
+        return self.file_class_name
+
+    @property
     def level(self):
         return self.code_blocks.level
 
@@ -82,6 +86,10 @@ class AsmMethod(DebugBase):
     @property
     def name(self):
         return self.method_name
+
+    @property
+    def inst_len(self):
+        return self.get_insts_total()
 
     def _insert_variable_virtual_block(self):
         tac_l = list()
@@ -224,10 +232,16 @@ class AsmMethod(DebugBase):
         return ret, l_n + 1
 
     def _debug_str(self) -> str:
+        args_out = "("
+        for i in range(len(self.args) - 1):
+            ty, name = self.args[i]
+            args_out += f"{ty}:{name}, "
+        if (len(self.args)):
+            ty, name = self.args[-1]
+            args_out += f"{ty}:{name})"
         out = f"AsmMethod: {self.slotNumberIdx} {self.file_class_method_name} name {self.name} \
 {self.method_type} ret {self.return_type} [{self.file_class_name}] \
-args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level_str} \
-insts total {self.get_insts_total()}"
+args({len(self.args)}) {args_out} cbs({len(self.code_blocks)}) {self.level_str} insts-{self.inst_len}"
         return out
 
     def _debug_vstr(self) -> str:

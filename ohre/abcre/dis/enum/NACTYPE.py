@@ -104,10 +104,6 @@ class NACTYPE(BaseEnum):
 
 if __name__ == "__main__":
     NACTYPE.init_from_ISAyaml(os.path.join(os.path.dirname(os.path.abspath(__file__)), "isa.yaml"))
-    # for inst in [
-    #     "mov", "return", "ldobjbyname", "jeqz", "jnez", "jstricteq", "jnstricteq", "throw", "throw.notexists",
-    #         "throw.ifnotobject"]:
-    #     print(f"inst {inst}: {NACTYPE.get_code_name(NACTYPE.get_NAC_type(inst))}")
     print(f"op total count: {len(NACTYPE.isa.opstr2infod)}")
     for inst in NACTYPE.isa.opstr2infod.keys():
         print(f"inst {inst}: {NACTYPE.get_code_name(NACTYPE.get_NAC_type(inst))}")
