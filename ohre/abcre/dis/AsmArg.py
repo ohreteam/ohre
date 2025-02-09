@@ -188,6 +188,10 @@ class AsmArg(DebugBase):
         if (self.type == AsmTypes.NULL or self.type == AsmTypes.INF or self.type == AsmTypes.NAN
                 or self.type == AsmTypes.UNDEFINED or self.type == AsmTypes.HOLE):
             return False
+        if (self.type == AsmTypes.LEXENV):
+            if (isinstance(self.value, list)):
+                return True
+            return False
         Log.error(f"is_value_valid NOT supported logic type {self.type_str} value {type(self.value)} {self.value}")
         return True
 
@@ -241,6 +245,9 @@ class AsmArg(DebugBase):
         if (self.type == AsmTypes.LABEL):
             if (len(self.name) == 0):
                 Log.error(f"[ArgCC] A label without name: len {len(self.name)}")
+        if (self.type == AsmTypes.LEXENV):
+            if (len(self.name) == 0):
+                Log.error(f"[ArgCC] A Lexenv without name: len {len(self.name)}")
 
     def _debug_str_obj(self, detail=False):
         out = ""

@@ -53,8 +53,9 @@ class NACtoTAC:
         if (nac.op == "asyncfunctionenter"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.METHOD_OBJ, name="__asyncfunctionenter"))
         if (nac.op == 'poplexenv'):
-            dis_file.pop_lex_env()
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV))
+            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
+                                paras=[AsmArg(AsmTypes.LEXENV, name='__poplexenv', value=[None])],
+                                )
         # === inst: constant object loaders # END
 
         # === inst: comparation instructions # START
@@ -268,13 +269,15 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg.ACC(), arg_obj, log="createobjectwithbuffer d3bug")
         if (nac.op == "newlexenv"):
             slots = int(nac.args[0], base=16)
-            cur_lex_env = dis_file.create_lexical_environment(slots)
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV, value=str(cur_lex_env)))
+            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
+                                paras=[AsmArg(AsmTypes.LEXENV, name="__newlexenv", value=[slots])],
+                                )
         if (nac.op == "newlexenvwithname"):
             slots = int(nac.args[0], base=16)
             literal_id = nac.args[1]
-            cur_lex_env = dis_file.create_lexical_environment(slots,literal_id=literal_id)
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV, value=str(cur_lex_env)))
+            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
+                                paras=[AsmArg(AsmTypes.LEXENV, name="__newlexenvwithname", value=[slots, literal_id])],
+                                )
         # === inst: object creaters # END
 
         # === inst: object visitors # START
@@ -289,7 +292,7 @@ class NACtoTAC:
             return TAC.tac_assign(
                 AsmArg.build_object(None, name=utils.strip_sted_str(nac.args[1])),
                 AsmArg.ACC(),
-                log = f"// todo: check trystglobalbyname, not throw now"
+                log=f"// todo: check trystglobalbyname, not throw now"
             )
         if (nac.op == "ldexternalmodulevar"):
             index = int(nac.args[0], base=16)
@@ -318,12 +321,16 @@ class NACtoTAC:
             lexenv_layer = int(nac.args[0], base=16)
             slot_index = int(nac.args[1], base=16)
             dest = AsmArg(AsmTypes.LEXENV, value=[lexenv_layer, slot_index])
-            return TAC.tac_assign(dest, AsmArg.ACC())
+            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
+                                paras=[dest],
+                                )
         if (nac.op == 'ldlexvar'):
             lexenv_layer = int(nac.args[0], base=16)
             slot_index = int(nac.args[1], base=16)
-            lex_value = dis_file.get_lex_env(lexenv_layer, slot_index)
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV, value=lex_value))
+            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
+                                paras=[AsmArg(AsmTypes.LEXENV, name="__ldlexvar",
+                                              value=[lexenv_layer, slot_index])],
+                                )
         # === inst: object visitors # END
 
         # === inst: definition instuctions # START
