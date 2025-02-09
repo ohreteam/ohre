@@ -59,23 +59,13 @@ class NACtoTAC:
 
         # === inst: comparation instructions # START
         if (nac.op == "isin"):
-            return TAC.tac_assign(
-                AsmArg.ACC(),
-                AsmArg.build_arg(nac.args[1]),
-                AsmArg.ACC(),
-                rop="in", log=f"arg0 {nac.args[0]}")
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop="in")
         if (nac.op == "instanceof"):
-            return TAC.tac_assign(
-                AsmArg.ACC(),
-                AsmArg.build_arg(nac.args[1]),
-                AsmArg.ACC(),
-                rop="instanceof", log=f"instanceof {nac.args[0]}")
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop="instanceof")
         if (nac.op == "stricteq"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), AsmArg.build_arg(nac.args[1]),
-                                  rop="===", log=f"stricteq arg0 {nac.args[0]}")
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), rop="===")
         if (nac.op == "strictnoteq"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), AsmArg.build_arg(nac.args[1]),
-                                  rop="!==", log=f"strictnoteq arg0 {nac.args[0]}")
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), rop="!==")
         # === inst: comparation instructions # END
 
         # === inst: unary operations # START
@@ -114,7 +104,20 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop=">")
         if (nac.op == "greatereq"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop=">=")
-
+        if (nac.op == "shl2"):
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop="<<")
+        if (nac.op == "shr2"):
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop=">>>")
+        if (nac.op == "ashr2"):
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop=">>")
+        if (nac.op == "and2"):
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop="&")
+        if (nac.op == "or2"):
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop="|")
+        if (nac.op == "xor2"):
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop="^")
+        if (nac.op == "exp"):
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop="**")
         if (nac.op == "add2"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[1]), AsmArg.ACC(), rop="+")
         if (nac.op == "sub2"):
@@ -225,8 +228,10 @@ class NACtoTAC:
                 for i in range(arg_len):
                     paras.append(arg)
                     arg = arg.build_next_arg()
-            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=arg_len), paras=paras,
-                                call_addr=AsmArg(AsmTypes.METHOD, name="__super"))
+            inst_call = TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=arg_len), paras=paras,
+                                     call_addr=AsmArg(AsmTypes.METHOD, name="__super"), ret_store_to=AsmArg.NULL())
+            inst_ret = TAC.tac_assign(AsmArg.ACC(), AsmArg.build_this(), log="TODO: __super return ptr this?")
+            return [inst_call, inst_ret]
         if (nac.op == "wide.supercallthisrange"):
             arg_len = int(nac.args[0], 16)
             paras = list()
@@ -256,16 +261,14 @@ class NACtoTAC:
             call_addr = AsmArg.build_arg(nac.args[2])
             arg = call_addr
             paras = list()
-            for i in range(arg_len):
+            for i in range(arg_len - 1):
                 arg = arg.build_next_arg()
                 paras.append(arg)
-            return TAC.tac_call(ret_store_to=AsmArg.ACC(), call_addr=call_addr,
-                                arg_len=AsmArg(AsmTypes.IMM, value=int(nac.args[1], 16)), paras=paras)
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=int(nac.args[1], 16)), paras, call_addr=call_addr)
         if (nac.op == "createobjectwithbuffer"):
             kv_dict = AsmLiteral.literal_get_key_value("{" + nac.args[1] + "}")
             arg_obj = AsmArg.build_object(kv_dict)
-            print(f"createobjectwithbuffer-arg_obj {type(arg_obj)} {arg_obj}")
-            return TAC.tac_assign(AsmArg.ACC(), arg_obj, log="createobjectwithbuffer d3bug")
+            return TAC.tac_assign(AsmArg.ACC(), arg_obj)
         if (nac.op == "newlexenv"):
             slots = int(nac.args[0], base=16)
             cur_lex_env = dis_file.create_lexical_environment(slots)
@@ -273,7 +276,7 @@ class NACtoTAC:
         if (nac.op == "newlexenvwithname"):
             slots = int(nac.args[0], base=16)
             literal_id = nac.args[1]
-            cur_lex_env = dis_file.create_lexical_environment(slots,literal_id=literal_id)
+            cur_lex_env = dis_file.create_lexical_environment(slots, literal_id=literal_id)
             return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV, value=str(cur_lex_env)))
         # === inst: object creaters # END
 
@@ -284,13 +287,11 @@ class NACtoTAC:
         if (nac.op == "tryldglobalbyname"):
             return TAC.tac_assign(
                 AsmArg.ACC(), AsmArg.build_object(None, name=utils.strip_sted_str(nac.args[1])),
-                log=f"// todo: check tryldglobalbyname, not throw now")
+                log=f"todo: ld global var, not throw now")
         if (nac.op == "trystglobalbyname"):
             return TAC.tac_assign(
-                AsmArg.build_object(None, name=utils.strip_sted_str(nac.args[1])),
-                AsmArg.ACC(),
-                log = f"// todo: check trystglobalbyname, not throw now"
-            )
+                AsmArg.build_object(None, name=utils.strip_sted_str(nac.args[1])), AsmArg.ACC(),
+                log=f"todo: st global var, not throw now")
         if (nac.op == "ldexternalmodulevar"):
             index = int(nac.args[0], base=16)
             module_name = dis_file.get_external_module_name(index, meth.file_class_name)
@@ -304,15 +305,16 @@ class NACtoTAC:
             dest = AsmArg(AsmTypes.FIELD, name=utils.strip_sted_str(nac.args[1]),
                           ref_base=AsmArg.build_arg(utils.strip_sted_str(nac.args[2])))
             return TAC.tac_assign(dest, AsmArg.ACC())
-        if (nac.op == "stmodulevar"):
-            pass  # TODO: global var related
+        if (nac.op == "stmodulevar"):  # TODO: global var related
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=2),
+                                [AsmArg(AsmTypes.IMM, value=int(nac.args[0], 16)), AsmArg.ACC()],
+                                call_addr=AsmArg(AsmTypes.METHOD, name="__stmodulevar"),
+                                ret_store_to=AsmArg.NULL())
         if (nac.op == "asyncfunctionresolve"):
-            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=1), [AsmArg.build_arg(nac.args[0]), AsmArg.ACC()],
-                                ret_store_to=AsmArg.ACC(),
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=2), [AsmArg.build_arg(nac.args[0]), AsmArg.ACC()],
                                 call_addr=AsmArg(AsmTypes.METHOD, name="__asyncfunctionresolve"))
         if (nac.op == "asyncfunctionreject"):
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=2), [AsmArg.build_arg(nac.args[0]), AsmArg.ACC()],
-                                ret_store_to=AsmArg.ACC(),
                                 call_addr=AsmArg(AsmTypes.METHOD, name="__asyncfunctionreject"))
         if (nac.op == "stlexvar"):
             lexenv_layer = int(nac.args[0], base=16)
@@ -327,6 +329,13 @@ class NACtoTAC:
         # === inst: object visitors # END
 
         # === inst: definition instuctions # START
+        if (nac.op == "definegettersetterbyvalue"):
+            # definegettersetterbyvalue v1: object, v2: key of v1, v3: getter METHOD_OBJ, v4: setter METHOD_OBJ
+            # acc-in: bool, Whether to set a name for the accessor # acc-out:
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=5),
+                                [AsmArg.ACC(), AsmArg.build_arg(nac.args[0]), AsmArg.build_arg(nac.args[1]),
+                                 AsmArg.build_arg(nac.args[2]), AsmArg.build_arg(nac.args[3])],
+                                call_addr=AsmArg(AsmTypes.METHOD, name="__definegettersetterbyvalue"))
         if (nac.op == "definefunc"):
             return TAC.tac_assign(
                 AsmArg.ACC(),
@@ -338,11 +347,15 @@ class NACtoTAC:
             inst1 = TAC.tac_assign(AsmArg.ACC(),
                                    AsmArg(AsmTypes.METHOD_OBJ, value=nac.args[1], paras_len=paras_len))
             return [inst0, inst1]
-        if (nac.op == "definegettersetterbyvalue"):
-            # definegettersetterbyvalue v1: object, v2: key of v1, v3: getter METHOD_OBJ, v4: setter METHOD_OBJ
-            # acc-in: bool, Whether to set a name for the accessor # acc-out:
-            # return [inst0, inst1]
-            pass
+        if (nac.op == "defineclasswithbuffer"):
+            constructor_str = AsmArg(AsmTypes.STR, value=nac.args[1])
+            class_lit = AsmArg(AsmTypes.STR, value=nac.args[2])
+            class_para_len = AsmArg(AsmTypes.IMM, value=int(nac.args[3], 16))
+            parent_class = AsmArg.build_arg(nac.args[4])
+            return TAC.tac_call(
+                AsmArg(AsmTypes.IMM, value=4),
+                [constructor_str, class_lit, class_para_len, parent_class],
+                call_addr=AsmArg(AsmTypes.METHOD, name="__defineclasswithbuffer"))
         # === inst: definition instuctions # END
 
         # === inst: iterator instructions # START
@@ -361,10 +374,11 @@ class NACtoTAC:
             log=f"todo: {nac.op} {[nac.args[i] for i in range(len(nac.args))]}")
 
     @classmethod
-    def trans_NAC_to_TAC(cls, meth: AsmMethod, dis_file: DisFile) -> CodeBlocks:
+    def trans_NAC_to_TAC(cls, meth: AsmMethod, dis_file: DisFile) -> bool:
         cbs = meth.code_blocks
-        assert cbs.level == CODE_LV.NATIVE_BLOCK_SPLITED
-        cbs_l = list()
+        if (cbs.level != CODE_LV.NATIVE_BLOCK_SPLITED):
+            Log.error(f"cbs level is NOT NATIVE_BLOCK_SPLITED")
+            return False
         for i in range(len(cbs.blocks)):
             tac_inst_l = list()
             for nac_inst in cbs.blocks[i].insts:
@@ -379,3 +393,4 @@ class NACtoTAC:
                         print(f"tac^: {tac._debug_vstr()}")
                         tac_inst_l.append(tac)
             cbs.blocks[i].insts = tac_inst_l
+        return True

@@ -36,6 +36,7 @@ class DisFile(DebugBase):
         self._debug: List = None
         self.lex_env: List = list()
         self.cur_lex_level: int = 0
+        self.modulevar_d: Dict[str, list] = dict()
 
         lines: List[str] = list()
         if (isinstance(value, str)):
@@ -244,8 +245,7 @@ _debug {self._debug}"
                 return lit
         return None
 
-    def get_external_module_name(
-            self, index: int, file_class_name: str = "") -> Union[str, None]:
+    def get_external_module_name(self, index: int, file_class_name: str = "") -> Union[str, None]:
         hit_cnt = 0
         hit_rec: AsmRecord = None
         if (len(file_class_name) > 0):
@@ -258,7 +258,10 @@ _debug {self._debug}"
                     ty, addr = hit_rec.fields["moduleRecordIdx"]
                     lit = self.get_literal_by_addr(addr)
                     if (lit is not None):
-                        return lit.module_request_array[index]
+                        if (index >= 0 and index < len(lit.module_request_array)):
+                            return lit.module_request_array[index]
+                        else:
+                            return None
             else:
                 Log.warn(f"get_external_module_name failed, hit_cnt {hit_cnt} \
 file_class_name {file_class_name}", True)
@@ -272,7 +275,7 @@ file_class_name {file_class_name}", True)
             print(literal_id)
             left_s = literal_id.find('[')
             right_s = literal_id.find(']')
-            literal_content = literal_id[left_s:right_s+1]
+            literal_content = literal_id[left_s:right_s + 1]
             literal_content = literal_content.split(',')
             cnt = 0
             for i in range(slots_number):
@@ -281,11 +284,11 @@ file_class_name {file_class_name}", True)
                     variable_value = literal_value[1].replace('"', '')
                 else:
                     Log.warn(f"newlexenvwithname failed. literal id format is {literal_content[cnt]}")
-                variable_name = literal_content[cnt+1].strip().split(':')
-                if len(variable_name)==2:
-                    variable_name = variable_name[1].replace('"','')
+                variable_name = literal_content[cnt + 1].strip().split(':')
+                if len(variable_name) == 2:
+                    variable_name = variable_name[1].replace('"', '')
                 else:
-                    Log.warn(f"newlexenvwithname failed. literal id format is {literal_content[cnt+1]}")
+                    Log.warn(f"newlexenvwithname failed. literal id format is {literal_content[cnt + 1]}")
                 # lex_env_layer[i] = f"[variable: {variable_name} value: {variable_value}]"
                 lex_env_layer[i] = variable_name
                 cnt += 2

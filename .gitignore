@@ -7,6 +7,8 @@ rules_local/
 *.out
 *.dis
 *.log.*
+*.txt
+*.exe
 isa.yaml
 tmp/
 temp/
