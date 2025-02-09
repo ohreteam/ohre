@@ -278,14 +278,9 @@ class NACtoTAC:
         if (nac.op == "newlexenvwithname"):
             slots = int(nac.args[0], base=16)
             literal_id = nac.args[1]
-<<<<<<< HEAD
             return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
                                 paras=[AsmArg(AsmTypes.LEXENV, name="__newlexenvwithname", value=[slots, literal_id])],
                                 )
-=======
-            cur_lex_env = dis_file.create_lexical_environment(slots, literal_id=literal_id)
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.LEXENV, value=str(cur_lex_env)))
->>>>>>> main
         # === inst: object creaters # END
 
         # === inst: object visitors # START
@@ -298,15 +293,8 @@ class NACtoTAC:
                 log=f"todo: ld global var, not throw now")
         if (nac.op == "trystglobalbyname"):
             return TAC.tac_assign(
-<<<<<<< HEAD
-                AsmArg.build_object(None, name=utils.strip_sted_str(nac.args[1])),
-                AsmArg.ACC(),
-                log=f"// todo: check trystglobalbyname, not throw now"
-            )
-=======
                 AsmArg.build_object(None, name=utils.strip_sted_str(nac.args[1])), AsmArg.ACC(),
                 log=f"todo: st global var, not throw now")
->>>>>>> main
         if (nac.op == "ldexternalmodulevar"):
             index = int(nac.args[0], base=16)
             module_name = dis_file.get_external_module_name(index, meth.file_class_name)
