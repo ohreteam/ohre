@@ -40,6 +40,11 @@ class AsmLiteral(DebugBase):
         change_flag = 0
         for i in element_content:
             if i == '"':
+                try:
+                    if element_content[i-1]=='"' and element_content[i-2]=='"':
+                        change_flag = abs(1 - change_flag)
+                except:
+                    pass
                 change_flag = abs(1 - change_flag)
                 s_cnt += 1
             elif i == ',' and change_flag == 1:
