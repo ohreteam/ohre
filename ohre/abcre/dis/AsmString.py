@@ -1,8 +1,6 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
-from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.abcre.dis.DebugBase import DebugBase
-from ohre.misc import Log
 
 
 class AsmString(DebugBase):
@@ -17,9 +15,9 @@ class AsmString(DebugBase):
         idx2 = line_remain.find(":")
         self.name_value = line_remain[idx2 + 1:]
 
-    def _debug_str(self):
+    def _debug_str(self) -> str:
         out = f"AsmString({hex(self.offset)}) {len(self.name_value)} {self.name_value}"
         return out
 
-    def _debug_vstr(self):
+    def _debug_vstr(self) -> str:
         return self._debug_str()

@@ -29,17 +29,23 @@ class PandaReverser(DebugBase):
         elif (method_name is not None and len(method_name)):
             pass
         Log.error(f"split cbs paras NOT valid: method_id {method_id} method_name {method_name}")
+        return False
 
-    def trans_NAC_to_TAC(self, method_id: int = -1, file_class_method_name: str = None):
+    def trans_NAC_to_TAC(self, method_id: int = -1, file_class_method_name: str = None) -> bool:
         if (isinstance(method_id, int) and method_id >= 0 and method_id < len(self.dis_file.methods)):
-            NACtoTAC.trans_NAC_to_TAC(self.dis_file.methods[method_id], self.dis_file)
-            self.dis_file.methods[method_id].set_level(CODE_LV.TAC)
+            meth = self.dis_file.methods[method_id]
+            if (meth.level != CODE_LV.NATIVE_BLOCK_SPLITED):
+                Log.error(f"trans_NAC_to_TAC: code level NOT valid, method[{method_id}] is {meth.level_str}")
+                return False
+            NACtoTAC.trans_NAC_to_TAC(meth, self.dis_file)
+            meth.set_level(CODE_LV.TAC)
             return True
         elif (file_class_method_name is not None and len(file_class_method_name) > 0):
             pass
         Log.error(f"to tac paras NOT valid: method_id {method_id} file_class_method_name {file_class_method_name}")
+        return False
 
-    def get_tac_unknown_count(self):
+    def get_tac_unknown_count(self) -> int:
         cnt = 0
         for met in self.dis_file.methods:
             for cb in met.code_blocks:
@@ -48,18 +54,20 @@ class PandaReverser(DebugBase):
                         cnt += 1
         return cnt
 
-    def get_insts_total(self):
+    def get_insts_total(self) -> int:
         cnt = 0
         for met in self.dis_file.methods:
             cnt += met.get_insts_total()
         return cnt
 
-    def _code_lifting_algorithms(self, method_id: int = -1):
+    def _code_lifting_algorithms(self, method_id: int = -1) -> bool:
         if (isinstance(method_id, int) and method_id >= 0 and method_id < len(self.dis_file.methods)):
             meth = self.dis_file.methods[method_id]
+            if (meth.level != CODE_LV.TAC):
+                Log.error(f"code level NOT valid, method[{method_id}] is {meth.level_str}")
+                return False
             meth._insert_variable_virtual_block()
-            print(
-                f"\n_code_lifting_algorithms START {meth.name}, inst total {meth.get_insts_total()}: {meth._debug_vstr()}")
+            print(f"_code_lifting_algorithms START {meth.name}, inst-{meth.inst_len}: {meth._debug_vstr()}")
             old_insts_len, new_insts_len = -1, 0
             while (old_insts_len != new_insts_len):
                 old_insts_len = meth.get_insts_total()
@@ -70,7 +78,7 @@ class PandaReverser(DebugBase):
             debug_out = f""
             for cb in meth.code_blocks:
                 debug_out += f" {cb}"
-            print(f"_code_lifting_algorithms MID-END {debug_out}, inst total {meth.get_insts_total()}")
+            print(f"_code_lifting_algorithms MID {debug_out}, inst total {meth.inst_len} \n{meth._debug_vstr()}")
 
             old_insts_len, new_insts_len = -1, 0
             while (old_insts_len != new_insts_len):
@@ -79,13 +87,18 @@ class PandaReverser(DebugBase):
                 DeadCodeElimination(meth)
                 PeepholeOptimization(meth)
                 new_insts_len = meth.get_insts_total()
+            print(f"d3bug before the last DeadCodeElimination \n{meth._debug_vstr()}")
             DeadCodeElimination(meth)
             debug_out = f""
             for cb in meth.code_blocks:
                 debug_out += f" {cb}"
-            print(f"_code_lifting_algorithms END {debug_out}, inst total {meth.get_insts_total()}")
+            print(f"_code_lifting_algorithms END {debug_out}, inst total {meth.inst_len}")
+            return True
+        else:
+            Log.error(f"_code_lifting_algorithms method_id NOT valid: {method_id}")
+            return False
 
-    def method_len(self):
+    def method_len(self) -> int:
         return len(self.dis_file.methods)
 
     def _debug_str(self) -> str:

@@ -12,7 +12,7 @@ from ohre.abcre.dis.TAC import TAC
 from ohre.misc import Log, utils
 
 
-def is_label_line(s: str):  # single str in a single line endswith ":", maybe label?
+def is_label_line(s: str) -> bool:  # single str in a single line endswith ":", maybe label?
     s = s.strip()
     if (s.endswith(":")):
         if (len(s.split(" ")) == 1):  # single str in a single line endswith ":", maybe label?
@@ -20,13 +20,13 @@ def is_label_line(s: str):  # single str in a single line endswith ":", maybe la
     return False
 
 
-def is_method_end_line(s: str):
+def is_method_end_line(s: str) -> bool:
     if (s.strip() == "}"):  # process END
         return True
     return False
 
 
-def find_line_end(lines: List[str], l_n: int):
+def find_line_end(lines: List[str], l_n: int) -> int:
     l_n_end = l_n + 1
     while (l_n_end < len(lines)):
         if (is_label_line(lines[l_n_end]) or is_method_end_line(lines[l_n_end])):
@@ -72,6 +72,10 @@ class AsmMethod(DebugBase):
         assert self.code_blocks is not None
 
     @property
+    def module_name(self) -> str:
+        return self.file_class_name
+
+    @property
     def level(self):
         return self.code_blocks.level
 
@@ -80,8 +84,12 @@ class AsmMethod(DebugBase):
         return CODE_LV.get_code_name(self.code_blocks.level)
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self.method_name
+
+    @property
+    def inst_len(self) -> int:
+        return self.get_insts_total()
 
     def _insert_variable_virtual_block(self):
         tac_l = list()
@@ -224,10 +232,16 @@ class AsmMethod(DebugBase):
         return ret, l_n + 1
 
     def _debug_str(self) -> str:
+        args_out = "("
+        for i in range(len(self.args) - 1):
+            ty, name = self.args[i]
+            args_out += f"{ty}:{name}, "
+        if (len(self.args)):
+            ty, name = self.args[-1]
+            args_out += f"{ty}:{name})"
         out = f"AsmMethod: {self.slotNumberIdx} {self.file_class_method_name} name {self.name} \
 {self.method_type} ret {self.return_type} [{self.file_class_name}] \
-args({len(self.args)}) {self.args} cbs({len(self.code_blocks)}) lv {self.level_str} \
-insts total {self.get_insts_total()}"
+args({len(self.args)}) {args_out} cbs({len(self.code_blocks)}) {self.level_str} insts-{self.inst_len}"
         return out
 
     def _debug_vstr(self) -> str:
@@ -243,7 +257,7 @@ insts total {self.get_insts_total()}"
     def set_level(self, level):
         self.code_blocks.set_level(level)
 
-    def get_insts_total(self):
+    def get_insts_total(self) -> int:
         return self.code_blocks.get_insts_total()
 
     def get_args(self, start_pos: int = 0) -> List[AsmArg]:

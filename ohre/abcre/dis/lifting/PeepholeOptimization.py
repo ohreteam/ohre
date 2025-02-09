@@ -8,13 +8,13 @@ from ohre.abcre.dis.TAC import TAC
 
 
 def PeepholeOptimization(meth: AsmMethod):
-    print(f"PHO-START {meth.name} {meth.level_str}")
+    print(f"PHO-START {meth.name}")
     for cb in meth.code_blocks:
         PHO_cb(cb)
         _update_cbs_def_use_vars_reverse(meth)
         PHO_cb_reverse(cb)  # e.g. a=xxx; b=a; a not used later
-        print(f"PHO_cb-END {cb._debug_vstr()}")
-    print(f"PHO-END {meth.name} {meth.level_str}")
+        print(f"PHO_cb-END {cb._debug_str()}")
+    print(f"PHO-END {meth.name} {meth._debug_vstr()}")
 
 
 def PHO_cb(cb: CodeBlock):
@@ -104,5 +104,5 @@ def update_cb_insts(cb: CodeBlock, idx_old2new: Dict[int, int], new_idx2inst: Di
             print(f"PHO-inst_delete {i} {cb.insts[i]}")
             continue  # this old inst point to a new inst idx that already append
         else:
-            tac_l.append(cb.insts[i])  # no op, just store it
+            tac_l.append(cb.insts[i])  # no operation, just store it
     cb.replace_insts(tac_l)

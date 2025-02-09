@@ -14,7 +14,7 @@ class DebugBase:
         return self._debug_str()
 
     @abstractmethod
-    def _debug_str(self):
+    def _debug_str(self) -> str:
         pass
 
     @abstractmethod
