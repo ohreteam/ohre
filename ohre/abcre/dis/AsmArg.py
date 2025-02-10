@@ -274,7 +274,7 @@ class AsmArg(DebugBase):
                 return 0
             if (self.type == AsmTypes.NAN):
                 return "NAN"
-            if (self.type == AsmTypes.NAN):
+            if (self.type == AsmTypes.INF):
                 return "INF"
         return None
 
