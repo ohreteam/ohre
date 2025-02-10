@@ -274,11 +274,7 @@ class AsmArg(DebugBase):
                 return 0
             if (self.type == AsmTypes.NAN):
                 return "NAN"
-<<<<<<< HEAD
             if (self.type == AsmTypes.INF):
-=======
-            if (self.type == AsmTypes.NAN):
->>>>>>> 671eff8df2daf893fea8a45897c1e46bbc1fcbb3
                 return "INF"
         return None
 
