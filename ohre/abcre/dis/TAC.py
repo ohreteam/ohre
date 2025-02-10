@@ -27,8 +27,9 @@ class TAC(DebugBase):  # Three Address Code
         # args[0]: return value stored to # usually acc
         # args[1]: called method
         # args[2]: arg len
-        # args[3]: actuall arg0 # args[4] arg1 ...
+        # args[3]: the actual arg0 of this function call # args[4]: arg1, args[5]: arg2 ...
         # this[opt]: this pointer
+        # args[0] = this->args[1](args[3], args[4] ...) // arg list len = args[2]
         self.args: List[AsmArg] = args  # NOTE: if optype is NOT UNKNOWN, def var must be args[0] if exists
         # rhs op # e.g. acc = a1 + v1 (rop is `+`) acc = -acc (rop is `-`) #  # NOTE: maybe a roptype class?
         self.rop: str = rop
@@ -343,7 +344,8 @@ throw {self.args[2]._debug_vstr()}"
             i = 1
             # v1["xx"] = v2 # v1=this in var2val
             if (self.args[0].has_ref() and in_and_not_None(self.args[0].ref_base, var2val)):
-                self.args[0].ref_base = var2val[self.args[0].ref_base]
+                if (var2val[self.args[0].ref_base].is_arg()):  # TODO: more situation plz, but not include obj/field
+                    self.args[0].ref_base = var2val[self.args[0].ref_base]
         else:
             i = 0
         print(f"copy_propagation-TAC-START i={i} inst {self._debug_vstr()} var2val {var2val}")

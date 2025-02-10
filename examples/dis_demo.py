@@ -1,4 +1,5 @@
 import argparse
+import datetime
 import os
 import subprocess
 
@@ -27,7 +28,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
         hhap = oh_hap.oh_hap(in_path)
         hhap.extract_all_to(TMP_HAP_EXTRACT)
         abc_file = os.path.join(TMP_HAP_EXTRACT, "ets", "modules.abc")
-        dis_file = f"{os.path.splitext(os.path.basename(in_path))[0]}.abc.dis" # os.path.splitext(file_name)[0]
+        dis_file = f"{os.path.splitext(os.path.basename(in_path))[0]}.abc.dis"  # os.path.splitext(file_name)[0]
         result = subprocess.run([ARK_DISASM, abc_file, dis_file], capture_output=True, text=True)
         dis_file: DisFile = DisFile(dis_file)
     panda_re: PandaReverser = PandaReverser(dis_file)
@@ -65,3 +66,14 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     # final_tac_total = panda_re.get_insts_total()
     # print(f"todo_tac {todo_tac}/{tac_total} {todo_tac/tac_total:.4f} /nac /{nac_total} {todo_tac/nac_total:.4f}")
     # print(f"lifting_algorithms {final_tac_total}/{tac_total} {final_tac_total/tac_total:.4f}")
+
+    panda_re._module_analysis_algorithms()
+    print(f"\n\n panda_re.dis_file.modulevar_d {panda_re.dis_file.modulevar_d}")
+
+    print(f"panda_re.dis_name {panda_re.dis_name} output write to {panda_re.dis_name}.out")
+    file = open(f"{panda_re.dis_name}.out", "w")
+    content = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n\n"
+    for idx in range(panda_re.method_len()):
+        content += f">> [{idx}/{panda_re.method_len()}] after lift \n{panda_re.dis_file.methods[idx]._debug_vstr()}\n\n"
+    file.write(content)
+    file.close()
