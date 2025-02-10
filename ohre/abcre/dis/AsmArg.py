@@ -197,7 +197,7 @@ class AsmArg(DebugBase):
                 or self.type == AsmTypes.UNDEFINED or self.type == AsmTypes.HOLE):
             return False
         if (self.type == AsmTypes.LEXENV):
-            if (isinstance(self.value, list)):
+            if (isinstance(self.value, int)):
                 return True
             return False
         Log.error(f"is_value_valid NOT supported logic type {self.type_str} value {type(self.value)} {self.value}")
