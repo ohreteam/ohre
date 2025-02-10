@@ -258,9 +258,6 @@ class AsmArg(DebugBase):
         if (self.type == AsmTypes.LABEL):
             if (len(self.name) == 0):
                 Log.error(f"[ArgCC] A label without name: len {len(self.name)}")
-        if (self.type == AsmTypes.LEXENV):
-            if (len(self.name) == 0):
-                Log.error(f"[ArgCC] A Lexenv without name: len {len(self.name)}")
         if (self.type == AsmTypes.STR):
             if (len(self.name) != 0 or (not isinstance(self.value, str))):
                 Log.error(f"[ArgCC] A str with name: {self.name} or value not str: {type(self.value)} {self.value}")

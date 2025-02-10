@@ -53,8 +53,10 @@ class NACtoTAC:
         if (nac.op == "asyncfunctionenter"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.METHOD_OBJ, name="__asyncfunctionenter"))
         if (nac.op == 'poplexenv'):
-            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
-                                paras=[AsmArg(AsmTypes.LEXENV, name='__poplexenv', value=[None])])
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=1),
+                                [AsmArg(AsmTypes.LEXENV, value=[None])],
+                                AsmArg(AsmTypes.METHOD, name="__poplexenv")
+                                )
         # === inst: constant object loaders # END
 
         # === inst: comparation instructions # START
@@ -271,13 +273,15 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg.ACC(), arg_obj)
         if (nac.op == "newlexenv"):
             slots = int(nac.args[0], base=16)
-            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
-                                paras=[AsmArg(AsmTypes.LEXENV, name="__newlexenv", value=[slots])])
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=1),
+                                [AsmArg(AsmTypes.LEXENV, value=[slots])],
+                                AsmArg(AsmTypes.METHOD, name="__newlexenv"))
         if (nac.op == "newlexenvwithname"):
             slots = int(nac.args[0], base=16)
             literal_id = nac.args[1]
-            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
-                                paras=[AsmArg(AsmTypes.LEXENV, name="__newlexenvwithname", value=[slots, literal_id])])
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=2),
+                                [AsmArg(AsmTypes.LEXENV, value=[slots]), AsmArg(AsmTypes.LEXENV, value=[literal_id])],
+                                AsmArg(AsmTypes.METHOD, name="__newlexenvwithname"))
         # === inst: object creaters # END
 
         # === inst: object visitors # START
@@ -319,15 +323,17 @@ class NACtoTAC:
         if (nac.op == "stlexvar"):
             lexenv_layer = int(nac.args[0], base=16)
             slot_index = int(nac.args[1], base=16)
-            dest = AsmArg(AsmTypes.LEXENV, value=[lexenv_layer, slot_index])
-            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
-                                paras=[dest])
+            return TAC.tac_call(
+                AsmArg(AsmTypes.IMM, value=2),
+                [AsmArg(AsmTypes.LEXENV, value=[lexenv_layer]), AsmArg(AsmTypes.LEXENV, value=[slot_index])],
+                AsmArg(AsmTypes.METHOD, name="__stlexvar"))
         if (nac.op == 'ldlexvar'):
             lexenv_layer = int(nac.args[0], base=16)
             slot_index = int(nac.args[1], base=16)
-            return TAC.tac_call(arg_len=AsmArg(AsmTypes.IMM, value=1),
-                                paras=[AsmArg(AsmTypes.LEXENV, name="__ldlexvar",
-                                              value=[lexenv_layer, slot_index])])
+            return TAC.tac_call(
+                AsmArg(AsmTypes.IMM, value=2),
+                [AsmArg(AsmTypes.LEXENV, value=[slot_index]), AsmArg(AsmTypes.LEXENV, value=[lexenv_layer])],
+                AsmArg(AsmTypes.METHOD, name="__ldlexvar"))
         # === inst: object visitors # END
 
         # === inst: definition instuctions # START
