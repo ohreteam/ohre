@@ -11,6 +11,7 @@ from ohre.abcre.dis.enum.CODE_LV import CODE_LV
 from ohre.abcre.dis.enum.TACTYPE import TACTYPE
 from ohre.abcre.dis.lifting.CopyPropagation import CopyPropagation
 from ohre.abcre.dis.lifting.DeadCodeElimination import DeadCodeElimination
+from ohre.abcre.dis.lifting.ModuleVarAnalysis import ModuleVarAnalysis
 from ohre.abcre.dis.lifting.PeepholeOptimization import PeepholeOptimization
 from ohre.abcre.dis.NACtoTAC import NACtoTAC
 from ohre.misc import Log, utils
@@ -20,6 +21,10 @@ class PandaReverser(DebugBase):
     # interface class for user
     def __init__(self, dis_file: DisFile):
         self.dis_file: DisFile = dis_file
+
+    @property
+    def dis_name(self) -> str:
+        return self.dis_file.dis_name
 
     def split_native_code_block(self, method_id: int = -1, method_name: str = None) -> bool:
         if (isinstance(method_id, int) and method_id >= 0 and method_id < len(self.dis_file.methods)):
@@ -87,16 +92,26 @@ class PandaReverser(DebugBase):
                 DeadCodeElimination(meth)
                 PeepholeOptimization(meth)
                 new_insts_len = meth.get_insts_total()
-            print(f"d3bug before the last DeadCodeElimination \n{meth._debug_vstr()}")
             DeadCodeElimination(meth)
             debug_out = f""
             for cb in meth.code_blocks:
                 debug_out += f" {cb}"
             print(f"_code_lifting_algorithms END {debug_out}, inst total {meth.inst_len}")
+            meth.set_level(CODE_LV.IR_LIFTED)
             return True
         else:
             Log.error(f"_code_lifting_algorithms method_id NOT valid: {method_id}")
             return False
+
+    def _module_analysis_algorithms(self):
+        for method_id in range(len(self.dis_file.methods)):
+            if (self.dis_file.methods[method_id].level == CODE_LV.NATIVE):
+                self.split_native_code_block(method_id=method_id)
+            if (self.dis_file.methods[method_id].level == CODE_LV.NATIVE_BLOCK_SPLITED):
+                self.trans_NAC_to_TAC(method_id=method_id)
+            if (self.dis_file.methods[method_id].level == CODE_LV.TAC):
+                self._code_lifting_algorithms(method_id)
+        ModuleVarAnalysis(self.dis_file)
 
     def method_len(self) -> int:
         return len(self.dis_file.methods)

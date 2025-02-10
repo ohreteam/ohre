@@ -36,7 +36,7 @@ class DisFile(DebugBase):
         self._debug: List = None
         self.lex_env: List = list()
         self.cur_lex_level: int = 0
-        self.modulevar_d: Dict[str, list] = dict()
+        self.modulevar_d: Dict[str, Dict[str, set]] = dict()
 
         lines: List[str] = list()
         if (isinstance(value, str)):
@@ -236,6 +236,10 @@ _debug {self._debug}"
             out += f">> {asmstr._debug_vstr()}\n"
         return out
 
+    @property
+    def dis_name(self) -> str:
+        return self.source_binary_name + ".dis"
+
     def get_abc_name(self) -> str:
         return self.source_binary_name
 
@@ -313,3 +317,26 @@ file_class_name {file_class_name}", True)
         else:
             self.lex_env.pop()
             self.cur_lex_level -= 1
+
+    def _module_var_name_preprocess(self, var_name: str) -> str:
+        if (var_name.startswith("__")):
+            return var_name[2:]
+        return var_name
+
+    def new_module_var(self, module_name: str, var_name: str, var_value=None):
+        var_name = self._module_var_name_preprocess(var_name)
+        if (module_name not in self.modulevar_d.keys()):
+            self.modulevar_d[module_name] = dict()
+        if (var_name not in self.modulevar_d[module_name].keys()):
+            self.modulevar_d[module_name][var_name] = set()
+        if (var_value is not None):
+            self.modulevar_d[module_name][var_name].add(var_value)
+
+    def set_module_var(self, module_name: str, var_name: str, var_value):
+        self.new_module_var(module_name, var_name, var_value)
+
+    def get_module_var_values(self, module_name: str, var_name: str) -> Iterable:
+        var_name = self._module_var_name_preprocess(var_name)
+        if (module_name in self.modulevar_d.keys() and var_name not in self.modulevar_d[module_name].keys()):
+            return self.modulevar_d[module_name][var_name]
+        return None

@@ -158,6 +158,11 @@ class AsmArg(DebugBase):
         # this always stored at a2
         return AsmArg(AsmTypes.ARG, name="this")
 
+    def is_arg_this(self) -> bool:
+        if (self.type == AsmTypes.ARG and self.name == "this"):
+            return True
+        return False
+
     def build_next_arg(self):  # arg is AsmArg
         # if self is v5, return v6; if self is a0, return a1; just num_part+=1
         num_part: str = self.name[1:]
@@ -213,8 +218,23 @@ class AsmArg(DebugBase):
             return True
         return False
 
+    def is_str(self) -> bool:
+        if (self.type == AsmTypes.STR):
+            return True
+        return False
+
     def is_field(self) -> bool:
         if (self.type == AsmTypes.FIELD):
+            return True
+        return False
+
+    def is_obj(self) -> bool:
+        if (self.type == AsmTypes.OBJECT):
+            return True
+        return False
+
+    def is_arg(self) -> bool:
+        if (self.type == AsmTypes.ARG):
             return True
         return False
 
@@ -232,6 +252,31 @@ class AsmArg(DebugBase):
         if ((self.type == AsmTypes.VAR or self.type == AsmTypes.ACC) and self.is_no_ref()):
             return True
         return False
+
+    def is_specific_like(self) -> bool:
+        if (self.type == AsmTypes.IMM or self.type == AsmTypes.STR):
+            return True
+        if (self.type == AsmTypes.TRUE or self.type == AsmTypes.FALSE):
+            return True
+        if (self.type == AsmTypes.ZERO or self.type == AsmTypes.NAN or self.type == AsmTypes.INF):
+            return True
+        return False
+
+    def get_specific_value(self) -> Any:
+        if (self.is_specific_like()):
+            if (self.type == AsmTypes.IMM or self.type == AsmTypes.STR):
+                return self.value
+            if (self.type == AsmTypes.TRUE):
+                return True
+            if (self.type == AsmTypes.FALSE):
+                return False
+            if (self.type == AsmTypes.ZERO):
+                return 0
+            if (self.type == AsmTypes.NAN):
+                return "NAN"
+            if (self.type == AsmTypes.NAN):
+                return "INF"
+        return None
 
     def get_all_args_recursively(self, include_self: bool = True) -> List:
         out = list()
@@ -263,27 +308,35 @@ class AsmArg(DebugBase):
                 Log.error(f"[ArgCC] A str with name: {self.name} or value not str: {type(self.value)} {self.value}")
 
     def _debug_str_obj(self, detail: bool = False, print_ref: bool = True) -> str:
-        out = "obj{"
+        out = ""
         if (print_ref and self.ref_base is not None):
-            out += f"{self.ref_base}->"
+            out += f"{self.ref_base}."
         if (detail):
             out += f"OBJ:{self.name}"
         else:
             out += f"{self.name}"
         if (isinstance(self.value, Iterable)):
             out += "{"
-            for v_arg in self.value:
-                out += f"{v_arg.name}:{v_arg.value}, "
+            for i in range(len(self.value)):
+                if (isinstance(self.value[i].value, str)):
+                    out += f"{self.value[i].name}:\"{self.value[i].value}\""
+                else:
+                    out += f"{self.value[i].name}:{self.value[i].value}"
+                if (i < len(self.value) - 1):
+                    out += ", "
             out += "}"
         elif (self.value is not None):
-            out += "{" + self.value + "}"
-        return out + "}"
+            if (isinstance(self.value, str)):
+                out += f"\"{self.value}\""
+            else:
+                out += "{" + self.value + "}"
+        return out
 
     def _debug_str(self, print_ref: bool = True) -> str:
         self._common_error_check()
 
         if (self.type == AsmTypes.OBJECT):
-            return self._debug_str_obj(print_ref=print_ref)
+            return self._debug_str_obj(detail=False, print_ref=print_ref)
         if (self.type == AsmTypes.STR and self.value is not None):
             return f"\"{self.value}\""
 

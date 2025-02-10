@@ -7,4 +7,4 @@ class CODE_LV(BaseEnum):
     NATIVE = 0
     NATIVE_BLOCK_SPLITED = 1
     TAC = 2
-    IR_LV2 = 3
+    IR_LIFTED = 3
