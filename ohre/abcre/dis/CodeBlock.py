@@ -3,7 +3,6 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmArg import AsmArg
 from ohre.abcre.dis.DebugBase import DebugBase
-from ohre.abcre.dis.enum.NACTYPE import NACTYPE
 from ohre.abcre.dis.enum.TACTYPE import TACTYPE
 from ohre.abcre.dis.NAC import NAC
 from ohre.abcre.dis.TAC import TAC

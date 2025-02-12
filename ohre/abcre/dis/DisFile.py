@@ -36,6 +36,7 @@ class DisFile(DebugBase):
         self._debug: List = None
         self.lex_env: List = list()
         self.cur_lex_level: int = 0
+        # module_name : dict{ var_name: set{potential values of var_name} }
         self.modulevar_d: Dict[str, Dict[str, set]] = dict()
 
         lines: List[str] = list()
@@ -262,8 +263,9 @@ _debug {self._debug}"
                     ty, addr = hit_rec.fields["moduleRecordIdx"]
                     lit = self.get_literal_by_addr(addr)
                     if (lit is not None):
-                        if (index >= 0 and index < len(lit.module_request_array)):
-                            return lit.module_request_array[index]
+                        if (index >= 0 and index < len(lit.module_tags) and isinstance(lit.module_tags[index], dict)
+                                and "module_request" in lit.module_tags[index].keys()):
+                            return lit.module_tags[index]["module_request"]
                         else:
                             return None
             else:

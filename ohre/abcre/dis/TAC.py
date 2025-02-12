@@ -36,6 +36,17 @@ class TAC(DebugBase):  # Three Address Code
         self.log: str = log
         self.this: AsmArg = this  # this pointer, maybe point to a object/module
 
+    def __eq__(self, rhs):
+        if isinstance(rhs, TAC):
+            if (self.optype == rhs.optype and self.args == rhs.args and self.rop == rhs.rop and self.this == rhs.this):
+                return True
+            else:
+                return False
+        return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
     @property
     def type(self) -> TACTYPE:
         return self.optype

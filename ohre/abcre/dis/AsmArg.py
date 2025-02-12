@@ -7,10 +7,10 @@ from ohre.misc import Log, utils
 
 class AsmArg(DebugBase):
     def __init__(self, arg_type: AsmTypes = AsmTypes.UNKNOWN,
-                 name: str = "", value=None, ref_base=None, paras_len: int = None):
+                 name = "", value=None, ref_base=None, paras_len: int = None):
         self.type = arg_type
         # name: e.g. for v0, type is VAR, name is v0(stored without truncating the prefix v)
-        self.name: str = name
+        self.name: str | AsmArg = name
         # value: may be set in the subsequent analysis
         # type is ARRAY: value is list[AsmArg]
         # type is OBJECT: value is list[AsmArg]: AsmArg(name:key, value:any value)
@@ -292,7 +292,7 @@ class AsmArg(DebugBase):
 
     def _common_error_check(self):
         if (self.type == AsmTypes.FIELD):
-            if (len(self.name) == 0):
+            if (isinstance(self.name, str) and len(self.name) == 0):
                 Log.error(f"[ArgCC] A filed name len==0: name {self.name} len {len(self.name)}")
         if (self.type == AsmTypes.MODULE):
             if (len(self.name) == 0):
@@ -307,7 +307,11 @@ class AsmArg(DebugBase):
             if (len(self.name) != 0 or (not isinstance(self.value, str))):
                 Log.error(f"[ArgCC] A str with name: {self.name} or value not str: {type(self.value)} {self.value}")
 
-    def _debug_str_obj(self, detail: bool = False, print_ref: bool = True) -> str:
+    def _debug_str_obj(self, detail: bool = False, print_ref: bool = True, visited=None) -> str:
+        visited = visited or set()
+        if id(self) in visited:
+            return "[Circular]"
+        visited.add(id(self))
         out = ""
         if (print_ref and self.ref_base is not None):
             out += f"{self.ref_base}."

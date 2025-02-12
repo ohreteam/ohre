@@ -52,12 +52,14 @@ class PandaReverser(DebugBase):
 
     def get_tac_unknown_count(self) -> int:
         cnt = 0
+        unknown_opcode = set()
         for met in self.dis_file.methods:
             for cb in met.code_blocks:
                 for inst in cb.insts:
                     if (inst.type == TACTYPE.UNKNOWN):
                         cnt += 1
-        return cnt
+                        unknown_opcode.add(inst.args[0])
+        return cnt, unknown_opcode
 
     def get_insts_total(self) -> int:
         cnt = 0

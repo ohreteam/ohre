@@ -62,10 +62,11 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     # for idx in range(panda_re.method_len()):
     #     panda_re._code_lifting_algorithms(method_id=idx)
     #     print(f">> [{idx}/{panda_re.method_len()}] after lift {panda_re.dis_file.methods[idx]._debug_vstr()}")
-    # todo_tac = panda_re.get_tac_unknown_count()
+    # todo_tac, tac_opstr_set = panda_re.get_tac_unknown_count()
     # final_tac_total = panda_re.get_insts_total()
     # print(f"todo_tac {todo_tac}/{tac_total} {todo_tac/tac_total:.4f} /nac /{nac_total} {todo_tac/nac_total:.4f}")
     # print(f"lifting_algorithms {final_tac_total}/{tac_total} {final_tac_total/tac_total:.4f}")
+    # print(f"tac_opstr_set {len(tac_opstr_set)} {tac_opstr_set}")
 
     panda_re._module_analysis_algorithms()
     print(f"\n\n panda_re.dis_file.modulevar_d {panda_re.dis_file.modulevar_d}")

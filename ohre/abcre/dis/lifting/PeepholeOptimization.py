@@ -43,7 +43,7 @@ def PHO_cb(cb: CodeBlock):
             idx_old2new[i], idx_old2new[i + 1] = i, None
             NOT_change = False
         # PH-3: a=xxx; b=a; a=yyy (yyy not used a)  =>  b=xxx; a=yyy; xxx may be a call or some other
-        if (NOT_change and i + 2 < cb.get_insts_len() and next_inst.is_simple_assgin()
+        if (NOT_change and i + 2 < cb.get_insts_len() and next_inst.is_simple_assgin() and len(curr_inst.args)
                 and curr_inst.args[0] == next_inst.args[1] and curr_inst.args[0] == cb.insts[i + 2].args[0]):
             if (curr_inst.is_arg0_def() and next_inst.is_arg0_def() and cb.insts[i + 2].is_arg0_def()):
                 mid_var_def_later = (cb.insts[i + 2].is_def(curr_inst.args[0])
@@ -63,7 +63,8 @@ def PHO_cb(cb: CodeBlock):
                 new_idx2inst[i + 1] = next_inst
                 idx_old2new[i], idx_old2new[i + 1] = None, i + 1
                 NOT_change = False
-    update_cb_insts(cb, idx_old2new, new_idx2inst)
+    if (len(idx_old2new) > 0):
+        update_cb_insts(cb, idx_old2new, new_idx2inst)
 
 
 def PHO_cb_reverse(cb: CodeBlock):
@@ -90,7 +91,8 @@ def PHO_cb_reverse(cb: CodeBlock):
         used_after.update(use_vars_inst)
 
     print(f"PHO_cb_reverse idx_old2new {idx_old2new} new_idx2inst {new_idx2inst}")
-    update_cb_insts(cb, idx_old2new, new_idx2inst)
+    if (len(idx_old2new) > 0):
+        update_cb_insts(cb, idx_old2new, new_idx2inst)
 
 
 def update_cb_insts(cb: CodeBlock, idx_old2new: Dict[int, int], new_idx2inst: Dict[int, TAC]):

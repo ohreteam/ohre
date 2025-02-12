@@ -25,6 +25,7 @@ def DeadCodeElimination(meth: AsmMethod):
         i = 0
         for cb in meth.code_blocks:
             DCE_cb_reverse(cb, DEBUG_MSG=f"DCE_{i}_{len(meth.code_blocks)}")
+            DCE_duplicate_insts(cb, DEBUG_MSG=f"DCE_{i}_{len(meth.code_blocks)} duplicate insts")
             i += 1
         new_insts_len = meth.get_insts_total()
     print(f"DCE-END {meth.name} {meth.level_str}\n\n")
@@ -55,6 +56,8 @@ def DCE_cb_reverse(cb: CodeBlock, DEBUG_MSG: str = ""):  # DCE is short for Dead
     cb.set_use_vars(used_after)
 
     # Step-2: determine: if idxs in pending delete inst idxs actually need to be deleted
+    if (len(pending_delete_inst_idxs) == 0):
+        return
     tac_l: List[TAC] = list()
     delete_inst_idx = set()
     for i in range(cb.get_insts_len()):
@@ -66,3 +69,25 @@ def DCE_cb_reverse(cb: CodeBlock, DEBUG_MSG: str = ""):  # DCE is short for Dead
     print(f"DCE_cb_reverse {DEBUG_MSG} delete_inst_idx {delete_inst_idx}")
     cb.replace_insts(tac_l)
     print(f"DCE_cb_reverse END {DEBUG_MSG} {cb._debug_vstr()}\n")
+
+
+def DCE_duplicate_insts(cb: CodeBlock, DEBUG_MSG: str = ""):
+    i = 0
+    delete_inst_idx = set()
+    while (i < cb.inst_len - 1):
+        if (cb.insts[i] == cb.insts[i + 1] and
+                (cb.insts[i].type == TACTYPE.COND_THR
+                 or cb.insts[i].type == TACTYPE.UNCN_THR
+                 or cb.insts[i].type == TACTYPE.IMPORT)):
+            delete_inst_idx.add(i)
+            i += 2
+        else:
+            i += 1
+
+    tac_l: List[TAC] = list()
+    if (len(delete_inst_idx) > 0):
+        for i in range(cb.get_insts_len()):
+            if (i not in delete_inst_idx):
+                tac_l.append(cb.insts[i])
+        cb.replace_insts(tac_l)
+        print(f"DCE_duplicate_insts END {DEBUG_MSG} cb: {cb} delete_inst_idx {delete_inst_idx}")
