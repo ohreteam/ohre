@@ -43,15 +43,20 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
     def empty_var2val(self):
         self.var2val = dict()
 
-    def get_all_prev_cbs_var2val(self, get_current_cb=False, definite_flag=True) -> Dict[AsmArg, AsmArg]:
+    def get_all_prev_cbs_var2val(self, get_current_cb=False, definite_flag=True, visited=None) -> Dict[AsmArg, AsmArg]:
         # recursively
         # definite_flag: if True, when var def more than 1 with different value, let var undef
         assert definite_flag == True  # TODO: support definite_flag==False in future
+        visited = visited if visited is not None else set()
+        if self in visited:
+            return dict()
+        visited.add(self)
+
         ret = dict()
         if (get_current_cb):
             ret.update(self.get_var2val())
         for cb in self.prev_cb_list:
-            prev_cbs_var2val = cb.get_all_prev_cbs_var2val(True, True)
+            prev_cbs_var2val = cb.get_all_prev_cbs_var2val(True, True, visited)
             for var, val in prev_cbs_var2val.items():
                 if (definite_flag):
                     if (var not in ret.keys()):
@@ -97,22 +102,32 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
             return self.def_vars
         return set()
 
-    def get_all_prev_cbs_def_vars(self, get_current_cb=False) -> set[AsmArg]:
+    def get_all_prev_cbs_def_vars(self, get_current_cb=False, visited=None) -> set[AsmArg]:
         # recursively
+        visited = visited if visited is not None else set()
+        if self in visited:
+            return set()
+        visited.add(self)
+
         ret = set()
         if (get_current_cb):
             ret.update(self.get_def_vars())
         for cb in self.prev_cb_list:
-            ret.update(cb.get_all_prev_cbs_def_vars(True))
+            ret.update(cb.get_all_prev_cbs_def_vars(True, visited))
         return ret
 
-    def get_all_next_cbs_use_vars(self, get_current_cb=False) -> set[AsmArg]:
+    def get_all_next_cbs_use_vars(self, get_current_cb=False, visited=None) -> set[AsmArg]:
         # recursively
+        visited = visited if visited is not None else set()
+        if self in visited:
+            return set()
+        visited.add(self)
+
         ret = set()
         if (get_current_cb):
             ret.update(self.get_use_vars())
         for cb in self.next_cb_list:
-            ret.update(cb.get_all_next_cbs_use_vars(True))
+            ret.update(cb.get_all_next_cbs_use_vars(True, visited))
         return ret
 
     def is_no_next_cb(self) -> bool:

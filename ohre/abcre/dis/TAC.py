@@ -78,7 +78,7 @@ class TAC(DebugBase):  # Three Address Code
         return TAC(TACTYPE.UNCN_THR, [exception], log=log)
 
     @classmethod
-    def tac_cond_throw(cls, para0: AsmArg, para1: AsmArg, rop, exception: AsmArg, log: str = ""):
+    def tac_cond_throw(cls, para0: AsmArg, para1: AsmArg, rop, exception: AsmArg = AsmArg.NULL(), log: str = ""):
         return TAC(TACTYPE.COND_THR, [para0, para1, exception], rop=rop, log=log)
 
     @classmethod

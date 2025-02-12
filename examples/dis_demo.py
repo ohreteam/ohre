@@ -44,7 +44,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
         print(f">> {asmstr}")
 
     # === reverse truly START
-    FUNC_IDX = 12  # 5: onWindowStageCreate, call loadContent and pass a mothod as para; 7: mothod that used as para
+    FUNC_IDX = 12
     # print(f">> before CF {dis_file.methods[FUNC_IDX]._debug_vstr()}")
     panda_re.split_native_code_block(FUNC_IDX)
     # print(f">> CF built {panda_re.dis_file.methods[FUNC_IDX]._debug_vstr()}")
