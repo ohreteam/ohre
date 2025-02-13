@@ -23,6 +23,7 @@ poetry.lock
 diff.diff
 bin/
 pyvenv.cfg
+test.py
 
 
 # Byte-compiled / optimized / DLL files

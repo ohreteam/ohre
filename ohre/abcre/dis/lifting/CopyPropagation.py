@@ -40,7 +40,6 @@ def var2val_assign(var2val: Dict, var, val):
 
 
 def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
-    print(f"\n\n ===================================== {DEBUG_MSG}")
     var2val: Dict[AsmArg, AsmArg] = cb.get_all_prev_cbs_var2val(get_current_cb=False, definite_flag=True)
     print(f"\n >>>> CPro_cb START {DEBUG_MSG} cb: {cb._debug_vstr()} var2val {var2val}")
     for i in range(cb.get_insts_len()):
@@ -57,6 +56,8 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
             # v1[x] = y , x is a field of v1
             print(f"before {var2val[inst.args[0].ref_base]}")
             ret = var2val[inst.args[0].ref_base].set_object_key_value(inst.args[0].name, inst.args[1])
+            if(ret == False):
+                Log.error(f"set_object_key_value ret False, name {inst.args[0].name} value {inst.args[1]}")
             print(f"after  {var2val[inst.args[0].ref_base]} {ret}")
         elif (inst.args_len == 2 and inst.rop == "-" and inst.args[1].is_imm()):  # a = - imm(xxx)
             if (inst.args[1].is_imm()):

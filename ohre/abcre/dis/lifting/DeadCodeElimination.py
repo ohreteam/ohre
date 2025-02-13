@@ -66,9 +66,8 @@ def DCE_cb_reverse(cb: CodeBlock, DEBUG_MSG: str = ""):  # DCE is short for Dead
                 delete_inst_idx.add(i)
                 continue
         tac_l.append(cb.insts[i])  # NOT delete
-    print(f"DCE_cb_reverse {DEBUG_MSG} delete_inst_idx {delete_inst_idx}")
     cb.replace_insts(tac_l)
-    print(f"DCE_cb_reverse END {DEBUG_MSG} {cb._debug_vstr()}\n")
+    print(f"DCE_cb_reverse END {DEBUG_MSG} delete_inst_idx {delete_inst_idx} {cb._debug_vstr()}\n")
 
 
 def DCE_duplicate_insts(cb: CodeBlock, DEBUG_MSG: str = ""):

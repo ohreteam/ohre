@@ -278,7 +278,6 @@ file_class_name {file_class_name}", True)
         slots_number = slots
         lex_env_layer = [None] * slots_number
         if literal_id:
-            print(literal_id)
             left_s = literal_id.find('[')
             right_s = literal_id.find(']')
             literal_content = literal_id[left_s:right_s + 1]

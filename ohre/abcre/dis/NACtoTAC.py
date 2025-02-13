@@ -73,22 +73,28 @@ class NACtoTAC:
         if (nac.op == "typeof"):
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=1),
                                 [AsmArg.ACC()], call_addr=AsmArg(AsmTypes.METHOD, name="__typeof"))
+        if (nac.op == "tonumber"):
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=1), [AsmArg.ACC()],
+                                call_addr=AsmArg(AsmTypes.METHOD, name="__tonumber"))
+        if (nac.op == "tonumeric"):
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=1), [AsmArg.ACC()],
+                                call_addr=AsmArg(AsmTypes.METHOD, name="__tonumeric"))
+        if (nac.op == "neg"):
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), rop="-")
+        if (nac.op == "deprecated.neg"):
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[0]), rop="-")
         if (nac.op == "isfalse"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), AsmArg(AsmTypes.FALSE), rop="==")
         if (nac.op == "istrue"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), AsmArg(AsmTypes.TRUE), rop="==")
-        if (nac.op == "neg"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), rop="-")
-        if (nac.op == "deprecated.neg"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), rop="-")
         if (nac.op == "inc"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), AsmArg(AsmTypes.IMM, value=1), rop="+")
         if (nac.op == "deprecated.inc"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), AsmArg(AsmTypes.IMM, value=1), rop="+")
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[0]), AsmArg(AsmTypes.IMM, value=1), rop="+")
         if (nac.op == "dec"):
             return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), AsmArg(AsmTypes.IMM, value=1), rop="-")
         if (nac.op == "deprecated.dec"):
-            return TAC.tac_assign(AsmArg.ACC(), AsmArg.ACC(), AsmArg(AsmTypes.IMM, value=1), rop="-")
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arg(nac.args[0]), AsmArg(AsmTypes.IMM, value=1), rop="-")
         # === inst: unary operations # END
 
         # === inst: binary operations # START
@@ -188,12 +194,12 @@ class NACtoTAC:
                 [AsmArg.build_arg(nac.args[1]), AsmArg.build_arg(nac.args[2]), AsmArg.build_arg(nac.args[3])])
         if (nac.op == "callrange"):
             arg_len = int(nac.args[1], 16)
-            paras_l = list()
+            paras_l: List[AsmArg] = list()
             arg = AsmArg.build_arg(nac.args[2])
             for i in range(arg_len):
                 paras_l.append(arg)
                 arg = arg.build_next_arg()
-            return TAC.tac_call(arg_len, paras_l)
+            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=arg_len), paras_l)
         if (nac.op == "supercallspread"):
             args_arr = AsmArg.build_arg(nac.args[1])
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=0), [args_arr],
@@ -218,7 +224,7 @@ class NACtoTAC:
         if (nac.op == "callthisrange"):
             # callthisrange reserved, para_cnt, this_ptr # acc: method obj # para(cnt): this_ptr para0 ...
             arg_len = int(nac.args[1], 16)
-            paras_l = list()
+            paras_l: List[AsmArg] = list()
             this_p = AsmArg.build_arg(nac.args[2])
             arg = this_p
             for i in range(arg_len):
@@ -274,10 +280,13 @@ class NACtoTAC:
                 arg = arg.build_next_arg()
                 paras.append(arg)
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=int(nac.args[1], 16)), paras, call_addr=call_addr)
+        if (nac.op == "createarraywithbuffer"):
+            out = AsmLiteral.lit_get_array(nac.args[1])
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_arr(out))
         if (nac.op == "createobjectwithbuffer"):  # TODO: fix it
-            kv_dict = AsmLiteral.literal_get_key_value("{" + nac.args[1] + "}")
-            arg_obj = AsmArg.build_object(kv_dict)
-            return TAC.tac_assign(AsmArg.ACC(), arg_obj)
+            out = AsmLiteral.lit_get_key_value(nac.args[1])
+            obj = AsmArg.build_object_with_asmarg(out)
+            return TAC.tac_assign(AsmArg.ACC(), obj)
         if (nac.op == "newlexenv"):
             slots = int(nac.args[0], base=16)
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=1),
@@ -394,7 +403,7 @@ class NACtoTAC:
 
         Log.warn(f"toTAC failed, not support nac inst: {nac._debug_vstr()}", False)  # to error when done
         return TAC.tac_unknown(
-            [nac.op] + [AsmArg(AsmTypes.UNKNOWN, nac.args[i]) for i in range(len(nac.args))],
+            [AsmArg(AsmTypes.STR, nac.op)] + [AsmArg(AsmTypes.UNKNOWN, nac.args[i]) for i in range(len(nac.args))],
             log=f"todo: {nac.op} {[nac.args[i] for i in range(len(nac.args))]}")
 
     @classmethod

@@ -13,7 +13,6 @@ def PeepholeOptimization(meth: AsmMethod):
         PHO_cb(cb)
         _update_cbs_def_use_vars_reverse(meth)
         PHO_cb_reverse(cb)  # e.g. a=xxx; b=a; a not used later
-        print(f"PHO_cb-END {cb._debug_str()}")
     print(f"PHO-END {meth.name} {meth._debug_vstr()}")
 
 
@@ -48,8 +47,8 @@ def PHO_cb(cb: CodeBlock):
             if (curr_inst.is_arg0_def() and next_inst.is_arg0_def() and cb.insts[i + 2].is_arg0_def()):
                 mid_var_def_later = (cb.insts[i + 2].is_def(curr_inst.args[0])
                                      and (not cb.insts[i + 2].is_use(curr_inst.args[0])))
-                print(f"mid_var_def_later {mid_var_def_later} {curr_inst}; {next_inst}; {cb.insts[i + 2]};")
                 if (mid_var_def_later):
+                    print(f"mid_var_def_later {mid_var_def_later} {curr_inst}; {next_inst}; {cb.insts[i + 2]};")
                     curr_inst.replace_def_var(next_inst.args[0])
                     new_idx2inst[i] = curr_inst
                     idx_old2new[i], idx_old2new[i + 1] = i, i
@@ -90,8 +89,8 @@ def PHO_cb_reverse(cb: CodeBlock):
         def_vars_inst, use_vars_inst = cb.insts[i].get_def_use()  # must update at last
         used_after.update(use_vars_inst)
 
-    print(f"PHO_cb_reverse idx_old2new {idx_old2new} new_idx2inst {new_idx2inst}")
     if (len(idx_old2new) > 0):
+        print(f"PHO_cb_reverse idx_old2new {idx_old2new} new_idx2inst {new_idx2inst}")
         update_cb_insts(cb, idx_old2new, new_idx2inst)
 
 

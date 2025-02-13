@@ -12,9 +12,9 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
     def __init__(self, in_l: Union[List[List[str]], List[NAC], List[TAC]],
                  prev_cb_list: List = None, next_cb_list: List = None):
         self.insts: Union[List[NAC], List[TAC]] = list()
-        if (isinstance(in_l[0], NAC)):  # NAC in list
+        if (isinstance(in_l, Iterable) and len(in_l) and isinstance(in_l[0], NAC)):  # NAC in list
             self.insts = copy.deepcopy(in_l)
-        elif (isinstance(in_l[0], TAC)):  # NAC in list
+        elif (isinstance(in_l, Iterable) and len(in_l) and isinstance(in_l[0], TAC)):  # NAC in list
             self.insts = copy.deepcopy(in_l)
         else:  # maybe list in list # anyway, try init NAC using element in list
             for inst in in_l:
