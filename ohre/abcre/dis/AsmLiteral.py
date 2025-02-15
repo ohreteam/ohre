@@ -1,5 +1,7 @@
+import re
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+from ohre.abcre.dis.AsmArg import AsmArg
 from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.misc import Log, utils
@@ -25,12 +27,12 @@ class AsmLiteral(DebugBase):
             Log.error(f"init ERROR in AsmLiteral, e {e}, lines {lines}")
 
     def _process_normal_literal(self, lines: List[str]):
-        literal_content = ' '.join(lines)
+        literal_content = " ".join(lines)
         s_idx = literal_content.find("{") + 1
         e_idx = literal_content.find("[")
         element_amount_str = literal_content[s_idx:e_idx].strip()
         assert element_amount_str.isdigit(), f"Expected a digit for element amount, got {element_amount_str}"
-        element_amount = int(element_amount_str)
+        ele_cnt = int(element_amount_str)
 
         s_idx = literal_content.find("[") + 1
         e_idx = literal_content.find("]")
@@ -38,68 +40,66 @@ class AsmLiteral(DebugBase):
         modified_content = element_content
         s_cnt = 0
         change_flag = 0
-        element_content = element_content.replace('""""','')
-        element_content = element_content.replace('"""','')
+        element_content = element_content.replace('""""', "")
+        element_content = element_content.replace('"""', "")
         for i in element_content:
-            if i == '"':
+            if (i == "\""):
                 change_flag = abs(1 - change_flag)
                 s_cnt += 1
-            elif i == ',' and change_flag == 1:
-                modified_content = modified_content[:s_cnt] + \
-                    '<comma>' + modified_content[s_cnt + 1:]
+            elif (i == "," and change_flag == 1):
+                modified_content = modified_content[:s_cnt] + "<comma>" + modified_content[s_cnt + 1:]
                 s_cnt += 7
             else:
                 s_cnt += 1
 
-        array_split_list = [x.strip() for x in modified_content.strip().split(',') if len(x) > 0]
+        array_split_list = [x.strip() for x in modified_content.strip().split(",") if len(x) > 0]
 
         method_dict = {}
-        if 'method' in element_content and 'method_affiliate' in element_content:
+        if ("method" in element_content and "method_affiliate" in element_content):
             cnt = 0
             while cnt < len(array_split_list):
-                if 'string' in array_split_list[cnt] and 'method' in array_split_list[cnt+1]:
-                    method_string = array_split_list[cnt].split(':')[
+                if "string" in array_split_list[cnt] and "method" in array_split_list[cnt + 1]:
+                    method_string = array_split_list[cnt].split(":")[
                         1].strip()[1:-1]
-                    method_name = array_split_list[cnt + 1].split(':')[1].strip()
-                    method_aff = array_split_list[cnt + 2].split(':')[1].strip()
-                    method_dict[method_string] = {
-                        'method': method_name, 'method_affiliate': method_aff}
+                    method_name = array_split_list[cnt + 1].split(":")[1].strip()
+                    method_aff = array_split_list[cnt + 2].split(":")[1].strip()
+                    method_dict[method_string] = {"method": method_name, "method_affiliate": method_aff}
                     cnt += 3
-                elif 'string' in array_split_list[cnt] and 'method' not in array_split_list[cnt+1]:
-                    variable_string = array_split_list[cnt].split(':')[1].replace('"', '').strip()
-                    variable_value = array_split_list[cnt+1].split(':')[1].replace('"', '').strip()
-                    if 'null_value' in array_split_list[cnt+1]:
-                        variable_value = 'null_value'
-                    method_dict[variable_string] = variable_value
+                elif ("string" in array_split_list[cnt] and "method" not in array_split_list[cnt + 1]):
+                    var_str = array_split_list[cnt].split(":")[1].replace("\"", "").strip()
+                    variable_value = array_split_list[cnt + 1].split(":")[1].replace("\"", "").strip()
+                    if ("null_value" in array_split_list[cnt + 1]):
+                        variable_value = "null_value"
+                    method_dict[var_str] = variable_value
                     cnt += 2
                 else:
                     cnt += 1
-            method_amount = array_split_list[-1].split(':')[1]
+            method_amount = array_split_list[-1].split(":")[1]
             method_dict["method_amount"] = method_amount
         else:
             cnt = 0
             array_len = len(array_split_list)
-            if element_amount % 2 == 1:
+            if (ele_cnt % 2 == 1):
                 array_len -= 1
-            while cnt < array_len:
-                variable_string = array_split_list[cnt].split(':')[1].strip().replace('"', '')
-                if len(variable_string) == 0:
+            while (cnt < array_len):
+                var_str = array_split_list[cnt].split(":")[1].strip().replace("\"", "")
+                if (len(var_str) == 0):
                     cnt += 2
                     continue
                 variable_value = array_split_list[cnt + 1]
-                if 'null_value' in variable_value:
-                    variable_value = 'null_value'
+                if ("null_value" in variable_value):
+                    variable_value = "null_value"
                 else:
                     variable_value = variable_value.split(":")[1].strip()
-                    if '"' in variable_value:
-                        variable_value = variable_value.replace('"', '').replace('<comma>', ',')
+                    if "\"" in variable_value:
+                        variable_value = variable_value.replace("\"", "").replace("<comma>", ",")
                 cnt += 2
-                method_dict[variable_string] = variable_value
-            if element_amount % 2 == 1:
-                variable_string = array_split_list[cnt].split(':')[1].strip()
-                if '"' in variable_string:
-                    variable_string = variable_string.replace('"', '')
-                method_dict[variable_string] = ''
+                method_dict[var_str] = variable_value
+            if (ele_cnt % 2 == 1):
+                var_str = array_split_list[cnt].split(":")[1].strip()
+                if ("\"" in var_str):
+                    var_str = var_str.replace("\"", "")
+                method_dict[var_str] = ""
         self.module_tags = [method_dict]
 
     def _process_module_request_array(self, lines: List[str]):
@@ -162,12 +162,11 @@ class AsmLiteral(DebugBase):
         s_cnt = 0
         change_flag = 0
         for i in s:
-            if i == '"':
+            if i == "\"":
                 change_flag = abs(1 - change_flag)
                 s_cnt += 1
             elif i == "," and change_flag == 1:
-                modified_content = modified_content[:s_cnt] + \
-                    "<comma>" + modified_content[s_cnt + 1:]
+                modified_content = modified_content[:s_cnt] + "<comma>" + modified_content[s_cnt + 1:]
                 s_cnt += 7
             else:
                 s_cnt += 1
@@ -178,33 +177,84 @@ class AsmLiteral(DebugBase):
         return array_split_list
 
     @classmethod
-    def literal_get_key_value(cls, in_s: str) -> Dict:
-        ret = dict()
-        in_s = utils.strip_sted_str(in_s.strip(), start_str="{", end_str="}").strip()
-        e_idx = in_s.find("[")
-        element_amount_str = in_s[0:e_idx].strip()
-        if (not element_amount_str.isdigit()):
-            Log.error(f"Expected a digit for element amount, got {element_amount_str}")
-            return dict()
-        element_amount = int(element_amount_str)
-        in_s = in_s[e_idx:].strip()
-        in_s = utils.strip_sted_str(in_s, start_str="[", end_str="]")
-        kv: List[str] = cls._lit_split_by_comma(in_s)
-        for i in range(0, element_amount, 2):
-            key = kv[i].split(":")[1].strip()
-            key = utils.strip_sted_str(key, start_str="\"", end_str="\"")
-            if (key.startswith("\"") and key.endswith("\"")):
-                key = key[1:-1]
-            value_type = kv[i + 1].split(":")[0].strip()
-            value = kv[i + 1].split(":")[1].strip()
-            if ("null_value" in value_type):
-                value = None
-            elif (AsmTypes.is_int(value_type)):
-                if (value.isdigit()):
-                    value = int(value,)
-                else:
-                    Log.error(f"ERROR literal_get_key_value value_type {value_type} value {value}")
-            elif ("string" in value_type):
-                value = utils.strip_sted_str(value, start_str="\"", end_str="\"")
-            ret[key] = value
+    def lit_get_array(cls, in_s: str) -> List[AsmArg]:
+        ele_cnt, in_s = lit_preprocess_and_get_ele_cnt(in_s)
+        if (ele_cnt == -1):
+            return list()
+        matches = lit_get_matches(in_s, ele_cnt)
+
+        ret: List[AsmArg] = list()
+        for i in range(len(matches)):
+            if (i != len(matches) - 1):
+                end_idx = matches[i + 1]["start"]
+            else:
+                end_idx = len(in_s)
+            value = utils.strip_sted_str(in_s[matches[i]["end"]: end_idx].strip(), None, ",")
+            value = utils.strip_sted_str(value, "\"", "\"")
+            ty = utils.strip_sted_str(matches[i]["text"], None, ":").strip()
+            arg = AsmArg.build_with_type(ty, value)
+            ret.append(arg)
+            if (arg.type == AsmTypes.UNKNOWN):
+                Log.error(f"lit_get_array got UNKNOWN: {i} {ty} : {value} arg {arg}")
+        if (len(ret) != ele_cnt):
+            Log.error(f"lit_get_array ret-unmatched: {len(ret)} {ret} ele_cnt {ele_cnt} // {in_s}")
         return ret
+
+    @classmethod
+    def lit_get_key_value(cls, in_s: str) -> Dict[str, AsmArg]:
+        ele_cnt, in_s = lit_preprocess_and_get_ele_cnt(in_s)
+        if (ele_cnt == -1):
+            return dict()
+        matches = lit_get_matches(in_s, ele_cnt)
+
+        if (len(matches) != ele_cnt):
+            Log.error(f"lit_get_key_value-unmatch {ele_cnt} matches {len(matches)} {matches}// {in_s}")
+            return None
+        ret: Dict[str, AsmArg] = dict()
+        if ("method_affiliate" not in in_s and ele_cnt % 2 == 0):
+            for i in range(0, ele_cnt, 2):
+                if (i + 1 != len(matches) - 1):
+                    end_idx = matches[i + 2]["start"]
+                else:
+                    end_idx = len(in_s)
+                name = utils.strip_sted_str(in_s[matches[i]["end"]: matches[i + 1]["start"]].strip(), None, ",")
+                name = utils.strip_sted_str(name, "\"", "\"")
+                value_v = utils.strip_sted_str(in_s[matches[i + 1]["end"]: end_idx].strip(), None, ",")
+                value_v = utils.strip_sted_str(value_v, "\"", "\"")
+                value_ty = utils.strip_sted_str(matches[i + 1]["text"], None, ":").strip()
+                ret[name] = AsmArg.build_with_type(value_ty, value_v)
+        else:
+            pass
+        if (len(ret) != ele_cnt / 2):
+            print(f"TODO: {len(ret)} {ret} ele_cnt {ele_cnt} // {in_s}")
+        return ret
+
+
+lit_fixed_patterns = [" null_value:", " u1:", " string:", " method_affiliate:", " f64:", " i32:", " method:"]
+
+
+def lit_preprocess_and_get_ele_cnt(in_s: str) -> Tuple[int, str]:
+    in_s = utils.strip_sted_str(in_s.strip(), "{", "}").strip()
+    e_idx = in_s.find("[")
+    ele_cnt = in_s[0:e_idx].strip()
+    if (not ele_cnt.isdigit()):
+        Log.error(f"Expected a digit for element amount, got {ele_cnt}")
+        return -1, in_s
+    ele_cnt = int(ele_cnt)
+    in_s = utils.strip_sted_str(in_s[e_idx:], "[", "]")
+    return ele_cnt, in_s
+
+
+def lit_get_matches(in_s: str, ele_cnt: int) -> List[Dict[str, Any]]:
+    global lit_fixed_patterns
+    # pattern = r" [a-zA-Z0-9_]+:" # NOTE: if need to support more key, used this pattern
+    pattern = r"(" + "|".join(re.escape(p) for p in lit_fixed_patterns) + ")"
+    matches: List[Dict[str, Any]] = list()
+    for match in re.finditer(pattern, in_s):
+        matches.append({"text": match.group(), "start": match.start(), "end": match.end()})
+
+    if (len(matches) != ele_cnt):
+        Log.error(f"lit_get_matches unmatched: matches {matches} != {ele_cnt} // {in_s}")
+    if (len(matches) == 0):
+        Log.error(f"lit_get_matches matches=0: matches {matches} != {ele_cnt} // {in_s}")
+    return matches

@@ -3,11 +3,19 @@ from typing import Any, Dict, Iterable, List, Tuple, Union
 import yaml
 
 
-def is_uppercase_or_underscore(s: str):
+def is_float(s: str) -> bool:
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
+
+
+def is_uppercase_or_underscore(s: str) -> bool:
     return all(c.isupper() or c.isdigit() or c == "_" for c in s)
 
 
-def find_idx_in_list(l, ele):
+def find_idx_in_list(l, ele) -> int:
     for i in range(len(l)):
         if (l[i] == ele):
             return i
@@ -149,9 +157,9 @@ def hexstr(value) -> str:
 
 def strip_sted_str(in_str: str, start_str: str = "\"", end_str: str = "\""):
     out = in_str
-    if (in_str.startswith(start_str)):
+    if (start_str is not None and in_str.startswith(start_str)):
         out = out[len(start_str):]
-    if (in_str.endswith(end_str)):
+    if (end_str is not None and in_str.endswith(end_str)):
         out = out[:-len(end_str)]
     return out
 

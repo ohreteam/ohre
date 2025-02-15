@@ -103,7 +103,6 @@ class AsmMethod(DebugBase):
 
     def _split_file_class_method_name(self, records: List[AsmRecord]):
         # split 'file_class_method' to 'file_class' and 'method'
-        class_name_match_len = 0
         for rec in records:
             if (len(rec.file_class_name) > 0 and self.file_class_method_name.startswith(rec.file_class_name)):
                 if (len(self.file_class_name) < len(rec.file_class_name)):

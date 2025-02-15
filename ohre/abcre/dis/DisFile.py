@@ -36,6 +36,7 @@ class DisFile(DebugBase):
         self._debug: List = None
         self.lex_env: List = list()
         self.cur_lex_level: int = 0
+        # module_name : dict{ var_name: set{potential values of var_name} }
         self.modulevar_d: Dict[str, Dict[str, set]] = dict()
 
         lines: List[str] = list()
@@ -249,26 +250,56 @@ _debug {self._debug}"
                 return lit
         return None
 
-    def get_external_module_name(self, index: int, file_class_name: str = "") -> Union[str, None]:
+    def get_records_by_module_name(self, module_name: str) -> List[AsmRecord]:
+        ret: List[AsmRecord] = list()
+        if (len(module_name) > 0):
+            for rec in self.records:
+                if (module_name == rec.module_name):
+                    ret.append(rec)
+        return ret
+
+    def get_record_by_module_name(self, module_name: str) -> AsmRecord:
         hit_cnt = 0
         hit_rec: AsmRecord = None
-        if (len(file_class_name) > 0):
-            for rec in self.records:
-                if (file_class_name == rec.file_class_name):
-                    hit_cnt += 1
-                    hit_rec = rec
-            if (hit_cnt == 1):
-                if ("moduleRecordIdx" in hit_rec.fields.keys()):
-                    ty, addr = hit_rec.fields["moduleRecordIdx"]
-                    lit = self.get_literal_by_addr(addr)
-                    if (lit is not None):
-                        if (index >= 0 and index < len(lit.module_request_array)):
-                            return lit.module_request_array[index]
-                        else:
-                            return None
-            else:
-                Log.warn(f"get_external_module_name failed, hit_cnt {hit_cnt} \
-file_class_name {file_class_name}", True)
+        for rec in self.records:
+            if (module_name == rec.module_name):
+                hit_cnt += 1
+                hit_rec = rec
+        if (hit_cnt > 1):
+            Log.warn(f"get_record_by_module_name hit_cnt > 1, hit_cnt {hit_cnt} module_name {module_name}", True)
+        return hit_rec
+
+    def get_external_module_name(self, index: int, module_name: str = "") -> Union[str, None]:
+        hit_rec = None
+        if (len(module_name) > 0):
+            hit_rec = self.get_record_by_module_name(module_name)
+            if (hit_rec is not None and "moduleRecordIdx" in hit_rec.fields.keys()):
+                ty, addr = hit_rec.fields["moduleRecordIdx"]
+                lit = self.get_literal_by_addr(addr)
+                if (lit is not None and index >= 0 and index < len(lit.module_tags)):
+                    if (isinstance(lit.module_tags[index], dict)
+                            and "module_request" in lit.module_tags[index].keys()):
+                        return lit.module_tags[index]["module_request"]
+        Log.warn(f"get_external_module_name failed, module_name {module_name} hit_rec {hit_rec}", True)
+        return None
+
+    def get_local_module_name(self, index: int, module_name: str = "") -> Union[str, None]:
+        hit_rec = None
+        if (len(module_name) > 0):
+            hit_rec = self.get_record_by_module_name(module_name)
+            if (hit_rec is not None and "moduleRecordIdx" in hit_rec.fields.keys()):
+                ty, addr = hit_rec.fields["moduleRecordIdx"]
+                lit = self.get_literal_by_addr(addr)
+                if (lit is not None and index >= 0 and index < len(lit.module_tags)):
+                    idx_in_lit = 0
+                    for d in lit.module_tags[index]:
+                        if (isinstance(d, dict) and "ModuleTag" in d.keys() and d["ModuleTag"] == "LOCAL_EXPORT"):
+                            if (idx_in_lit == index and "local_name" in d.keys()):
+                                if ("export_name" in d.keys() and d["local_name"] != d["export_name"]):
+                                    Log.warn(f"local_module {d['local_name']} != {d['export_name']}")
+                                return d["local_name"]
+                            idx_in_lit += 1
+        Log.warn(f"get_local_module_name failed, module_name {module_name} hit_rec {hit_rec}", True)
         return None
 
     def create_lexical_environment(
@@ -276,7 +307,6 @@ file_class_name {file_class_name}", True)
         slots_number = slots
         lex_env_layer = [None] * slots_number
         if literal_id:
-            print(literal_id)
             left_s = literal_id.find('[')
             right_s = literal_id.find(']')
             literal_content = literal_id[left_s:right_s + 1]

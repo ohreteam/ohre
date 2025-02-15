@@ -7,14 +7,15 @@ from ohre.misc import Log, utils
 
 class AsmArg(DebugBase):
     def __init__(self, arg_type: AsmTypes = AsmTypes.UNKNOWN,
-                 name: str = "", value=None, ref_base=None, paras_len: int = None):
+                 name="", value=None, ref_base=None, paras_len: int = None):
         self.type = arg_type
         # name: e.g. for v0, type is VAR, name is v0(stored without truncating the prefix v)
-        self.name: str = name
+        # type is FIELD/OBJECT: name maybe str or AsmArg
+        self.name: Union[str, AsmArg] = name
         # value: may be set in the subsequent analysis
         # type is ARRAY: value is list[AsmArg]
-        # type is OBJECT: value is list[AsmArg]: AsmArg(name:key, value:any value)
-        self.value = value
+        # type is OBJECT: value is dict str->AsmArg: key: str, value: AsmArg
+        self.value: Union[int, float, str, List[AsmArg], Dict[str, AsmArg]] = value
         self.ref_base = ref_base  # AsmArg
         self.paras_len: Union[int, None] = paras_len  # for method object, store paras len here
         if (self.is_value_valid() == False):
@@ -65,25 +66,34 @@ class AsmArg(DebugBase):
             key_name_str = key
         else:
             Log.error(f"ERROR! obj_has_key key {type(key)} {key}")
-        for arg in self.value:
-            if (key_name_str == arg.name):
+        for name in self.value.keys():
+            if (key_name_str == name):
                 return True
         return False
 
-    def set_object_key_value(self, key: str, value: str, create=False) -> bool:
+    def set_object_key_value(self, key: str, value_arg, create=False) -> bool:
+        # value_arg: a AsmArg
+        if (not isinstance(value_arg, AsmArg)):
+            return False
         if (self.type != AsmTypes.OBJECT):
             return False
-        for arg in self.value:
-            if (key == arg.name):
-                arg.value = value
+        for name, arg in self.value.items():
+            if (key == name):
+                self.value[name] = value_arg
                 return True
+        if (create):
+            self.value[name] = value_arg
+            return True
         return False
 
-    def set_ref(self, ref_ed_arg):
-        self.ref_base = ref_ed_arg
+    def set_ref(self, ref_ed_arg) -> bool:
+        if (isinstance(ref_ed_arg, AsmArg)):
+            self.ref_base = ref_ed_arg
+            return True
+        return False
 
     def has_ref(self) -> bool:
-        if (self.ref_base is not None):
+        if (self.ref_base is not None and isinstance(self.ref_base, AsmArg)):
             return True
         else:
             return False
@@ -125,23 +135,38 @@ class AsmArg(DebugBase):
         return AsmArg(AsmTypes.ARRAY, name=name, value=list(args))
 
     @classmethod
-    def build_object(cls, in_kv: Dict = None, name: str = "", ref_base=None):  # element of args should be AsmArg
-        obj_value_l: List[AsmArg] = list()
+    def build_object(cls, in_kv: Dict = None, name: str = "", ref_base=None):
+        obj_value_d: Dict[str, AsmArg] = dict()
         if (isinstance(in_kv, Iterable)):
             for k, v in in_kv.items():
                 if (isinstance(v, int)):
-                    obj_value_l.append(AsmArg(AsmTypes.IMM, name=k, value=v))
+                    obj_value_d[k] = AsmArg(AsmTypes.IMM, value=v)
                 elif (isinstance(v, float)):
-                    obj_value_l.append(AsmArg(AsmTypes.IMM, name=k, value=v))
+                    obj_value_d[k] = AsmArg(AsmTypes.IMM, value=v)
                 elif (isinstance(v, str)):
-                    obj_value_l.append(AsmArg(AsmTypes.FIELD, name=k, value=v))
+                    obj_value_d[k] = AsmArg(AsmTypes.FIELD, value=v)
                 elif (v is None):
-                    obj_value_l.append(AsmArg(AsmTypes.UNDEFINED, name=k, value=None))
+                    obj_value_d[k] = AsmArg(AsmTypes.NULL)
                 else:
+                    obj_value_d[k] = AsmArg(AsmTypes.UNDEFINED, value=v)
                     Log.error(f"ERROR! build_object k {k} {type(k)} v {v} {type(v)} name {name}")
-        if (len(obj_value_l) == 0):
-            obj_value_l = None
-        return AsmArg(AsmTypes.OBJECT, name=name, value=obj_value_l, ref_base=ref_base)
+        if (len(obj_value_d) == 0):
+            obj_value_d = None
+        return AsmArg(AsmTypes.OBJECT, name=name, value=obj_value_d, ref_base=ref_base)
+
+    @classmethod
+    def build_object_with_asmarg(cls, in_kv: Dict = None, name: str = "", ref_base=None):
+        # in_kv : k str, v AsmArg
+        obj_value_d: Dict[str, AsmArg] = dict()
+        if (isinstance(in_kv, Iterable)):
+            for k, v in in_kv.items():
+                if (isinstance(v, AsmArg)):
+                    obj_value_d[k] = v
+                else:
+                    Log.error(f"ERROR! build_object_with_asmarg k {k} {type(k)} v {v} {type(v)} v is not AsmArg")
+        if (len(obj_value_d) == 0):
+            obj_value_d = None
+        return AsmArg(AsmTypes.OBJECT, name=name, value=obj_value_d, ref_base=ref_base)
 
     @classmethod
     def build_FunctionObject(cls):
@@ -157,6 +182,20 @@ class AsmArg(DebugBase):
     def build_this(cls):
         # this always stored at a2
         return AsmArg(AsmTypes.ARG, name="this")
+
+    @classmethod
+    def build_with_type(cls, ty: str, value: str):
+        if (AsmTypes.is_str(ty)):
+            return AsmArg(AsmTypes.STR, value=value)
+        if (AsmTypes.is_int(ty)):
+            if (value.isdigit()):
+                return AsmArg(AsmTypes.IMM, value=int(value))
+        if (AsmTypes.is_float(ty)):
+            if (utils.is_float(value)):
+                return AsmArg(AsmTypes.IMM, value=float(value))
+        if (ty == "null_value" and value == "0"):
+            return AsmArg(AsmTypes.NULL)
+        return AsmArg(AsmTypes.UNKNOWN, value=value)
 
     def is_arg_this(self) -> bool:
         if (self.type == AsmTypes.ARG and self.name == "this"):
@@ -187,7 +226,7 @@ class AsmArg(DebugBase):
                 return True
             return False
         if (self.type == AsmTypes.OBJECT):
-            if (isinstance(self.value, Iterable)):
+            if (isinstance(self.value, dict)):
                 return True
             return False
         if (self.type == AsmTypes.FIELD):
@@ -205,7 +244,8 @@ class AsmArg(DebugBase):
             if (isinstance(self.value, int)):
                 return True
             return False
-        Log.error(f"is_value_valid NOT supported logic type {self.type_str} value {type(self.value)} {self.value}")
+        if (self.type != AsmTypes.UNKNOWN):
+            Log.error(f"is_value_valid NOT supported logic type {self.type_str} value {type(self.value)} {self.value}")
         return True
 
     def is_acc(self) -> bool:
@@ -292,7 +332,7 @@ class AsmArg(DebugBase):
 
     def _common_error_check(self):
         if (self.type == AsmTypes.FIELD):
-            if (len(self.name) == 0):
+            if (isinstance(self.name, str) and len(self.name) == 0):
                 Log.error(f"[ArgCC] A filed name len==0: name {self.name} len {len(self.name)}")
         if (self.type == AsmTypes.MODULE):
             if (len(self.name) == 0):
@@ -307,7 +347,11 @@ class AsmArg(DebugBase):
             if (len(self.name) != 0 or (not isinstance(self.value, str))):
                 Log.error(f"[ArgCC] A str with name: {self.name} or value not str: {type(self.value)} {self.value}")
 
-    def _debug_str_obj(self, detail: bool = False, print_ref: bool = True) -> str:
+    def _debug_str_obj(self, detail: bool = False, print_ref: bool = True, visited=None) -> str:
+        visited = visited or set()
+        if id(self) in visited:
+            return "[Circular]"
+        visited.add(id(self))
         out = ""
         if (print_ref and self.ref_base is not None):
             out += f"{self.ref_base}."
@@ -315,15 +359,17 @@ class AsmArg(DebugBase):
             out += f"OBJ:{self.name}"
         else:
             out += f"{self.name}"
-        if (isinstance(self.value, Iterable)):
+        if (isinstance(self.value, dict)):
             out += "{"
-            for i in range(len(self.value)):
-                if (isinstance(self.value[i].value, str)):
-                    out += f"{self.value[i].name}:\"{self.value[i].value}\""
+            i = 0
+            for name, arg in self.value.items():
+                if (detail):
+                    out += f"{name}: {arg._debug_vstr()}"
                 else:
-                    out += f"{self.value[i].name}:{self.value[i].value}"
+                    out += f"{name}: {arg}"
                 if (i < len(self.value) - 1):
                     out += ", "
+                i += 1
             out += "}"
         elif (self.value is not None):
             if (isinstance(self.value, str)):

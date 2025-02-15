@@ -22,17 +22,24 @@ def CopyPropagation(meth: AsmMethod):
         i += 1
     print(f">>> CPro-END {meth.name} {meth._debug_vstr()}")
 
-def var2val_assign(var2val: Dict, var, val):
+
+def is_refbase_same_recursive(var, val) -> bool:  # x = x->y; x = x->a->b # return True
     if (isinstance(var, AsmArg) and isinstance(val, AsmArg)):
         if (val.has_ref() and val.ref_base == var):
-            Log.info(f"var2val_assign: val {val} var {var}, skip")
-        else:
-            var2val[var] = val
+            return True
+        if (val.has_ref()):
+            return is_refbase_same_recursive(var, val.ref_base)
+    return False
+
+
+def var2val_assign(var2val: Dict, var, val):
+    if (is_refbase_same_recursive(var, val)):
+        Log.info(f"var2val_assign: var {var} : val {val}, skip")
     else:
         var2val[var] = val
 
+
 def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
-    print(f"\n\n ===================================== {DEBUG_MSG}")
     var2val: Dict[AsmArg, AsmArg] = cb.get_all_prev_cbs_var2val(get_current_cb=False, definite_flag=True)
     print(f"\n >>>> CPro_cb START {DEBUG_MSG} cb: {cb._debug_vstr()} var2val {var2val}")
     for i in range(cb.get_insts_len()):
@@ -46,9 +53,12 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
         elif (inst.args[0].has_ref() and (inst.args[0].is_field() or inst.args[0].is_obj())
                 and in_and_not_None(inst.args[0].ref_base, var2val)
                 and var2val[inst.args[0].ref_base].obj_has_key(inst.args[0])):
-            print(f"before {var2val[inst.args[0].ref_base]}")
+            # v1[x] = y , x is a field of v1
+            print(f"before {var2val[inst.args[0].ref_base]} inst: {inst}")
             ret = var2val[inst.args[0].ref_base].set_object_key_value(inst.args[0].name, inst.args[1])
-            print(f"after  {var2val[inst.args[0].ref_base]} {ret}")
+            if(ret == False):
+                Log.error(f"set_object_key_value ret False, name {inst.args[0].name} value {inst.args[1]}")
+            print(f"after  {var2val[inst.args[0].ref_base]} {ret} inst: {inst}")
         elif (inst.args_len == 2 and inst.rop == "-" and inst.args[1].is_imm()):  # a = - imm(xxx)
             if (inst.args[1].is_imm()):
                 inst.rop = ""
@@ -61,13 +71,21 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
             else:
                 var2val_assign(var2val, inst.args[0], None)
                 Log.error(f"ERROR-CPro_cb! a = - b else hit, inst {inst}")
+        elif (inst.is_simple_assgin() and inst.args[0].has_ref() and isinstance(inst.args[0].ref_base, AsmArg)
+              and inst.args[0].ref_base.is_arg_this()):
+            if (inst.args[1].is_specific_like()):
+                # this[xx] = True (specific like)
+                var2val_assign(var2val, inst.args[0], inst.args[1])
+            else:
+                # this[xx] = v0
+                var2val_assign(var2val, inst.args[0], inst.args[1])
         elif (inst.type == TACTYPE.CALL):
             if (inst.args[0] in var2val):
                 var2val_assign(var2val, inst.args[0], None)
         else:  # TODO: if hit here, something need to be check, and support it!
             if (inst.args[0] in var2val):
                 var2val_assign(var2val, inst.args[0], None)
-            Log.error(f"ERROR-CPro_cb! else hit, inst {inst} is_arg0_def {inst.is_arg0_def()} var2val {var2val}")
+            Log.warn(f"ERROR-CPro_cb! else hit, inst {inst} is_arg0_def {inst.is_arg0_def()} var2val {var2val}")
         print(f"CPro_cb inst END {i}/{cb.get_insts_len()} {inst} {inst._debug_vstr()} var2val {var2val}")
     print(f"\n >>>> CPro_cb END {DEBUG_MSG} // var2val {var2val}")
     return var2val
