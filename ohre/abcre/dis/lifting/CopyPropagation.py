@@ -54,11 +54,11 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
                 and in_and_not_None(inst.args[0].ref_base, var2val)
                 and var2val[inst.args[0].ref_base].obj_has_key(inst.args[0])):
             # v1[x] = y , x is a field of v1
-            print(f"before {var2val[inst.args[0].ref_base]}")
+            print(f"before {var2val[inst.args[0].ref_base]} inst: {inst}")
             ret = var2val[inst.args[0].ref_base].set_object_key_value(inst.args[0].name, inst.args[1])
             if(ret == False):
                 Log.error(f"set_object_key_value ret False, name {inst.args[0].name} value {inst.args[1]}")
-            print(f"after  {var2val[inst.args[0].ref_base]} {ret}")
+            print(f"after  {var2val[inst.args[0].ref_base]} {ret} inst: {inst}")
         elif (inst.args_len == 2 and inst.rop == "-" and inst.args[1].is_imm()):  # a = - imm(xxx)
             if (inst.args[1].is_imm()):
                 inst.rop = ""
@@ -85,7 +85,7 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
         else:  # TODO: if hit here, something need to be check, and support it!
             if (inst.args[0] in var2val):
                 var2val_assign(var2val, inst.args[0], None)
-            Log.error(f"ERROR-CPro_cb! else hit, inst {inst} is_arg0_def {inst.is_arg0_def()} var2val {var2val}")
+            Log.warn(f"ERROR-CPro_cb! else hit, inst {inst} is_arg0_def {inst.is_arg0_def()} var2val {var2val}")
         print(f"CPro_cb inst END {i}/{cb.get_insts_len()} {inst} {inst._debug_vstr()} var2val {var2val}")
     print(f"\n >>>> CPro_cb END {DEBUG_MSG} // var2val {var2val}")
     return var2val

@@ -42,6 +42,10 @@ class AsmRecord(DebugBase):
             self.file_name = self.file_class_name[:file_postfix_idx + len(".ets")].strip()
             self.class_name = self.file_class_name[file_postfix_idx + len(".ets") + 1:].strip()
 
+    @property
+    def module_name(self) -> str:
+        return self.file_class_name
+
     def _debug_str(self) -> str:
         out = f"AsmRecord: {self.file_class_name} file_name({len(self.file_name)}) {self.file_name} \
 class_name({len(self.class_name)}) {self.class_name}: "

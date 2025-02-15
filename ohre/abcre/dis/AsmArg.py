@@ -10,6 +10,7 @@ class AsmArg(DebugBase):
                  name="", value=None, ref_base=None, paras_len: int = None):
         self.type = arg_type
         # name: e.g. for v0, type is VAR, name is v0(stored without truncating the prefix v)
+        # type is FIELD/OBJECT: name maybe str or AsmArg
         self.name: Union[str, AsmArg] = name
         # value: may be set in the subsequent analysis
         # type is ARRAY: value is list[AsmArg]
