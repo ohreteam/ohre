@@ -1,6 +1,8 @@
+from concurrent.futures import ThreadPoolExecutor
 from threading import Thread
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
+from ohre.abcre.dis.AsmArg import AsmArg
 from ohre.abcre.dis.AsmLiteral import AsmLiteral
 from ohre.abcre.dis.AsmMethod import AsmMethod
 from ohre.abcre.dis.AsmRecord import AsmRecord
@@ -36,8 +38,10 @@ class DisFile(DebugBase):
         self._debug: List = None
         self.lex_env: List = list()
         self.cur_lex_level: int = 0
-        # module_name : dict{ var_name: set{potential values of var_name} }
-        self.modulevar_d: Dict[str, Dict[str, set]] = dict()
+        # module_name -> dict{ var_name: set{potential values of var_name} }
+        self.module_obj_d: Dict[str, Dict[str, set]] = dict()
+        # module_name -> dict{idx -> modulevar/module}
+        self.modulevar_local: Dict[str, Dict[int, Union[str, AsmArg]]] = dict()
 
         lines: List[str] = list()
         if (isinstance(value, str)):
@@ -52,37 +56,33 @@ class DisFile(DebugBase):
             method._split_file_class_method_name(self.records)
 
     def _dis_process_main(self, lines: List[str]):
-        process_list: List[Thread] = [Thread(target=self._read_disheader, args=(0, lines))]
         l_n = 0  # line number
         lit_ln_start, rec_ln_start, met_ln_start, str_ln_start = 0, 0, 0, 0
-        while (l_n < len(lines)):
-            if (_is_delimiter(lines[l_n].strip())):
-                l_n += 1
-                state, l_n = self._read_section_type(l_n, lines)
-                if (state == STATE.LITERALS):
-                    lit_ln_start = l_n
-                    process_list.append(Thread(target=self._read_literals, args=(l_n, lines)))
-                elif (state == STATE.RECORDS):
-                    rec_ln_start = l_n
-                    process_list.append(Thread(target=self._read_records, args=(l_n, lines)))
-                elif (state == STATE.METHODS):
-                    met_ln_start = l_n
-                    process_list.append(Thread(target=self._read_methods, args=(l_n, lines)))
-                elif (state == STATE.STRING):
-                    str_ln_start = l_n
-                    process_list.append(Thread(target=self._read_strings, args=(l_n, lines)))
+        Log.info(f"DisFile process START source_binary_name {self.source_binary_name}", True)
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            executor.submit(self._read_disheader, 0, lines)
+            while (l_n < len(lines)):
+                if (_is_delimiter(lines[l_n].strip())):
+                    l_n += 1
+                    state, l_n = self._read_section_type(l_n, lines)
+                    if (state == STATE.LITERALS):
+                        lit_ln_start = l_n
+                        executor.submit(self._read_literals, l_n, lines)
+                    elif (state == STATE.RECORDS):
+                        rec_ln_start = l_n
+                        executor.submit(self._read_records, l_n, lines)
+                    elif (state == STATE.METHODS):
+                        met_ln_start = l_n
+                        executor.submit(self._read_methods, l_n, lines)
+                    elif (state == STATE.STRING):
+                        str_ln_start = l_n
+                        executor.submit(self._read_strings, l_n, lines)
+                    else:
+                        Log.error(f"state ERROR, state {state} l_n {l_n}")
                 else:
-                    Log.error(f"state ERROR, state {state} l_n {l_n}")
-            else:
-                l_n += 1
-        process_list.append(Thread(target=self._count_parts, args=(
-            lines, lit_ln_start, rec_ln_start, met_ln_start, str_ln_start)))
-        Log.info(f"DisFile process threads START, l_n {l_n} should >= {len(lines)}")
-        for process in process_list:
-            process.start()
-        for process in process_list:
-            process.join()  # wait for all process
-        Log.info(f"DisFile process END, abc file name {self.source_binary_name}")
+                    l_n += 1
+            executor.submit(self._count_parts, lines, lit_ln_start, rec_ln_start, met_ln_start, str_ln_start)
+        Log.info(f"DisFile process END, {l_n}>={len(lines)}? {self._debug_str()} _debug {self._debug}", True)
 
     def _read_section_type(self, l_n: int, lines: List[str]) -> Tuple[int, int]:
         line: str = lines[l_n].strip()
@@ -157,15 +157,10 @@ class DisFile(DebugBase):
             if (_is_delimiter(line)):
                 return
             elif (line.startswith(".record")):
-                lines_record: List[str] = list()
-                while (l_n < len(lines)):  # find "}"
-                    line_rec: str = lines[l_n].rstrip()
-                    lines_record.append(line_rec)
-                    l_n += 1
-                    if ("}" in line_rec):
-                        break
-                rec = AsmRecord(lines_record)
+                end_ln = lines.index("}\n", l_n + 1)
+                rec = AsmRecord(lines[l_n:end_ln + 1])
                 self.records.append(rec)
+                l_n = end_ln + 1
             else:
                 l_n += 1
 
@@ -175,19 +170,23 @@ class DisFile(DebugBase):
             if (_is_delimiter(line)):
                 return
             elif (line == "L_ESSlotNumberAnnotation:"):
-                l_n += 1
-                line: str = lines[l_n].strip()
-                parts = line.strip().split(" ")
-                slotNumberIdx = int(parts[-2], 16)
-                l_n += 1
-                lines_method: List[str] = list()
-                while (l_n < len(lines)):  # find "}"
-                    line_method: str = lines[l_n].rstrip()
-                    lines_method.append(line_method)
-                    l_n += 1
-                    if ("}" == line_method):
-                        break
-                method = AsmMethod(slotNumberIdx, lines_method)
+                try:
+                    next_TAG_ln = lines.index("L_ESSlotNumberAnnotation:\n", l_n + 1)
+                    lines_method = lines[l_n:next_TAG_ln]
+                    for i, sub_l in enumerate(lines_method):
+                        lines_method[i] = sub_l.rstrip()
+                    method = AsmMethod(lines_method)
+                    l_n = next_TAG_ln - 1
+                except Exception as e:
+                    Log.info(f"_read_methods exception {e}, should be last meth: l_n {l_n} {lines[l_n:l_n + 4]}")
+                    lines_method: List[str] = list()
+                    while (l_n < len(lines)):  # find "}"
+                        line_method: str = lines[l_n].rstrip()
+                        lines_method.append(line_method)
+                        l_n += 1
+                        if ("}" == line_method):
+                            break
+                    method = AsmMethod(lines_method)
                 self.methods.append(method)
             else:
                 l_n += 1
@@ -200,19 +199,17 @@ class DisFile(DebugBase):
                     return l_n_end
                 l_n_end += 1
             return len(lines)
+
         while (l_n < len(lines)):
-            line: str = lines[l_n].strip()
+            line: str = lines[l_n]
             if (_is_delimiter(line)):
                 return
             elif (len(line) == 0):
                 l_n += 1
             elif (line.startswith("[offset:")):  # single or multi line
                 l_n_next = find_next_string_line(l_n, lines)
-                line_concat = lines[l_n]
-                for i in range(l_n + 1, l_n_next):
-                    line_concat += "\n" + lines[i]
-                asmstr = AsmString(line_concat)
-                self.asmstrs.append(asmstr)
+                line_concat = "\n".join(lines[l_n: l_n_next])
+                self.asmstrs.append(AsmString(line_concat))
                 l_n = l_n_next
             else:
                 Log.error(f"ERROR in _read_strings, else hit. l_n {l_n} line {line}")
@@ -269,37 +266,46 @@ _debug {self._debug}"
             Log.warn(f"get_record_by_module_name hit_cnt > 1, hit_cnt {hit_cnt} module_name {module_name}", True)
         return hit_rec
 
-    def get_external_module_name(self, index: int, module_name: str = "") -> Union[str, None]:
+    def get_external_module_name(self, idx: int, module_name: str = "") -> Union[str, None]:
         hit_rec = None
         if (len(module_name) > 0):
             hit_rec = self.get_record_by_module_name(module_name)
-            if (hit_rec is not None and "moduleRecordIdx" in hit_rec.fields.keys()):
+            if (hit_rec is not None and "moduleRecordIdx" in hit_rec.fields):
                 ty, addr = hit_rec.fields["moduleRecordIdx"]
                 lit = self.get_literal_by_addr(addr)
-                if (lit is not None and index >= 0 and index < len(lit.module_tags)):
-                    if (isinstance(lit.module_tags[index], dict)
-                            and "module_request" in lit.module_tags[index].keys()):
-                        return lit.module_tags[index]["module_request"]
+                if (lit is not None and idx >= 0 and idx < len(lit.module_tags)
+                        and isinstance(lit.module_tags[idx], dict)
+                        and "module_request" in lit.module_tags[idx]):
+                    return lit.module_tags[idx]["module_request"]
         Log.warn(f"get_external_module_name failed, module_name {module_name} hit_rec {hit_rec}", True)
         return None
 
-    def get_local_module_name(self, index: int, module_name: str = "") -> Union[str, None]:
+    def _ini_modulevar_local(self, module_name: str, lit: AsmLiteral):
+        idx = 0
+        if (module_name not in self.modulevar_local):
+            self.modulevar_local[module_name] = dict()
+        for d in lit.module_tags:
+            if (isinstance(d, dict) and "ModuleTag" in d and d["ModuleTag"] == "LOCAL_EXPORT"):
+                if ("local_name" in d):
+                    if ("export_name" in d and d["local_name"] != d["export_name"]):
+                        Log.warn(f"local_module!=export_name {d['local_name']} != {d['export_name']} {module_name}")
+                    self.modulevar_local[module_name][idx] = d["local_name"]
+                    idx += 1
+
+    def get_local_module_name(self, idx: int, module_name: str = "") -> Union[str, None]:
+        if (len(module_name) == 0):
+            return None
         hit_rec = None
-        if (len(module_name) > 0):
+        if (module_name not in self.modulevar_local):
             hit_rec = self.get_record_by_module_name(module_name)
-            if (hit_rec is not None and "moduleRecordIdx" in hit_rec.fields.keys()):
+            if (hit_rec is not None and "moduleRecordIdx" in hit_rec.fields):
                 ty, addr = hit_rec.fields["moduleRecordIdx"]
                 lit = self.get_literal_by_addr(addr)
-                if (lit is not None and index >= 0 and index < len(lit.module_tags)):
-                    idx_in_lit = 0
-                    for d in lit.module_tags[index]:
-                        if (isinstance(d, dict) and "ModuleTag" in d.keys() and d["ModuleTag"] == "LOCAL_EXPORT"):
-                            if (idx_in_lit == index and "local_name" in d.keys()):
-                                if ("export_name" in d.keys() and d["local_name"] != d["export_name"]):
-                                    Log.warn(f"local_module {d['local_name']} != {d['export_name']}")
-                                return d["local_name"]
-                            idx_in_lit += 1
-        Log.warn(f"get_local_module_name failed, module_name {module_name} hit_rec {hit_rec}", True)
+                if (lit is not None):
+                    self._ini_modulevar_local(module_name, lit)
+
+        if (module_name in self.modulevar_local and idx in self.modulevar_local[module_name]):
+            return self.modulevar_local[module_name][idx]
         return None
 
     def create_lexical_environment(
@@ -355,18 +361,18 @@ _debug {self._debug}"
 
     def new_module_var(self, module_name: str, var_name: str, var_value=None):
         var_name = self._module_var_name_preprocess(var_name)
-        if (module_name not in self.modulevar_d.keys()):
-            self.modulevar_d[module_name] = dict()
-        if (var_name not in self.modulevar_d[module_name].keys()):
-            self.modulevar_d[module_name][var_name] = set()
+        if (module_name not in self.module_obj_d):
+            self.module_obj_d[module_name] = dict()
+        if (var_name not in self.module_obj_d[module_name]):
+            self.module_obj_d[module_name][var_name] = set()
         if (var_value is not None):
-            self.modulevar_d[module_name][var_name].add(var_value)
+            self.module_obj_d[module_name][var_name].add(var_value)
 
     def set_module_var(self, module_name: str, var_name: str, var_value):
         self.new_module_var(module_name, var_name, var_value)
 
     def get_module_var_values(self, module_name: str, var_name: str) -> Iterable:
         var_name = self._module_var_name_preprocess(var_name)
-        if (module_name in self.modulevar_d.keys() and var_name not in self.modulevar_d[module_name].keys()):
-            return self.modulevar_d[module_name][var_name]
+        if (module_name in self.module_obj_d and var_name not in self.module_obj_d[module_name]):
+            return self.module_obj_d[module_name][var_name]
         return None

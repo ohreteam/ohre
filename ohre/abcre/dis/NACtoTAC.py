@@ -55,7 +55,7 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg.ACC(), AsmArg(AsmTypes.METHOD_OBJ, name="__asyncfunctionenter"))
         if (nac.op == "poplexenv"):
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=1),
-                                [AsmArg(AsmTypes.LEXENV, value=-1)],
+                                [AsmArg(AsmTypes.IMM, value=-1)],
                                 call_addr=AsmArg(AsmTypes.METHOD, name="__poplexenv"))
         # === inst: constant object loaders # END
 
@@ -361,16 +361,16 @@ class NACtoTAC:
             out = AsmLiteral.lit_get_key_value(nac.args[1])
             obj = AsmArg.build_object_with_asmarg(out)
             return TAC.tac_assign(AsmArg.ACC(), obj)
-        if (nac.op == "newlexenv"):
+        if (nac.op == "newlexenv" or nac.op == "wide.newlexenv"):
             slots = int(nac.args[0], base=16)
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=1),
-                                [AsmArg(AsmTypes.LEXENV, value=slots)],
+                                [AsmArg(AsmTypes.IMM, value=slots)],
                                 call_addr=AsmArg(AsmTypes.METHOD, name="__newlexenv"))
         if (nac.op == "newlexenvwithname"):
             slots = int(nac.args[0], base=16)
             lit = nac.args[1]
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=2),
-                                [AsmArg(AsmTypes.LEXENV, value=slots), AsmArg(AsmTypes.STR, value=lit)],
+                                [AsmArg(AsmTypes.IMM, value=slots), AsmArg(AsmTypes.STR, value=lit)],
                                 call_addr=AsmArg(AsmTypes.METHOD, name="__newlexenvwithname"))
         # === inst: object creaters # END
 
@@ -388,8 +388,8 @@ class NACtoTAC:
             return TAC.tac_assign(AsmArg(AsmTypes.FIELD, name=AsmArg.build_arg(nac.args[2]),
                                          ref_base=AsmArg.build_arg(nac.args[1])), AsmArg.ACC())
         if (nac.op == "stownbyindex"):  # arg1[arg2] = acc
-            return TAC.tac_assign(AsmArg(AsmTypes.FIELD, name=AsmArg(AsmTypes.IMM, value=int(nac.args[1], 16)),
-                                         ref_base=AsmArg.build_arg(nac.args[2])), AsmArg.ACC())
+            return TAC.tac_assign(AsmArg(AsmTypes.FIELD, name=AsmArg(AsmTypes.IMM, value=int(nac.args[2], 16)),
+                                         ref_base=AsmArg.build_arg(nac.args[1])), AsmArg.ACC())
         if (nac.op == "asyncfunctionresolve"):
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=2), [AsmArg.build_arg(nac.args[0]), AsmArg.ACC()],
                                 call_addr=AsmArg(AsmTypes.METHOD, name="__asyncfunctionresolve"))
@@ -405,16 +405,16 @@ class NACtoTAC:
             slot_index = int(nac.args[1], base=16)
             return TAC.tac_call(
                 AsmArg(AsmTypes.IMM, value=2),
-                [AsmArg(AsmTypes.LEXENV, value=slot_index), AsmArg(AsmTypes.LEXENV, value=lexenv_layer)],
+                [AsmArg(AsmTypes.IMM, value=slot_index), AsmArg(AsmTypes.IMM, value=lexenv_layer)],
                 call_addr=AsmArg(AsmTypes.METHOD, name="__ldlexvar"))
         if (nac.op == "stlexvar" or nac.op == "wide.stlexvar"):
             lexenv_layer = int(nac.args[0], base=16)
             slot_index = int(nac.args[1], base=16)
             return TAC.tac_call(
                 AsmArg(AsmTypes.IMM, value=2),
-                [AsmArg(AsmTypes.LEXENV, value=lexenv_layer), AsmArg(AsmTypes.LEXENV, value=slot_index)],
+                [AsmArg(AsmTypes.IMM, value=lexenv_layer), AsmArg(AsmTypes.IMM, value=slot_index)],
                 call_addr=AsmArg(AsmTypes.METHOD, name="__stlexvar"))
-        if (nac.op == "stmodulevar"):  # TODO: global var related
+        if (nac.op == "stmodulevar" or nac.op == "wide.stmodulevar"):  # TODO: modulevar related
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=2),
                                 [AsmArg(AsmTypes.IMM, value=int(nac.args[0], 16)), AsmArg.ACC()],
                                 call_addr=AsmArg(AsmTypes.METHOD, name="__stmodulevar"),

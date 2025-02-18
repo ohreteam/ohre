@@ -9,6 +9,8 @@ rules_local/
 *.log.*
 *.txt
 *.exe
+*.pkl
+*.pickle
 isa.yaml
 tmp/
 temp/

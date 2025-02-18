@@ -17,12 +17,12 @@ class ISA:
         self.prefixes: Dict = None
         self.prefixes = self._get_prefixes_dict()
         assert self.prefixes is not None
-        Log.info(f"[ISA] prefixes {len(self.prefixes)} {self.prefixes}")
+        Log.info(f"[ISA] prefixes {len(self.prefixes)} {self.prefixes}", True)
 
         self.opstr2infod: Dict[str, Dict] | None = None
         self.opstr2infod = self._get_opstr_dict()
         assert self.opstr2infod is not None
-        Log.info(f"[ISA] opstr2infod len {len(self.opstr2infod)}")
+        Log.info(f"[ISA] opstr2infod len {len(self.opstr2infod)}", True)
 
     def _get_prefixes_dict(self) -> Dict:
         if (self.prefixes is not None):
@@ -33,33 +33,33 @@ class ISA:
         return ret
 
     def _get_prefix_opcode(self, prefix: str) -> int:
-        if (prefix in self.prefixes.keys()):
+        if (prefix in self.prefixes):
             return self.prefixes[prefix]["opcode_idx"]
         return -1
 
     def _get_opstr_dict(self) -> Dict[str, Dict]:
         ret = dict()
         for group in self.ori_d["groups"]:
-            title = group["title"] if "title" in group.keys() else None
+            title = group["title"] if "title" in group else None
             assert len(title) > 0 and isinstance(title, str)
-            description: str = group["description"].strip() if "description" in group.keys() else None
-            verification: List | None = group["verification"] if "verification" in group.keys() else None
-            exceptions: List | None = group["exceptions"] if "exceptions" in group.keys() else None
-            properties_common: List | None = group["properties"] if "properties" in group.keys() else None
-            namespace: str = group["namespace"].strip() if "namespace" in group.keys() else None
-            pseudo: str = group["pseudo"].strip() if "pseudo" in group.keys() else None
-            semantics: str = group["semantics"].strip() if "semantics" in group.keys() else None
+            description: str = group["description"].strip() if "description" in group else None
+            verification: List | None = group["verification"] if "verification" in group else None
+            exceptions: List | None = group["exceptions"] if "exceptions" in group else None
+            properties_common: List | None = group["properties"] if "properties" in group else None
+            namespace: str = group["namespace"].strip() if "namespace" in group else None
+            pseudo: str = group["pseudo"].strip() if "pseudo" in group else None
+            semantics: str = group["semantics"].strip() if "semantics" in group else None
 
-            assert "instructions" in group.keys()
+            assert "instructions" in group
             for inst in group["instructions"]:
-                assert "sig" in inst.keys() and "opcode_idx" in inst.keys()
+                assert "sig" in inst and "opcode_idx" in inst
                 opstr = inst["sig"].split(" ")[0].strip()
                 opcode_idx = inst["opcode_idx"]
 
-                acc = inst["acc"] if "acc" in inst.keys() else None
-                format = inst["format"] if "format" in inst.keys() else None
-                prefix = inst["prefix"] if "prefix" in inst.keys() else None
-                properties_inst: List | None = inst["properties"] if "properties" in inst.keys() else None
+                acc = inst["acc"] if "acc" in inst else None
+                format = inst["format"] if "format" in inst else None
+                prefix = inst["prefix"] if "prefix" in inst else None
+                properties_inst: List | None = inst["properties"] if "properties" in inst else None
                 properties = None
                 if (properties_inst is not None and properties_common is not None):
                     properties = copy.deepcopy(properties_common + properties_inst)
@@ -85,18 +85,18 @@ class ISA:
         if (opcode_info_d is None):
             return None
         else:
-            if ("opcode_idx" in opcode_info_d.keys()):
+            if ("opcode_idx" in opcode_info_d):
                 return opcode_info_d["opcode_idx"]
             else:
-                Log.warn(f"[ISA] opstr {opstr}, opcode_idx not in {opcode_info_d.keys()}")
+                Log.warn(f"[ISA] opstr {opstr}, opcode_idx not in {opcode_info_d}")
                 return None
 
     def get_opstr_info_dict(self, opstr: str) -> Union[Dict, None]:
-        if opstr in self.opstr2infod.keys():
+        if opstr in self.opstr2infod:
             return self.opstr2infod[opstr]
         else:
             Log.warn(f"[ISA] opstr NOT hit directly, opstr {opstr}, remove prefix and match again", True)
-            for key_opstr in self.opstr2infod.keys():
+            for key_opstr in self.opstr2infod:
                 opstr_rhs = key_opstr
                 tmp = opstr_rhs.split(".")
                 if (len(tmp) > 1 and opstr == tmp[1]):
@@ -113,6 +113,6 @@ if __name__ == "__main__":
     for ins_str in ["mov", "callruntime.definefieldbyindex", "isin", "jequndefined"]:
         print(f"{ins_str}: {utils.hexstr(isa.get_opcodes(ins_str))} {isa.get_opstr_info_dict(ins_str)}")
     title_set = set()
-    for opstr in isa.opstr2infod.keys():
+    for opstr in isa.opstr2infod:
         title_set.add(isa.opstr2infod[opstr]["title"])
     print(f"{len(title_set)} {title_set}")

@@ -66,8 +66,8 @@ class AsmArg(DebugBase):
             key_name_str = key
         else:
             Log.error(f"ERROR! obj_has_key key {type(key)} {key}")
-        for name in self.value.keys():
-            if (key_name_str == name):
+        if (isinstance(self.value, dict)):
+            for key_name_str in self.value:
                 return True
         return False
 
@@ -217,6 +217,10 @@ class AsmArg(DebugBase):
             if (isinstance(self.value, int) or isinstance(self.value, float)):
                 return True
             return False
+        if (self.type == AsmTypes.MODULE):
+            if (isinstance(self.value, int)):  # TODO: a temp state for later analysis, int for module index
+                return True
+            return False
         if (self.type == AsmTypes.STR or self.type == AsmTypes.LABEL):
             if (isinstance(self.value, str)):
                 return True
@@ -260,6 +264,11 @@ class AsmArg(DebugBase):
 
     def is_str(self) -> bool:
         if (self.type == AsmTypes.STR):
+            return True
+        return False
+
+    def is_str_and_eq(self, rhs: str) -> bool:
+        if (self.type == AsmTypes.STR and self.value == rhs):
             return True
         return False
 

@@ -14,7 +14,7 @@ def _update_cbs_def_use_vars_reverse(meth: AsmMethod):
             def_vars.update(def_tac)
             # a var used and def-ed inside this inst # assume that def op must occur after the use op
             for var in def_tac: # a=xxx(a not used);...; a used; then for prev inst, a is not used
-                if(var in use_vars and var not in use_tac):
+                if(var not in use_tac): # e.g. a = b(c) # then for previous inst, a is not used
                     use_vars.discard(var)
         cb.set_use_vars(use_vars)
         cb.set_def_vars(def_vars)

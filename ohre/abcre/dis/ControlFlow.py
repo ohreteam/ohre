@@ -51,7 +51,7 @@ class ControlFlow():
             if (final_nac_blocks[i].len > 0 and (final_nac_blocks[i].insts[-1].type == NACTYPE.COND_JMP
                                                  or final_nac_blocks[i].insts[-1].type == NACTYPE.UNCN_JMP)):
                 label = final_nac_blocks[i].insts[-1].args[0]
-                if (label in d_label2cb.keys()):
+                if (label in d_label2cb):
                     final_nac_blocks[i].add_next_cb(d_label2cb[label])
                     d_label2cb[label].add_prev_cb(final_nac_blocks[i])
                 else:

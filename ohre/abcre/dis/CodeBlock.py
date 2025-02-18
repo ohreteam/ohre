@@ -58,9 +58,9 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
             prev_cbs_var2val = cb.get_all_prev_cbs_var2val(True, True, visited)
             for var, val in prev_cbs_var2val.items():
                 if (definite_flag):
-                    if (var not in ret.keys()):
+                    if (var not in ret):
                         ret[var] = val
-                    elif (var in ret.keys() and ret[var] == val):  # same value
+                    elif (var in ret and ret[var] == val):  # same value
                         continue
                     else:
                         ret[var] = None  # None means value conflicted, treat this var as undef-ed
@@ -175,7 +175,7 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
         out = self._debug_str() + "\n"
         for i in range(len(self.insts)):
             if (self.insts[i].type == TACTYPE.LABEL):
-                out += f"{i}".ljust(3, "-") + f" {self.insts[i]._debug_str()}\n"
+                out += f"{i}".ljust(4, "-") + f" {self.insts[i]._debug_str()}\n"
             else:
-                out += f"{i}".ljust(4, " ") + f"{self.insts[i]._debug_str()}\n"
+                out += f"{i}".ljust(4, " ") + f" {self.insts[i]._debug_str()}\n"
         return out.strip()

@@ -1,6 +1,7 @@
 import argparse
 import datetime
 import os
+import pickle
 import subprocess
 
 import ohre
@@ -8,6 +9,18 @@ from ohre.abcre.dis.DisFile import DisFile
 from ohre.abcre.dis.PandaReverser import PandaReverser
 from ohre.core import oh_app, oh_hap
 from ohre.misc import Log
+
+
+def save_object(obj, filename):
+    with open(filename, "wb") as file:
+        pickle.dump(obj, file)
+
+
+def load_object(filename):
+    with open(filename, "rb") as file:
+        obj = pickle.load(file)
+    return obj
+
 
 TMP_HAP_EXTRACT = "tmp_hap_extract"
 TMP_APP_EXTRACT = "tmp_app_extract"
@@ -17,7 +30,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     Log.init_log("abcre", ".")
     ohre.set_log_level("info")
     ohre.set_log_print(True)
-    Log.info(f"START {__file__}")
+    Log.info(f"START {__file__}", True)
     parser = argparse.ArgumentParser()
     parser.add_argument("in_path", type=str, help="path to the dis file (ark_disasm-ed abc) or hap/app")
     arg = parser.parse_args()
@@ -32,7 +45,9 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
         result = subprocess.run([ARK_DISASM, abc_file, dis_file], capture_output=True, text=True)
         dis_file: DisFile = DisFile(dis_file)
     panda_re: PandaReverser = PandaReverser(dis_file)
-    print(f"> panda_re: {panda_re}")
+    Log.info(f"> panda_re: {panda_re}")
+    save_object(panda_re, "temp.pkl")
+    panda_re: PandaReverser = load_object("temp.pkl")
 
     for lit in dis_file.literals:
         print(f">> {lit._debug_vstr()}")
@@ -63,16 +78,16 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
         print(f">> [{idx}/{panda_re.method_len()}] after lift {panda_re.dis_file.methods[idx]._debug_vstr()}")
     todo_tac, tac_opstr_set = panda_re.get_tac_unknown_count()
     final_tac_total = panda_re.get_insts_total()
-    print(f"todo_tac {todo_tac}/{tac_total} {todo_tac/tac_total:.4f} /nac /{nac_total} {todo_tac/nac_total:.4f}")
-    print(f"lifting_algorithms {final_tac_total}/{tac_total} {final_tac_total/tac_total:.4f}")
+    print(f"todo_tac {todo_tac}/{tac_total} {todo_tac / tac_total:.4f} /nac /{nac_total} {todo_tac / nac_total:.4f}")
+    print(f"lifting_algorithms {final_tac_total}/{tac_total} {final_tac_total / tac_total:.4f}")
     print(f"tac_opstr_set {len(tac_opstr_set)} {tac_opstr_set}")
 
     panda_re._module_analysis_algorithms()
-    print(f"\n\n panda_re.dis_file.modulevar_d {panda_re.dis_file.modulevar_d}")
+    print(f"\n\n panda_re.dis_file.module_obj_d {panda_re.dis_file.module_obj_d}")
 
-    print(f"panda_re.dis_name {panda_re.dis_name} output write to {panda_re.dis_name}.out")
-    file = open(f"{panda_re.dis_name}.out", "w")
-    content = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n\n"
+    print(f"panda_re.dis_name {panda_re.dis_name} output write to test.out")
+    file = open(f"test.out", "w")
+    content = panda_re.dis_name + " time: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n\n"
     for idx in range(panda_re.method_len()):
         content += f">> [{idx}/{panda_re.method_len()}] after lift \n{panda_re.dis_file.methods[idx]._debug_vstr()}\n\n"
     content += f"tac_opstr_set {len(tac_opstr_set)} {tac_opstr_set}"

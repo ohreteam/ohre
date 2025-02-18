@@ -18,6 +18,7 @@ class AsmTypes(BaseEnum):
     ZERO = "zero"  # AsmArg: value not valid
     LABEL = "label"  # AsmArg: value not valid
     STR = "str"
+    CLASS = "class"  # maybe same as module
     MODULE = "module"
     METHOD = "method"
     METHOD_OBJ = "method_obj"  # TODO: merge it with method?

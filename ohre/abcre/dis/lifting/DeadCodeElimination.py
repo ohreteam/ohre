@@ -6,6 +6,7 @@ from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.enum.TACTYPE import TACTYPE
 from ohre.abcre.dis.lifting.LivingVar import _update_cbs_def_use_vars_reverse
 from ohre.abcre.dis.TAC import TAC
+from ohre.misc import Log, utils
 
 
 def DeadCodeBlockElimination(meth: AsmMethod):
@@ -15,27 +16,22 @@ def DeadCodeBlockElimination(meth: AsmMethod):
 def DeadCodeElimination(meth: AsmMethod):
     # eliminate the var def but not used inside that code block and the following cbs
     # 1-Delete Dead Code: 1. def in cb 2. NOT used in cb and all next cbs
-    # 2-Delete Dead Code: TODO: delete code def in the front but not used and then redef later
-    print(f"\n DCE-START {meth.name} {meth.level_str}")
-
-    old_insts_len, new_insts_len = -1, 0
-    while (old_insts_len != new_insts_len):
-        old_insts_len = meth.get_insts_total()
-        _update_cbs_def_use_vars_reverse(meth)
-        i = 0
-        for cb in meth.code_blocks:
-            DCE_cb_reverse(cb, DEBUG_MSG=f"DCE_{i}_{len(meth.code_blocks)}")
-            DCE_duplicate_insts(cb, DEBUG_MSG=f"DCE_{i}_{len(meth.code_blocks)} duplicate insts")
-            i += 1
-        new_insts_len = meth.get_insts_total()
-    print(f"DCE-END {meth.name} {meth.level_str}\n\n")
+    # 2-Delete Dead Code:  delete code def in the front but not used and then redef later
+    # 3-Delete Dead COde: duplicate insts, like [a=a] [throw s; throw s] [v0=v0+""]
+    Log.info(f"DCE-START {meth.file_class_method_name} inst-{meth.inst_len}", True)
+    _update_cbs_def_use_vars_reverse(meth)
+    i = 0
+    for cb in reversed(meth.code_blocks.blocks):
+        DCE_cb_reverse(cb, DEBUG_MSG=f"DCE_{i}_{len(meth.code_blocks)}")
+        i += 1
+    # print(f"DCE-END {meth.name} {meth.level_str}\n\n")
 
 
 def DCE_cb_reverse(cb: CodeBlock, DEBUG_MSG: str = ""):  # DCE is short for DeadCodeElimination
     # NOTE: reverse order traversal: update vars used into `used_after`
     # if a inst def a var NOT used at `used_after`, mark it as pending delete index set
     used_after: set[AsmArg] = cb.get_all_next_cbs_use_vars(get_current_cb=False)
-    print(f"DCE_cb_reverse START {DEBUG_MSG} cb: {cb} used_after {used_after}")
+    # print(f"DCE_cb_reverse START {DEBUG_MSG} cb: {cb} used_after {used_after}")
 
     # Step-1: add inst that [def a var not in current `used_after`] into pending set (in reverse order)
     pending_delete_inst_idxs: set = set()
@@ -51,42 +47,30 @@ def DCE_cb_reverse(cb: CodeBlock, DEBUG_MSG: str = ""):  # DCE is short for Dead
             pending_delete_inst_idxs.add(i)
         if (len(def_vars_inst) == 1 and def_vars_inst[0] not in use_vars_inst and def_vars_inst[0].is_acc()):
             # TODO: more test needed, more situation needed # NOTE: must be placed in the last
-            # if a var def in this inst, but: 1. not used in this inst; 2. is ACC
+            # if a var def in this inst, but: 1. not used in this inst; 2. is ACC # e.g. acc = v0 + v1 # acc not used
             used_after.discard(def_vars_inst[0])
     cb.set_use_vars(used_after)
 
     # Step-2: determine: if idxs in pending delete inst idxs actually need to be deleted
-    if (len(pending_delete_inst_idxs) == 0):
-        return
     tac_l: List[TAC] = list()
-    delete_inst_idx = set()
-    for i in range(cb.get_insts_len()):
-        if ((cb.insts[i].type == TACTYPE.ASSIGN or cb.insts[i].type == TACTYPE.IMPORT) and i in pending_delete_inst_idxs):
-            if (cb.insts[i].is_arg0_def() and cb.insts[i].args[0].is_temp_var_like()):
-                delete_inst_idx.add(i)
-                continue
-        tac_l.append(cb.insts[i])  # NOT delete
-    cb.replace_insts(tac_l)
-    print(f"DCE_cb_reverse END {DEBUG_MSG} delete_inst_idx {delete_inst_idx} {cb._debug_vstr()}\n")
-
-
-def DCE_duplicate_insts(cb: CodeBlock, DEBUG_MSG: str = ""):
-    i = 0
-    delete_inst_idx = set()
-    while (i < cb.inst_len - 1):
-        if (cb.insts[i] == cb.insts[i + 1] and
-                (cb.insts[i].type == TACTYPE.COND_THR
-                 or cb.insts[i].type == TACTYPE.UNCN_THR
-                 or cb.insts[i].type == TACTYPE.IMPORT)):
-            delete_inst_idx.add(i)
-            i += 2
+    for i, inst in enumerate(cb.insts):
+        if (i in pending_delete_inst_idxs and (inst.type == TACTYPE.ASSIGN or inst.type == TACTYPE.IMPORT)
+                and inst.is_arg0_def() and inst.args[0].is_temp_var_like()):
+            continue  # delete
+        # NOTE: below are duplicate insts that need to be deleted
+        # same inst[i] and inst[i+1]
+        elif (i + 1 < cb.inst_len and inst == cb.insts[i + 1] and
+                (inst.type == TACTYPE.COND_THR or inst.type == TACTYPE.UNCN_THR or inst.type == TACTYPE.IMPORT)):
+            continue  # delete
+        # v0 = v0
+        elif (inst.is_simplest_assgin() and inst.args[0] == inst.args[1]):
+            continue  # delete
+        # v0 = v0 + "" or v0 = "" + v0
+        elif (inst.rop == "+" and inst.type == TACTYPE.ASSIGN and len(inst.args) == 3
+              and ((inst.args[0] == inst.args[1] and inst.args[2].is_str_and_eq(""))
+                   or (inst.args[0] == inst.args[2] and inst.args[1].is_str_and_eq("")))):
+            print(f"TODO: d3bug hit: v0 = v0 + \"\", inst: {cb.insts[i]}")
+            continue  # delete
         else:
-            i += 1
-
-    tac_l: List[TAC] = list()
-    if (len(delete_inst_idx) > 0):
-        for i in range(cb.get_insts_len()):
-            if (i not in delete_inst_idx):
-                tac_l.append(cb.insts[i])
-        cb.replace_insts(tac_l)
-        print(f"DCE_duplicate_insts END {DEBUG_MSG} cb: {cb} delete_inst_idx {delete_inst_idx}")
+            tac_l.append(inst)  # NOT delete
+    cb.replace_insts(tac_l)

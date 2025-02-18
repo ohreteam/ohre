@@ -47,8 +47,7 @@ class AsmRecord(DebugBase):
         return self.file_class_name
 
     def _debug_str(self) -> str:
-        out = f"AsmRecord: {self.file_class_name} file_name({len(self.file_name)}) {self.file_name} \
-class_name({len(self.class_name)}) {self.class_name}: "
+        out = f"AsmRecord: {self.module_name}:"
         for field_name, (ty, value) in self.fields.items():
             if (isinstance(value, int)):
                 out += f"{field_name}({ty}) {hex(value)}; "

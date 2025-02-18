@@ -39,9 +39,16 @@ def find_line_end(lines: List[str], l_n: int) -> int:
 
 class AsmMethod(DebugBase):
     # fields in Class
-    def __init__(self, slotNumberIdx: int, lines: List[str]):
+    def __init__(self, lines: List[str]):
         assert len(lines) >= 2
-        self.slotNumberIdx: int = slotNumberIdx
+        slot_idx = 0
+        while (slot_idx < len(lines) - 1):
+            if ("slotNumberIdx" in lines[slot_idx]):
+                break
+            slot_idx += 1
+        parts = lines[slot_idx].strip().split(" ")
+
+        self.slotNumberIdx: int = int(parts[-2], 16)
         self.concurrentModuleRequestIdx: List[int] = list()
         self.return_type = "None"
         self.file_class_method_name: str = ""  # remove the starting "&" if exists
@@ -61,7 +68,7 @@ class AsmMethod(DebugBase):
             if ("L_ESConcurrentModuleRequestsAnnotation" in lines[dot_function_idx]):
                 L_ESConcurrentModuleRequestsAnnotation_flag = True
             dot_function_idx += 1
-        if (dot_function_idx != 0 and L_ESConcurrentModuleRequestsAnnotation_flag == False):
+        if (dot_function_idx != 2 and L_ESConcurrentModuleRequestsAnnotation_flag == False):
             Log.error(f"ERROR!!! not L_ESConcurrentModuleRequestsAnnotation_flag !!! {lines[0:dot_function_idx]}")
         if (L_ESConcurrentModuleRequestsAnnotation_flag):
             self._process_concurrent_module_reqs(lines[0:dot_function_idx])

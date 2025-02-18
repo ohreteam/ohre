@@ -1,14 +1,14 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmArg import AsmArg
-from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.abcre.dis.enum.TACTYPE import TACTYPE
 from ohre.misc import Log, utils
 
 
 def in_and_not_None(key, d: Dict) -> bool:
-    if (key in d.keys() and d[key] is not None):
+    if (key in d and d[key] is not None):
         if (isinstance(d[key], AsmArg)):
             if (not d[key].is_unknown()):
                 return True
@@ -16,6 +16,13 @@ def in_and_not_None(key, d: Dict) -> bool:
                 return False
         else:
             return True
+    return False
+
+
+def rop_is_calculate(rop: str) -> bool:
+    cal_rop_set = {"+", "-", "*", "/", "%"}
+    if (rop in cal_rop_set):
+        return True
     return False
 
 
@@ -285,9 +292,10 @@ throw {self.args[2]._debug_vstr()}"
             for arg in self.args:
                 use_vars.update(arg.get_all_args_recursively())
         else:
-            Log.error(f"get_def_use optype NOT SUPPORTED ERROR {self.type_str} {self._debug_vstr()}")
+            Log.warn(f"get_def_use optype NOT SUPPORTED ERROR {self.type_str} {self._debug_vstr()}", False)
+            if (len(self.args)):
+                def_vars.update(self.args[0].get_all_args_recursively())
             for arg in self.args:
-                def_vars.update(arg.get_all_args_recursively())
                 use_vars.update(arg.get_all_args_recursively())
         return def_vars, use_vars
 
@@ -345,9 +353,16 @@ throw {self.args[2]._debug_vstr()}"
             return True
         return False
 
-    def is_simple_assgin(self) -> bool:  # like a = b;  NOT a = rop b OR a = b rop c
+    def is_simplest_assgin(self) -> bool:  # like a = b;  NOT a = rop b OR a = b rop c
         if (self.optype == TACTYPE.ASSIGN and len(self.args) == 2 and len(self.rop) == 0):
             return True
+        return False
+
+    def is_imm_assgin(self) -> bool:  # like a = 0 + 1 # a assgin that result is imm
+        if (self.optype == TACTYPE.ASSIGN and rop_is_calculate(self.rop)):
+            if (len(self.args) == 3 and isinstance(self.args[1], AsmArg) and self.args[1].is_imm()
+                    and isinstance(self.args[2], AsmArg) and self.args[2].is_imm()):
+                return True
         return False
 
     def copy_propagation(self, var2val: Dict[AsmArg, AsmArg], include_ref: bool = True):

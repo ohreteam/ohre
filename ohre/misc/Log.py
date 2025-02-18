@@ -57,19 +57,19 @@ def set_debug_print_flag(print_flag: bool):
     DEBUG_LOCAL = print_flag
 
 
-def debug(logstr, print_flag=True):
+def debug(logstr, print_flag=False):
     if (print_flag and get_logger().getEffectiveLevel() <= logging.DEBUG):
         debug_print(logstr, "debug")
     g_log.debug(logstr)
 
 
-def info(logstr, print_flag=True):
+def info(logstr, print_flag=False):
     if (print_flag and get_logger().getEffectiveLevel() <= logging.INFO):
         debug_print(logstr, "info")
     g_log.info(logstr)
 
 
-def warn(logstr, print_flag=True):
+def warn(logstr, print_flag=False):
     if (print_flag and get_logger().getEffectiveLevel() <= logging.WARNING):
         debug_print(logstr, "warn")
     g_log.warning(logstr)

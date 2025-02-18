@@ -28,8 +28,12 @@ class PandaReverser(DebugBase):
 
     def split_native_code_block(self, method_id: int = -1, method_name: str = None) -> bool:
         if (isinstance(method_id, int) and method_id >= 0 and method_id < len(self.dis_file.methods)):
-            self.dis_file.methods[method_id].split_native_code_block()
-            self.dis_file.methods[method_id].set_level(CODE_LV.NATIVE_BLOCK_SPLITED)
+            meth = self.dis_file.methods[method_id]
+            if (meth.level != CODE_LV.NATIVE):
+                Log.error(f"split_native_code_block: code level NOT valid, method[{method_id}] is {meth.level_str}")
+                return False
+            meth.split_native_code_block()
+            meth.set_level(CODE_LV.NATIVE_BLOCK_SPLITED)
             return True
         elif (method_name is not None and len(method_name)):
             pass
@@ -75,8 +79,8 @@ class PandaReverser(DebugBase):
                 return False
             meth._insert_variable_virtual_block()
             print(f"_code_lifting_algorithms START {method_id} {meth.name} inst-{meth.inst_len}\n{meth._debug_vstr()}")
-            old_insts_len, new_insts_len = -1, 0
-            while (old_insts_len != new_insts_len):
+            old_insts_len, new_insts_len = -1, -2
+            while (old_insts_len > new_insts_len):
                 old_insts_len = meth.get_insts_total()
                 DeadCodeElimination(meth)
                 PeepholeOptimization(meth)
@@ -84,8 +88,8 @@ class PandaReverser(DebugBase):
 
             print(f"_code_lifting_algorithms MID {method_id} {meth.name} inst-{meth.inst_len}\n{meth._debug_vstr()}")
 
-            old_insts_len, new_insts_len = -1, 0
-            while (old_insts_len != new_insts_len):
+            old_insts_len, new_insts_len = -1, -2
+            while (old_insts_len > new_insts_len):
                 old_insts_len = meth.get_insts_total()
                 CopyPropagation(meth)
                 DeadCodeElimination(meth)
