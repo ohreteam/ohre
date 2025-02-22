@@ -9,14 +9,10 @@ from ohre.misc import Log, utils
 
 
 def PeepholeOptimization(meth: AsmMethod):
-    Log.info(f"PHO-START {meth.file_class_method_name} inst-{meth.inst_len}", True)
+    Log.info(f"PHO-START {meth.module_method_name} inst-{meth.inst_len}", True)
     old_inst_len = meth.inst_len
     for cb in meth.code_blocks:
         PHO_cb(cb)
-    if (old_inst_len != meth.inst_len):
-        _update_cbs_def_use_vars_reverse(meth)
-    for cb in meth.code_blocks:
-        PHO_cb_reverse(cb)  # e.g. a=xxx; b=a; a not used later
 
 
 def PHO_cb(cb: CodeBlock):
@@ -30,8 +26,13 @@ def PHO_cb(cb: CodeBlock):
         if (delete_idx_mask[i] or delete_idx_mask[i + 1]):
             continue  # if it is about to be replaced, skip it.
         curr_t, next_t = insts[i], insts[i + 1]  # current tac and next tac
-        curr_def, curr_use = curr_t.get_def_use_list()
-        next_def, next_use = next_t.get_def_use_list()
+        curr_def, curr_use = curr_t.get_def_use()
+        next_def, next_use = next_t.get_def_use()
+        len_curr_def, len_next_def = len(curr_def), len(next_def)
+        if (len_curr_def):
+            var_in_curr_def = curr_def.pop()
+        if (len_next_def):
+            var_in_next_def = next_def.pop()
 
         # PH-1: a=b; b=a;  =>  a=b;
         if (curr_t.is_simplest_assgin() and next_t.is_simplest_assgin()
@@ -40,8 +41,8 @@ def PHO_cb(cb: CodeBlock):
             continue
         # PH-2: a=xxx (assign tac, def) ; a=yyy (def not used) # delete a=xxx
         # NOTE: assign A but A overwritten immediately
-        if (curr_t.type == TACTYPE.ASSIGN and len(curr_def) == 1 and len(next_def) == 1
-                and curr_def == next_def and curr_def[0] not in next_use):
+        if (curr_t.type == TACTYPE.ASSIGN and len_curr_def == len_next_def == 1
+                and var_in_curr_def == var_in_next_def and var_in_curr_def not in next_use):
             delete_idx_mask[i] = True
             continue
         # PH-3: a=xxx; b=a; a=yyy (yyy not used a)  =>  b=xxx; a=yyy; xxx may be a call or some other
@@ -61,10 +62,11 @@ def PHO_cb(cb: CodeBlock):
                 next_t.replace_use_var(curr_t.args[0], arg_in)
                 delete_idx_mask[i] = True
                 continue
-    cb.insts = [inst for i, inst in enumerate(insts) if not delete_idx_mask[i]]
+    cb.replace_insts([inst for i, inst in enumerate(insts) if not delete_idx_mask[i]])
 
 
 def PHO_cb_reverse(cb: CodeBlock):
+    # TODO: delete in future, mv to DCE
     insts = cb.insts
     insts_len = len(insts)
     delete_idx_mask = [False] * insts_len
@@ -74,17 +76,24 @@ def PHO_cb_reverse(cb: CodeBlock):
         if delete_idx_mask[i] or delete_idx_mask[i - 1]:
             continue
         pre1_t, curr_t = insts[i - 1], insts[i]
-        pre1_def, pre1_use = pre1_t.get_def_use_list()
-        curr_def, curr_use = curr_t.get_def_use_list()
+        pre1_def, pre1_use = pre1_t.get_def_use()
+        curr_def, curr_use = curr_t.get_def_use()
+        len_curr_def, len_pre1_def, len_curr_use = len(curr_def), len(pre1_def), len(curr_use)
+        if (len_curr_def):
+            var_in_curr_def = curr_def.pop()
+        if (len_pre1_def):
+            var_in_pre1_def = pre1_def.pop()
+        if (len_curr_use):
+            var_in_curr_use = curr_use.pop()
         # PHO-reverse: pre1: a=xxx; curr: b=a; a not used later
         if (curr_t.is_simplest_assgin()
-                and len(curr_def) == len(curr_use) == 1 and len(pre1_def) == 1
-                and pre1_def[0] == curr_use[0] and curr_use[0] not in used_after):
-            pre1_t.replace_def_var(curr_def[0])
+                and len_curr_def == len_curr_use == len_pre1_def == 1
+                and var_in_pre1_def == var_in_curr_use and var_in_curr_use not in used_after):
+            pre1_t.replace_def_var(var_in_curr_def)
             delete_idx_mask[i] = True
             continue
+        if (delete_idx_mask[i] == False):
+            # def_vars_inst, use_vars_inst = curr_t.get_def_use()  # must update at last
+            used_after |= curr_use
 
-        def_vars_inst, use_vars_inst = insts[i].get_def_use()  # must update at last
-        used_after.update(use_vars_inst)
-
-    cb.insts = [inst for i, inst in enumerate(insts) if not delete_idx_mask[i]]
+        cb.replace_insts([inst for i, inst in enumerate(insts) if not delete_idx_mask[i]])

@@ -51,9 +51,9 @@ class AsmMethod(DebugBase):
         self.slotNumberIdx: int = int(parts[-2], 16)
         self.concurrentModuleRequestIdx: List[int] = list()
         self.return_type = "None"
-        self.file_class_method_name: str = ""  # remove the starting "&" if exists
+        self.module_method_name: str = ""  # remove the starting "&" if exists
         # the following names is part of this name
-        self.file_class_name: str = ""
+        self.module_name: str = ""
         self.method_name: str = ""
 
         self.method_type: str = ""
@@ -77,10 +77,6 @@ class AsmMethod(DebugBase):
         # code_blocks: code must start at [0]
         self.code_blocks: CodeBlocks = CodeBlocks(self._process_method_inst(lines[dot_function_idx + 1:]))
         assert self.code_blocks is not None
-
-    @property
-    def module_name(self) -> str:
-        return self.file_class_name
 
     @property
     def level(self):
@@ -108,22 +104,6 @@ class AsmMethod(DebugBase):
         cb_1st.add_next_cb(self.code_blocks.blocks[0])
         self.code_blocks.insert_front(cb_1st)
 
-    def _split_file_class_method_name(self, records: List[AsmRecord]):
-        # split 'file_class_method' to 'file_class' and 'method'
-        for rec in records:
-            if (len(rec.file_class_name) > 0 and self.file_class_method_name.startswith(rec.file_class_name)):
-                if (len(self.file_class_name) < len(rec.file_class_name)):
-                    self.file_class_name = rec.file_class_name
-
-                    idx = len(rec.file_class_name)
-                    if (self.file_class_method_name[idx] == "&"):
-                        idx += 1
-                    if (self.file_class_method_name[idx] == "."):
-                        idx += 1
-                    self.method_name = self.file_class_method_name[idx:]
-        if (len(self.file_class_name) == 0):
-            Log.error(f"_split_file_class_method_name NOT match, file_class_method_name {self.file_class_method_name}")
-
     def _process_concurrent_module_reqs(self, lines: List[str]):
         for line in lines:
             if ("concurrentModuleRequestIdx" in line):
@@ -139,9 +119,9 @@ class AsmMethod(DebugBase):
         assert parts[0] == ".function"
         self.return_type = parts[1].strip()
         file_func_name = parts[2].split("(")[0]
-        self.file_class_method_name = file_func_name.strip()
-        if (self.file_class_method_name.startswith("&")):
-            self.file_class_method_name = self.file_class_method_name[1:]
+        self.module_method_name = file_func_name.strip()
+        if (self.module_method_name.startswith("&")):
+            self.module_method_name = self.module_method_name[1:]
         i = len(parts) - 1
         while (i >= 0):
             if (parts[i].startswith("<") and parts[i].endswith(">") and len(parts[i]) >= 3):
@@ -149,6 +129,8 @@ class AsmMethod(DebugBase):
                 break
             else:
                 i -= 1
+        # split func name and module name
+        self.module_name, self.method_name = self.split_to_module_method_name(self.module_method_name)
         # process args now
         parts = line.split("(")
         parts = parts[1].split(")")[0]
@@ -167,7 +149,7 @@ class AsmMethod(DebugBase):
                 l_n += 1
             elif (len(line.strip()) == 0):  # skip empty line
                 l_n += 1
-            elif (".catchall" in line.strip()):  # skip empty line
+            elif (".catchall" in line.strip()):  # skip catchall line
                 l_n += 1
             elif (is_method_end_line(line)):  # process END
                 return insts
@@ -245,8 +227,8 @@ class AsmMethod(DebugBase):
         if (len(self.args)):
             ty, name = self.args[-1]
             args_out += f"{ty}:{name})"
-        out = f"AsmMethod: {self.slotNumberIdx} {self.file_class_method_name} name {self.name} \
-{self.method_type} ret {self.return_type} [{self.file_class_name}] \
+        out = f"AsmMethod: {self.slotNumberIdx} {self.module_method_name} name {self.name} \
+{self.method_type} ret {self.return_type} [{self.module_name}] \
 args({len(self.args)}) {args_out} cbs({len(self.code_blocks)}) {self.level_str} insts-{self.inst_len}"
         return out
 
@@ -272,6 +254,14 @@ args({len(self.args)}) {args_out} cbs({len(self.code_blocks)}) {self.level_str} 
             ty, name = self.args[i]
             ret.append(AsmArg.build_arg(name))
         return ret
+
+    @classmethod
+    def split_to_module_method_name(self, module_method_name: str) -> Tuple[str, str]:
+        func_st_idx = module_method_name.rfind(".")
+        method_name = module_method_name[func_st_idx + 1:]
+        module_name = module_method_name[:func_st_idx]
+        module_name = utils.strip_sted_str(module_name, "&", "&")
+        return module_name, method_name
 
 
 if __name__ == "__main__":

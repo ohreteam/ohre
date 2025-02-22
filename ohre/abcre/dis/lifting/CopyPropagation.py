@@ -10,7 +10,7 @@ from ohre.misc import Log, utils
 
 
 def CopyPropagation(meth: AsmMethod):
-    Log.info(f"CPro-START {meth.file_class_method_name} inst-{meth.inst_len}", True)
+    Log.info(f"CPro-START {meth.module_method_name} inst-{meth.inst_len}", True)
     for cb in meth.code_blocks:
         cb.empty_var2val()
     i = 0
@@ -58,7 +58,7 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
             print(f"before {var2val[inst.args[0].ref_base]} inst: {inst}")
             ret = var2val[inst.args[0].ref_base].set_object_key_value(inst.args[0].name, inst.args[1])
             if (ret == False):
-                Log.error(f"set_object_key_value ret False, name {inst.args[0].name} value {inst.args[1]}")
+                Log.error(f"set_object_key_value False {DEBUG_MSG}, name {inst.args[0].name} value {inst.args[1]}")
             print(f"after  {var2val[inst.args[0].ref_base]} {ret} inst: {inst}")
         elif (inst.args_len == 2 and inst.rop == "-" and inst.args[1].is_imm()):  # a = - imm(xxx)
             if (inst.args[1].is_imm()):

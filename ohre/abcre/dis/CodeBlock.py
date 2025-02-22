@@ -6,6 +6,7 @@ from ohre.abcre.dis.DebugBase import DebugBase
 from ohre.abcre.dis.enum.TACTYPE import TACTYPE
 from ohre.abcre.dis.NAC import NAC
 from ohre.abcre.dis.TAC import TAC
+from ohre.misc import Log, utils
 
 
 class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
@@ -29,30 +30,36 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
         if (next_cb_list is not None):
             self.next_cb_list = next_cb_list
 
-        self.use_vars: set[AsmArg] = None
-        self.def_vars: set[AsmArg] = None
+        self.use_vars: set[AsmArg] = set()
+        self.def_vars: set[AsmArg] = set()
         self.var2val: Dict[AsmArg, AsmArg] = dict()
+        self._next_use_cache_include_curr = None  # cache for get_all_next_cbs_use_vars
+        self._prev_v2v_cache_include_curr = None  # cache for get_all_prev_cbs_var2val
 
     def set_var2val(self, var2val: Dict[AsmArg, AsmArg]):
+        self._prev_v2v_cache_include_curr = None
         self.var2val = var2val
 
     def get_var2val(self) -> Dict[AsmArg, AsmArg]:
         return self.var2val
 
     def empty_var2val(self):
+        self._prev_v2v_cache_include_curr = None
         self.var2val = dict()
 
     def get_all_prev_cbs_var2val(self, get_current_cb=False, definite_flag=True, visited=None) -> Dict[AsmArg, AsmArg]:
-        # recursively
+        # recursively # TODO: support definite_flag==False in future
         # definite_flag: if True, when var def more than 1 with different value, let var undef
-        assert definite_flag == True  # TODO: support definite_flag==False in future
+        if (get_current_cb is True and definite_flag is True
+                and self._prev_v2v_cache_include_curr is not None):  # cache HIT
+            return self._prev_v2v_cache_include_curr
         visited = visited if visited is not None else set()
         if self in visited:
             return dict()
         visited.add(self)
 
         ret = dict()
-        if (get_current_cb):
+        if (get_current_cb is True):
             ret.update(self.get_var2val())
         for cb in self.prev_cb_list:
             prev_cbs_var2val = cb.get_all_prev_cbs_var2val(True, True, visited)
@@ -65,7 +72,9 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
                     else:
                         ret[var] = None  # None means value conflicted, treat this var as undef-ed
                 else:
-                    pass
+                    Log.error(f"NOT supported, definite_flag {definite_flag}")
+        if (get_current_cb is True and definite_flag is True):
+            self._prev_v2v_cache_include_curr = ret
         return ret
 
     def get_slice_block(self, idx_start: int, idx_end: int):
@@ -73,6 +82,7 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
 
     def add_next_cb(self, cb):
         if (cb not in self.next_cb_list):
+            self._next_use_cache_include_curr = None
             self.next_cb_list.append(cb)
 
     def add_prev_cb(self, cb):
@@ -80,21 +90,20 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
             self.prev_cb_list.append(cb)
 
     def empty_next_cbs(self):
+        self._next_use_cache_include_curr = None
         self.next_cb_list = list()
 
     def get_all_next_cb(self) -> List:
         return self.next_cb_list
 
-    def set_use_vars(self, use_vars: set):
+    def set_use_vars(self, use_vars: set[AsmArg]):
         self.use_vars = use_vars
 
-    def set_def_vars(self, def_vars: set):
+    def set_def_vars(self, def_vars: set[AsmArg]):
         self.def_vars = def_vars
 
     def get_use_vars(self) -> set[AsmArg]:
-        if (self.use_vars is not None):
-            return self.use_vars
-        return set()
+        return self.use_vars
 
     def get_def_vars(self) -> set[AsmArg]:
         if (self.def_vars is not None):
@@ -110,23 +119,29 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
 
         ret = set()
         if (get_current_cb):
-            ret.update(self.get_def_vars())
+            ret |= self.get_def_vars()
         for cb in self.prev_cb_list:
-            ret.update(cb.get_all_prev_cbs_def_vars(True, visited))
+            ret |= cb.get_all_prev_cbs_def_vars(True, visited)
         return ret
 
     def get_all_next_cbs_use_vars(self, get_current_cb=False, visited=None) -> set[AsmArg]:
-        # recursively
+        # recursively # commonly not include curr cb, but include all next cb recursively
+        # this cache cannot update correspondingly when next cb updated, so must call reversed
+        if (get_current_cb is True and self._next_use_cache_include_curr is not None):  # cache HIT
+            return self._next_use_cache_include_curr
         visited = visited if visited is not None else set()
         if self in visited:
             return set()
         visited.add(self)
 
         ret = set()
-        if (get_current_cb):
-            ret.update(self.get_use_vars())
+        if (get_current_cb is True):
+            ret |= self.get_use_vars()
         for cb in self.next_cb_list:
-            ret.update(cb.get_all_next_cbs_use_vars(True, visited))
+            ret |= cb.get_all_next_cbs_use_vars(True, visited)
+
+        if (get_current_cb is True):  # cache it
+            self._next_use_cache_include_curr = ret
         return ret
 
     def is_no_next_cb(self) -> bool:
@@ -135,6 +150,7 @@ class CodeBlock(DebugBase):  # asm instruction(NAC) cantained
         return False
 
     def replace_insts(self, tac_l: List[TAC]):
+        self._next_use_cache_include_curr = None
         self.insts = tac_l
 
     def get_insts_len(self) -> int:

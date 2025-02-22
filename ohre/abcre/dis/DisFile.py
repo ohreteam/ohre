@@ -31,9 +31,9 @@ class DisFile(DebugBase):
     def __init__(self, value):
         self.source_binary_name: str = ""
         self.language: str = ""
-        self.literals: List[AsmLiteral] = list()
-        self.records: List[AsmRecord] = list()
-        self.methods: List[AsmMethod] = list()
+        self.literals: Dict[str, AsmLiteral] = dict()  # addr -> lit
+        self.records: Dict[str, AsmRecord] = dict()  # module_name -> rec
+        self.methods: Dict[str, Dict[str, AsmMethod]] = dict()  # module_name -> method_name -> AsmMethod
         self.asmstrs: List[AsmString] = list()
         self._debug: List = None
         self.lex_env: List = list()
@@ -52,13 +52,11 @@ class DisFile(DebugBase):
             Log.error(f"DisFile init ERROR: value type NOT supported, {type(value)} {value}")
 
         self._dis_process_main(lines)
-        for method in self.methods:
-            method._split_file_class_method_name(self.records)
 
     def _dis_process_main(self, lines: List[str]):
         l_n = 0  # line number
         lit_ln_start, rec_ln_start, met_ln_start, str_ln_start = 0, 0, 0, 0
-        Log.info(f"DisFile process START source_binary_name {self.source_binary_name}", True)
+        Log.info(f"DisFile process START", True)
         with ThreadPoolExecutor(max_workers=10) as executor:
             executor.submit(self._read_disheader, 0, lines)
             while (l_n < len(lines)):
@@ -138,28 +136,29 @@ class DisFile(DebugBase):
 
     def _read_literals(self, l_n: int, lines: List[str]):
         while (l_n < len(lines)):
-            line: str = lines[l_n].strip()
+            line: str = lines[l_n]
             if (_is_delimiter(line)):
+                Log.info(f"_read_literals END")
                 return
             parts = line.split(" ")
             if (parts[0].isdigit()):
                 l_idx, n_idx = utils.find_matching_symbols_multi_line(lines[l_n:], "{")
                 if (l_idx is not None):
                     asm_lit = AsmLiteral(lines[l_n:l_n + l_idx + 1])
-                    self.literals.append(asm_lit)
+                    self.literals[asm_lit.address] = asm_lit
                 l_n += l_idx + 1
             else:
                 l_n += 1
 
     def _read_records(self, l_n: int, lines: List[str]):
         while (l_n < len(lines)):
-            line: str = lines[l_n].strip()
+            line: str = lines[l_n]
             if (_is_delimiter(line)):
                 return
             elif (line.startswith(".record")):
                 end_ln = lines.index("}\n", l_n + 1)
                 rec = AsmRecord(lines[l_n:end_ln + 1])
-                self.records.append(rec)
+                self.records[rec.module_name] = rec
                 l_n = end_ln + 1
             else:
                 l_n += 1
@@ -175,7 +174,7 @@ class DisFile(DebugBase):
                     lines_method = lines[l_n:next_TAG_ln]
                     for i, sub_l in enumerate(lines_method):
                         lines_method[i] = sub_l.rstrip()
-                    method = AsmMethod(lines_method)
+                    meth = AsmMethod(lines_method)
                     l_n = next_TAG_ln - 1
                 except Exception as e:
                     Log.info(f"_read_methods exception {e}, should be last meth: l_n {l_n} {lines[l_n:l_n + 4]}")
@@ -186,8 +185,10 @@ class DisFile(DebugBase):
                         l_n += 1
                         if ("}" == line_method):
                             break
-                    method = AsmMethod(lines_method)
-                self.methods.append(method)
+                    meth = AsmMethod(lines_method)
+                if (meth.module_name not in self.methods):
+                    self.methods[meth.module_name] = dict()
+                self.methods[meth.module_name][meth.method_name] = meth
             else:
                 l_n += 1
 
@@ -212,24 +213,24 @@ class DisFile(DebugBase):
                 self.asmstrs.append(AsmString(line_concat))
                 l_n = l_n_next
             else:
-                Log.error(f"ERROR in _read_strings, else hit. l_n {l_n} line {line}")
+                Log.warn(f"_read_strings, else hit. l_n {l_n} line {line}, should occur only once")
                 l_n += 1
-        return None, l_n + 1
 
     def _debug_str(self) -> str:
         out = f"DisFile: {self.source_binary_name} language {self.language} \
-literals({len(self.literals)}) records({len(self.records)}) methods({len(self.methods)}) asmstrs({len(self.asmstrs)}) \
+literals({len(self.literals)}) records({len(self.records)}) methods({self.method_len()}) asmstrs({len(self.asmstrs)}) \
 _debug {self._debug}"
         return out
 
     def _debug_vstr(self) -> str:
         out = self._debug_str() + "\n"
-        for lit in self.literals:
+        for address, lit in self.literals.items():
             out += f">> {lit._debug_vstr()}\n"
-        for rec in self.records:
+        for module_name, rec in self.records.items():
             out += f">> {rec._debug_vstr()}\n"
-        for method in self.methods:
-            out += f">> {method._debug_vstr()}\n"
+        for module_name, name_meth_d in self.methods.items():
+            for method_name, meth in name_meth_d.items():
+                out += f">> {meth._debug_vstr()}\n"
         for asmstr in self.asmstrs:
             out += f">> {asmstr._debug_vstr()}\n"
         return out
@@ -241,30 +242,21 @@ _debug {self._debug}"
     def get_abc_name(self) -> str:
         return self.source_binary_name
 
+    def method_len(self) -> int:
+        meth_cnt = 0
+        for _, d in self.methods.items():
+            meth_cnt += len(d)
+        return meth_cnt
+
     def get_literal_by_addr(self, addr: int) -> Union[AsmLiteral, None]:
-        for lit in self.literals:
-            if (lit.address == addr):
-                return lit
+        if (addr in self.literals):
+            return self.literals[addr]
         return None
 
-    def get_records_by_module_name(self, module_name: str) -> List[AsmRecord]:
-        ret: List[AsmRecord] = list()
-        if (len(module_name) > 0):
-            for rec in self.records:
-                if (module_name == rec.module_name):
-                    ret.append(rec)
-        return ret
-
     def get_record_by_module_name(self, module_name: str) -> AsmRecord:
-        hit_cnt = 0
-        hit_rec: AsmRecord = None
-        for rec in self.records:
-            if (module_name == rec.module_name):
-                hit_cnt += 1
-                hit_rec = rec
-        if (hit_cnt > 1):
-            Log.warn(f"get_record_by_module_name hit_cnt > 1, hit_cnt {hit_cnt} module_name {module_name}", True)
-        return hit_rec
+        if (module_name in self.records):
+            return self.records[module_name]
+        return None
 
     def get_external_module_name(self, idx: int, module_name: str = "") -> Union[str, None]:
         hit_rec = None
@@ -375,4 +367,14 @@ _debug {self._debug}"
         var_name = self._module_var_name_preprocess(var_name)
         if (module_name in self.module_obj_d and var_name not in self.module_obj_d[module_name]):
             return self.module_obj_d[module_name][var_name]
+        return None
+
+    def get_meth(self, module_name: str = None, method_name: str = None,
+                 module_method_name: str = None) -> Union[AsmMethod, None]:
+        if (module_method_name is None):
+            if (module_name in self.methods and method_name in self.methods[module_name]):
+                return self.methods[module_name][method_name]
+        elif (module_method_name is not None and len(module_method_name) > 0):
+            module_name, method_name = AsmMethod.split_to_module_method_name(module_method_name)
+            return self.get_meth(module_name, method_name)
         return None

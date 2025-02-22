@@ -38,12 +38,16 @@ class ControlFlow():
             idx_start = idx_end
 
         for i in range(len(final_nac_blocks)):
-            if (i == len(final_nac_blocks) - 1):
-                final_nac_blocks[i].empty_next_cbs()
-            else:
+            if (i != len(final_nac_blocks) - 1 and
+                    (final_nac_blocks[i].inst_len == 0
+                     or final_nac_blocks[i].insts[-1].type != NACTYPE.RETURN)):
                 final_nac_blocks[i].empty_next_cbs()
                 final_nac_blocks[i].add_next_cb(final_nac_blocks[i + 1])
-            if (i - 1 >= 0):
+            else:
+                final_nac_blocks[i].empty_next_cbs()
+            if (i - 1 >= 0 and
+                    (final_nac_blocks[i - 1].inst_len == 0
+                     or final_nac_blocks[i - 1].insts[-1].type != NACTYPE.RETURN)):
                 final_nac_blocks[i].add_prev_cb(final_nac_blocks[i - 1])
 
         d_label2cb = get_label2cb(final_nac_blocks)
