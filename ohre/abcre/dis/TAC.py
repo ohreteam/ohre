@@ -1,14 +1,14 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmArg import AsmArg
-from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.abcre.dis.enum.TACTYPE import TACTYPE
 from ohre.misc import Log, utils
 
 
 def in_and_not_None(key, d: Dict) -> bool:
-    if (key in d.keys() and d[key] is not None):
+    if (key in d and d[key] is not None):
         if (isinstance(d[key], AsmArg)):
             if (not d[key].is_unknown()):
                 return True
@@ -16,6 +16,13 @@ def in_and_not_None(key, d: Dict) -> bool:
                 return False
         else:
             return True
+    return False
+
+
+def rop_is_calculate(rop: str) -> bool:
+    cal_rop_set = {"+", "-", "*", "/", "%"}
+    if (rop in cal_rop_set):
+        return True
     return False
 
 
@@ -233,62 +240,64 @@ throw {self.args[2]._debug_vstr()}"
 
     def get_def_use(self) -> Tuple[set[AsmArg], set[AsmArg]]:
         def_vars, use_vars = set(), set()
+        args = self.args
         if (self.type == TACTYPE.ASSIGN):
-            if (len(self.args) == 2):  # a=b # a[c] = b : b used, a,c def
-                def_vars.update(self.args[0].get_all_args_recursively())
-                use_vars.update(self.args[1].get_all_args_recursively())
-            elif (len(self.args) == 3):  # a=b+c
-                def_vars.update(self.args[0].get_all_args_recursively())
-                use_vars.update(self.args[1].get_all_args_recursively())
-                use_vars.update(self.args[2].get_all_args_recursively())
+            if (len(args) == 2):  # a=b # a[c] = b : b used, a,c def
+                def_vars |= args[0].get_all_args_recursively()
+                use_vars |= args[1].get_all_args_recursively()
+            elif (len(args) == 3):  # a=b+c
+                def_vars |= args[0].get_all_args_recursively()
+                use_vars |= args[1].get_all_args_recursively()
+                use_vars |= args[2].get_all_args_recursively()
             else:
                 Log.error(f"get_def_use ERROR {self.type_str} {self._debug_vstr()}")
             # NOTE: if v10[xxx] = yyy, xxx is def-ed, v10 is def-ed, and v10 is also used here
-            if (self.args[0].has_ref()):
-                use_vars.update(self.args[0].ref_base.get_all_args_recursively())
+            if (args[0].has_ref()):
+                use_vars |= args[0].ref_base.get_all_args_recursively()
         elif (self.type == TACTYPE.IMPORT):  # acc = module(x)
-            if (len(self.args) == 2):
-                def_vars.update(self.args[0].get_all_args_recursively())
-                use_vars.update(self.args[1].get_all_args_recursively())
+            if (len(args) == 2):
+                def_vars |= args[0].get_all_args_recursively()
+                use_vars |= args[1].get_all_args_recursively()
             else:
                 Log.error(f"get_def_use ERROR {self.type_str} {self._debug_vstr()}")
         elif (self.type == TACTYPE.COND_JMP):
-            if (len(self.args) == 3):
-                for arg in self.args:
-                    use_vars.update(arg.get_all_args_recursively())
+            if (len(args) == 3):
+                for arg in args:
+                    use_vars |= arg.get_all_args_recursively()
             else:
                 Log.error(f"get_def_use ERROR {self.type_str} {self._debug_vstr()}")
         elif (self.type == TACTYPE.UNCN_JMP):
-            if (len(self.args) == 1):
-                use_vars.update(self.args[0].get_all_args_recursively())
+            if (len(args) == 1):
+                use_vars |= args[0].get_all_args_recursively()
             else:
                 Log.error(f"get_def_use ERROR {self.type_str} {self._debug_vstr()}")
         elif (self.type == TACTYPE.LABEL):
-            if (len(self.args) == 1):
-                use_vars.update(self.args[0].get_all_args_recursively())
+            if (len(args) == 1):
+                use_vars |= args[0].get_all_args_recursively()
             else:
                 Log.error(f"get_def_use ERROR {self.type_str} {self._debug_vstr()}")
         elif (self.type == TACTYPE.RETURN):
-            if (len(self.args) == 1):
-                use_vars.update(self.args[0].get_all_args_recursively())
+            if (len(args) == 1):
+                use_vars |= args[0].get_all_args_recursively()
             else:
                 Log.error(f"get_def_use ERROR {self.type_str} {self._debug_vstr()}")
         elif (self.type == TACTYPE.CALL):
             # call may NOT use acc but will definitely assign/def acc
-            for arg in self.args[1:]:
-                use_vars.update(arg.get_all_args_recursively())
+            for arg in args[1:]:
+                use_vars |= arg.get_all_args_recursively()
             if (self.this is not None):
-                use_vars.update(self.this.get_all_args_recursively())
-            if (isinstance(self.args[0], AsmArg)):
-                def_vars.update(self.args[0].get_all_args_recursively())  # return value store to args[0]
+                use_vars |= self.this.get_all_args_recursively()
+            if (isinstance(args[0], AsmArg)):
+                def_vars |= args[0].get_all_args_recursively()  # return value store to args[0]
         elif (self.type == TACTYPE.COND_THR or self.type == TACTYPE.UNCN_THR):
-            for arg in self.args:
-                use_vars.update(arg.get_all_args_recursively())
+            for arg in args:
+                use_vars |= arg.get_all_args_recursively()
         else:
-            Log.error(f"get_def_use optype NOT SUPPORTED ERROR {self.type_str} {self._debug_vstr()}")
-            for arg in self.args:
-                def_vars.update(arg.get_all_args_recursively())
-                use_vars.update(arg.get_all_args_recursively())
+            Log.warn(f"get_def_use optype NOT SUPPORTED ERROR {self.type_str} {self._debug_vstr()}", False)
+            if (len(args)):
+                def_vars |= args[0].get_all_args_recursively()
+            for arg in args:
+                use_vars |= arg.get_all_args_recursively()
         return def_vars, use_vars
 
     def get_def_use_list(self) -> Tuple[list[AsmArg], list[AsmArg]]:
@@ -345,31 +354,36 @@ throw {self.args[2]._debug_vstr()}"
             return True
         return False
 
-    def is_simple_assgin(self) -> bool:  # like a = b;  NOT a = rop b OR a = b rop c
+    def is_simplest_assgin(self) -> bool:  # like a = b;  NOT a = rop b OR a = b rop c
         if (self.optype == TACTYPE.ASSIGN and len(self.args) == 2 and len(self.rop) == 0):
             return True
         return False
 
-    def copy_propagation(self, var2val: Dict[AsmArg, AsmArg], include_ref: bool = True):
-        if (self.is_arg0_def()):
-            i = 1
-            # v1["xx"] = v2 # v1=this in var2val
-            if (self.args[0].has_ref() and in_and_not_None(self.args[0].ref_base, var2val)):
-                if (var2val[self.args[0].ref_base].is_arg()):  # TODO: more situation plz, but not include obj/field
-                    self.args[0].ref_base = var2val[self.args[0].ref_base]
-        else:
-            i = 0
-        print(f"copy_propagation-TAC-START i={i} inst {self._debug_vstr()} var2val {var2val}")
-        while (i < self.args_len):
-            if (in_and_not_None(self.args[i], var2val)):
-                print(f"copy_propagation  {self.args[i]} => {var2val[self.args[i]]}; {self._debug_str()}")
-                self.args[i] = var2val[self.args[i]]
-            elif (include_ref and self.args[i].has_ref() and in_and_not_None(self.args[i].ref_base, var2val)):
-                print(f"copy_propagation-ref {self.args[i].ref_base._debug_vstr()} => \
-{var2val[self.args[i].ref_base]._debug_vstr()}; {self._debug_str()}")
-                self.args[i].set_ref(var2val[self.args[i].ref_base])
-            i += 1
+    def is_imm_assgin(self) -> bool:  # like a = 0 + 1 # a assgin that result is imm
+        if (self.optype == TACTYPE.ASSIGN and rop_is_calculate(self.rop)):
+            if (len(self.args) == 3 and isinstance(self.args[1], AsmArg) and self.args[1].is_imm()
+                    and isinstance(self.args[2], AsmArg) and self.args[2].is_imm()):
+                return True
+        return False
+
+    def copy_propagation(self, v2v: Dict[AsmArg, AsmArg], include_ref: bool = True):
+        args = self.args
+        start_idx = 1 if self.is_arg0_def() else 0
+        # v1["xx"] = v2 # v1=this in v2v
+        if (start_idx == 1 and args[0].has_ref() and in_and_not_None(args[0].ref_base, v2v)):
+            if (v2v[args[0].ref_base].is_arg()):  # TODO: more situation plz, but not include obj/field
+                self.args[0].ref_base = v2v[args[0].ref_base]
+
+        for i in range(start_idx, len(args)):
+            print(f"CP-TAC-START i={i} inst {self._debug_vstr()} v2v {v2v}")
+            arg_i = args[i]
+            if (in_and_not_None(arg_i, v2v)):
+                print(f"CP-replace  {arg_i} => {v2v[arg_i]}; {self._debug_str()}")
+                self.args[i] = v2v[arg_i]
+            elif (include_ref and arg_i.has_ref() and in_and_not_None(arg_i.ref_base, v2v)):
+                print(f"CP-ref {arg_i.ref_base._debug_vstr()} => {v2v[arg_i.ref_base]._debug_vstr()}; {self}")
+                self.args[i].set_ref(v2v[arg_i.ref_base])
         if (self.type == TACTYPE.CALL and self.this is not None):
-            if (in_and_not_None(self.this, var2val)):
-                print(f"copy_propagation-this  {self.this} => {var2val[self.this]}; {self._debug_str()}")
-                self.this = var2val[self.this]
+            if (in_and_not_None(self.this, v2v)):
+                print(f"CP-this  {self.this} => {v2v[self.this]}; {self._debug_str()}")
+                self.this = v2v[self.this]

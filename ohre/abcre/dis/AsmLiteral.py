@@ -210,23 +210,47 @@ class AsmLiteral(DebugBase):
         if (len(matches) != ele_cnt):
             Log.error(f"lit_get_key_value-unmatch {ele_cnt} matches {len(matches)} {matches}// {in_s}")
             return None
+
+        def process_a_kv(i: int, matches: List[Dict[str, Any]], in_s: str) -> Tuple[int, str, AsmArg]:
+            if (i + 1 != len(matches) - 1):
+                end_idx = matches[i + 2]["start"]
+            else:
+                end_idx = len(in_s)
+            name = utils.strip_sted_str(in_s[matches[i]["end"]: matches[i + 1]["start"]].strip(), None, ",")
+            name = utils.strip_sted_str(name, "\"", "\"")
+            value_v = utils.strip_sted_str(in_s[matches[i + 1]["end"]: end_idx].strip(), None, ",")
+            value_v = utils.strip_sted_str(value_v, "\"", "\"")
+            value_ty = utils.strip_sted_str(matches[i + 1]["text"], None, ":").strip()
+            if (name == "\n"):
+                name = "\\n"
+            return i + 2, name, AsmArg.build_with_type(value_ty, value_v)
+
+        def process_a_method_lit(i: int, matches: List[Dict[str, Any]], in_s: str) -> Tuple[int, str, AsmArg]:
+            if (i + 2 != len(matches) - 1):
+                end_idx = matches[i + 3]["start"]
+            else:
+                end_idx = len(in_s)
+            name = utils.strip_sted_str(in_s[matches[i]["end"]: matches[i + 1]["start"]].strip(), None, ",")
+            name = utils.strip_sted_str(name, "\"", "\"")
+            method = utils.strip_sted_str(in_s[matches[i + 1]["end"]: matches[i + 2]["start"]].strip(), None, ",")
+            method_affiliate = utils.strip_sted_str(in_s[matches[i + 2]["end"]: end_idx].strip(), None, ",")
+            method_affiliate = int(method_affiliate)
+            return i + 3, name, AsmArg(AsmTypes.METHOD, name=method, paras_len=method_affiliate + 3)
         ret: Dict[str, AsmArg] = dict()
-        if ("method_affiliate" not in in_s and ele_cnt % 2 == 0):
-            for i in range(0, ele_cnt, 2):
-                if (i + 1 != len(matches) - 1):
-                    end_idx = matches[i + 2]["start"]
-                else:
-                    end_idx = len(in_s)
-                name = utils.strip_sted_str(in_s[matches[i]["end"]: matches[i + 1]["start"]].strip(), None, ",")
-                name = utils.strip_sted_str(name, "\"", "\"")
-                value_v = utils.strip_sted_str(in_s[matches[i + 1]["end"]: end_idx].strip(), None, ",")
-                value_v = utils.strip_sted_str(value_v, "\"", "\"")
-                value_ty = utils.strip_sted_str(matches[i + 1]["text"], None, ":").strip()
-                ret[name] = AsmArg.build_with_type(value_ty, value_v)
-        else:
-            pass
-        if (len(ret) != ele_cnt / 2):
-            print(f"TODO: {len(ret)} {ret} ele_cnt {ele_cnt} // {in_s}")
+        i = 0
+        while (i < ele_cnt):
+            if (i + 2 < ele_cnt and "method_affiliate" in matches[i + 2]["text"]):
+                i, name, asm_arg = process_a_method_lit(i, matches, in_s)
+                ret[name] = asm_arg
+            elif (i + 1 < ele_cnt):
+                i, name, asm_arg = process_a_kv(i, matches, in_s)
+                if (name == ""):
+                    name = "None"
+                ret[name] = asm_arg
+            else:
+                Log.error(f"lit_get_key_value else hit {ele_cnt} matches {len(matches)} {matches} // {in_s}")
+        if (len(ret) != ele_cnt / 2 and len(ret) != ele_cnt / 3):
+            Log.warn(f"lit_get_key_value: {len(ret)} {ret} ele_cnt {ele_cnt} // {in_s}")
         return ret
 
 

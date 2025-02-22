@@ -5,105 +5,95 @@ from ohre.abcre.dis.CodeBlock import CodeBlock
 from ohre.abcre.dis.enum.TACTYPE import TACTYPE
 from ohre.abcre.dis.lifting.LivingVar import _update_cbs_def_use_vars_reverse
 from ohre.abcre.dis.TAC import TAC
+from ohre.misc import Log, utils
 
 
 def PeepholeOptimization(meth: AsmMethod):
-    print(f"PHO-START {meth.name}")
+    Log.info(f"PHO-START {meth.module_method_name} inst-{meth.inst_len}", True)
+    old_inst_len = meth.inst_len
     for cb in meth.code_blocks:
         PHO_cb(cb)
-        _update_cbs_def_use_vars_reverse(meth)
-        PHO_cb_reverse(cb)  # e.g. a=xxx; b=a; a not used later
-    print(f"PHO-END {meth.name} {meth._debug_vstr()}")
 
 
 def PHO_cb(cb: CodeBlock):
     # PHO is short for PeepHole Optimization
-    idx_old2new: Dict[int, int] = dict()  # pending replaced inst idx
-    new_idx2inst: Dict[int, TAC] = dict()
-    for i in range(cb.get_insts_len() - 1):
-        if (i in idx_old2new.keys() or i + 1 in idx_old2new.keys()):
-            continue  # if it is about to be replaced, skip it.
-        curr_inst, next_inst = cb.insts[i], cb.insts[i + 1]
-        curr_def, curr_use = curr_inst.get_def_use_list()
-        next_def, next_use = next_inst.get_def_use_list()
+    insts = cb.insts
+    insts_len = len(insts)
 
-        NOT_change = True
+    delete_idx_mask = [False] * insts_len
+    # new_idx2inst: Dict[int, TAC] = dict()  # old inst's index to new TAC
+    for i in range(insts_len - 1):
+        if (delete_idx_mask[i] or delete_idx_mask[i + 1]):
+            continue  # if it is about to be replaced, skip it.
+        curr_t, next_t = insts[i], insts[i + 1]  # current tac and next tac
+        curr_def, curr_use = curr_t.get_def_use()
+        next_def, next_use = next_t.get_def_use()
+        len_curr_def, len_next_def = len(curr_def), len(next_def)
+        if (len_curr_def):
+            var_in_curr_def = curr_def.pop()
+        if (len_next_def):
+            var_in_next_def = next_def.pop()
+
         # PH-1: a=b; b=a;  =>  a=b;
-        if (NOT_change and curr_inst.is_simple_assgin() and next_inst.is_simple_assgin()
-                and curr_inst.args[0] == next_inst.args[1] and curr_inst.args[1] == next_inst.args[0]):
-            new_idx2inst[i] = curr_inst
-            idx_old2new[i], idx_old2new[i + 1] = i, None
-            NOT_change = False
+        if (curr_t.is_simplest_assgin() and next_t.is_simplest_assgin()
+                and curr_t.args[0] == next_t.args[1] and curr_t.args[1] == next_t.args[0]):
+            delete_idx_mask[i + 1] = True
+            continue
         # PH-2: a=xxx (assign tac, def) ; a=yyy (def not used) # delete a=xxx
         # NOTE: assign A but A overwritten immediately
-        if (NOT_change and curr_inst.type == TACTYPE.ASSIGN and len(curr_def) == 1 and len(next_def) == 1
-                and curr_def == next_def and curr_def[0] not in next_use):
-            new_idx2inst[i] = next_inst
-            idx_old2new[i], idx_old2new[i + 1] = i, None
-            NOT_change = False
+        if (curr_t.type == TACTYPE.ASSIGN and len_curr_def == len_next_def == 1
+                and var_in_curr_def == var_in_next_def and var_in_curr_def not in next_use):
+            delete_idx_mask[i] = True
+            continue
         # PH-3: a=xxx; b=a; a=yyy (yyy not used a)  =>  b=xxx; a=yyy; xxx may be a call or some other
-        if (NOT_change and i + 2 < cb.get_insts_len() and next_inst.is_simple_assgin() and len(curr_inst.args)
-                and curr_inst.args[0] == next_inst.args[1] and curr_inst.args[0] == cb.insts[i + 2].args[0]):
-            if (curr_inst.is_arg0_def() and next_inst.is_arg0_def() and cb.insts[i + 2].is_arg0_def()):
-                mid_var_def_later = (cb.insts[i + 2].is_def(curr_inst.args[0])
-                                     and (not cb.insts[i + 2].is_use(curr_inst.args[0])))
-                if (mid_var_def_later):
-                    print(f"mid_var_def_later {mid_var_def_later} {curr_inst}; {next_inst}; {cb.insts[i + 2]};")
-                    curr_inst.replace_def_var(next_inst.args[0])
-                    new_idx2inst[i] = curr_inst
-                    idx_old2new[i], idx_old2new[i + 1] = i, i
-                    NOT_change = False
+        if (i + 2 < insts_len and next_t.is_simplest_assgin() and len(curr_t.args) and len(insts[i + 2].args)
+                and curr_t.args[0] == next_t.args[1] == insts[i + 2].args[0]
+                and all(inst.is_arg0_def() for inst in (curr_t, next_t, insts[i + 2]))
+                and (not insts[i + 2].is_use(curr_t.args[0]))):
+            # print(f"mid_var_def_later {curr_t}; {next_t}; {insts[i + 2]};")
+            curr_t.replace_def_var(next_t.args[0])
+            delete_idx_mask[i + 1] = True
+            continue
         # PH-4: A=B (2-arg-assgin, B has no ref base); A=A["xxx"] (A used and also def) => A=B["xxx"]
-        if (NOT_change and curr_inst.is_simple_assgin() and next_inst.is_arg0_def()
-                and curr_inst.args[0] == next_inst.args[0] and next_inst.args[0] in next_use):
-            arg_in = curr_inst.args[1]  # var B
+        if (curr_t.is_simplest_assgin() and next_t.is_arg0_def()
+                and curr_t.args[0] == next_t.args[0] and next_t.args[0] in next_use):
+            arg_in = curr_t.args[1]  # var B
             if (arg_in.is_no_ref()):
-                next_inst.replace_use_var(curr_inst.args[0], arg_in)
-                new_idx2inst[i + 1] = next_inst
-                idx_old2new[i], idx_old2new[i + 1] = None, i + 1
-                NOT_change = False
-    if (len(idx_old2new) > 0):
-        update_cb_insts(cb, idx_old2new, new_idx2inst)
+                next_t.replace_use_var(curr_t.args[0], arg_in)
+                delete_idx_mask[i] = True
+                continue
+    cb.replace_insts([inst for i, inst in enumerate(insts) if not delete_idx_mask[i]])
 
 
 def PHO_cb_reverse(cb: CodeBlock):
-    idx_old2new: Dict[int, int] = dict()  # pending replaced inst idx
-    new_idx2inst: Dict[int, TAC] = dict()
+    # TODO: delete in future, mv to DCE
+    insts = cb.insts
+    insts_len = len(insts)
+    delete_idx_mask = [False] * insts_len
 
     used_after: set = cb.get_all_next_cbs_use_vars(get_current_cb=False)
-    for i in range(cb.get_insts_len() - 1, 0, -1):
-        if (i not in idx_old2new.keys() and i - 1 not in idx_old2new.keys()):
-            NOT_change = True
-            pre1_inst, curr_inst = cb.insts[i - 1], cb.insts[i]
-            pre1_def, pre1_use = pre1_inst.get_def_use_list()
-            curr_def, curr_use = curr_inst.get_def_use_list()
-            # PHO-reverse: pre1: a=xxx; curr: b=a; a not used later
-            if (NOT_change and curr_inst.is_simple_assgin()
-                    and len(curr_def) == 1 and len(curr_use) == 1 and len(pre1_def) == 1
-                    and pre1_def[0] == curr_use[0] and curr_use[0] not in used_after):
-                pre1_inst.replace_def_var(curr_def[0])
-                idx_old2new[i], idx_old2new[i - 1] = None, i - 1
-                new_idx2inst[i - 1] = pre1_inst
-                NOT_change = False
+    for i in range(insts_len - 1, 0, -1):
+        if delete_idx_mask[i] or delete_idx_mask[i - 1]:
+            continue
+        pre1_t, curr_t = insts[i - 1], insts[i]
+        pre1_def, pre1_use = pre1_t.get_def_use()
+        curr_def, curr_use = curr_t.get_def_use()
+        len_curr_def, len_pre1_def, len_curr_use = len(curr_def), len(pre1_def), len(curr_use)
+        if (len_curr_def):
+            var_in_curr_def = curr_def.pop()
+        if (len_pre1_def):
+            var_in_pre1_def = pre1_def.pop()
+        if (len_curr_use):
+            var_in_curr_use = curr_use.pop()
+        # PHO-reverse: pre1: a=xxx; curr: b=a; a not used later
+        if (curr_t.is_simplest_assgin()
+                and len_curr_def == len_curr_use == len_pre1_def == 1
+                and var_in_pre1_def == var_in_curr_use and var_in_curr_use not in used_after):
+            pre1_t.replace_def_var(var_in_curr_def)
+            delete_idx_mask[i] = True
+            continue
+        if (delete_idx_mask[i] == False):
+            # def_vars_inst, use_vars_inst = curr_t.get_def_use()  # must update at last
+            used_after |= curr_use
 
-        def_vars_inst, use_vars_inst = cb.insts[i].get_def_use()  # must update at last
-        used_after.update(use_vars_inst)
-
-    if (len(idx_old2new) > 0):
-        print(f"PHO_cb_reverse idx_old2new {idx_old2new} new_idx2inst {new_idx2inst}")
-        update_cb_insts(cb, idx_old2new, new_idx2inst)
-
-
-def update_cb_insts(cb: CodeBlock, idx_old2new: Dict[int, int], new_idx2inst: Dict[int, TAC]):
-    tac_l: List[TAC] = list()
-    for i in range(cb.get_insts_len()):
-        if (i in idx_old2new.keys() and idx_old2new[i] in new_idx2inst.keys()):
-            tac_l.append(new_idx2inst[idx_old2new[i]])
-            print(f"PHO-inst_replace {i} {cb.insts[i]} to {new_idx2inst[idx_old2new[i]]}")
-            new_idx2inst.pop(idx_old2new[i], None)
-        elif (i in idx_old2new.keys()):
-            print(f"PHO-inst_delete {i} {cb.insts[i]}")
-            continue  # this old inst point to a new inst idx that already append
-        else:
-            tac_l.append(cb.insts[i])  # no operation, just store it
-    cb.replace_insts(tac_l)
+        cb.replace_insts([inst for i, inst in enumerate(insts) if not delete_idx_mask[i]])

@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
-from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.abcre.dis.enum.AsmTypes import AsmTypes
 from ohre.misc import Log, utils
 
 
@@ -35,22 +35,23 @@ class AsmArg(DebugBase):
         return self.len
 
     def __eq__(self, rhs):
-        if isinstance(rhs, AsmArg):
-            if (self.type == rhs.type and self.name == rhs.name):
-                if (self.ref_base == rhs.ref_base and self.value == rhs.value and self.paras_len == rhs.paras_len):
-                    return True
-                else:
-                    return False
-            else:
-                return False
-        return False
+        if self is rhs:
+            return True
+        if not isinstance(rhs, AsmArg):
+            return False
+        return (self.type == rhs.type
+                and self.name == rhs.name
+                and self.value == rhs.value
+                and self.ref_base == rhs.ref_base
+                and self.paras_len == rhs.paras_len
+                )
 
     def __ne__(self, other):
         return not self.__eq__(other)
 
     def __hash__(self):
-        ref_base = self.ref_base if self.ref_base is not None else 'None'
-        return hash((self.type, self.name, ref_base))
+        ref_base_hash = hash(self.ref_base) if self.ref_base else 0
+        return hash((self.type, self.name, ref_base_hash))
 
     def __repr__(self):
         return f"Arg({self._debug_str()})"
@@ -66,8 +67,8 @@ class AsmArg(DebugBase):
             key_name_str = key
         else:
             Log.error(f"ERROR! obj_has_key key {type(key)} {key}")
-        for name in self.value.keys():
-            if (key_name_str == name):
+        if (isinstance(self.value, dict)):
+            if key_name_str in self.value:
                 return True
         return False
 
@@ -76,13 +77,13 @@ class AsmArg(DebugBase):
         if (not isinstance(value_arg, AsmArg)):
             return False
         if (self.type != AsmTypes.OBJECT):
+            Log.error(f"set_object_key_value: not a obj {self._debug_str()}")
             return False
-        for name, arg in self.value.items():
-            if (key == name):
-                self.value[name] = value_arg
-                return True
+        if (key in self.value):
+            self.value[key] = value_arg
+            return True
         if (create):
-            self.value[name] = value_arg
+            self.value[key] = value_arg
             return True
         return False
 
@@ -217,6 +218,10 @@ class AsmArg(DebugBase):
             if (isinstance(self.value, int) or isinstance(self.value, float)):
                 return True
             return False
+        if (self.type == AsmTypes.MODULE):
+            if (isinstance(self.value, int)):  # TODO: a temp state for later analysis, int for module index
+                return True
+            return False
         if (self.type == AsmTypes.STR or self.type == AsmTypes.LABEL):
             if (isinstance(self.value, str)):
                 return True
@@ -260,6 +265,11 @@ class AsmArg(DebugBase):
 
     def is_str(self) -> bool:
         if (self.type == AsmTypes.STR):
+            return True
+        return False
+
+    def is_str_and_eq(self, rhs: str) -> bool:
+        if (self.type == AsmTypes.STR and self.value == rhs):
             return True
         return False
 
@@ -318,16 +328,16 @@ class AsmArg(DebugBase):
                 return "INF"
         return None
 
-    def get_all_args_recursively(self, include_self: bool = True) -> List:
-        out = list()
+    def get_all_args_recursively(self, include_self: bool = True) -> set:
+        out = set()
         if (include_self):
-            out.append(self)
+            out.add(self)
         if (isinstance(self.ref_base, AsmArg)):
-            out.append(self.ref_base)
+            out.add(self.ref_base)
         if (self.value is not None and isinstance(self.value, Iterable)):  # if type is ARRAY
             for v in self.value:
                 if (isinstance(v, AsmArg)):
-                    out.append(v)
+                    out.add(v)
         return out
 
     def _common_error_check(self):

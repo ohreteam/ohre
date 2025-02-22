@@ -6,7 +6,7 @@ from ohre.misc import Log, utils
 
 
 def _value_in_key_of_dict(d: dict, key, value) -> bool:
-    if (key in d.keys() and d[key] is not None and value in d[key]):
+    if (key in d and d[key] is not None and value in d[key]):
         return True
     return False
 
@@ -53,9 +53,9 @@ class NACTYPE(BaseEnum):
         if (op.endswith("catchall")):
             return NACTYPE.TRYCATCH
         info_d = cls.isa.get_opstr_info_dict(op)
-        if (info_d is None or "title" not in info_d.keys()):
+        if (info_d is None or "title" not in info_d):
             Log.error(f"get_NAC_type ERROR! op({len(op)}) is {op}")
-        assert info_d is not None and "title" in info_d.keys()
+        assert info_d is not None and "title" in info_d
         if (_value_in_key_of_dict(info_d, "properties", "return")):
             return NACTYPE.RETURN
         elif (op == "nop"):
@@ -68,7 +68,7 @@ class NACTYPE(BaseEnum):
             return NACTYPE.COND_JMP
         elif (_value_in_key_of_dict(info_d, "properties", "conditional_throw")):
             return NACTYPE.COND_THROW
-        elif ("prefix" in info_d.keys() and info_d["prefix"] == "throw"):
+        elif ("prefix" in info_d and info_d["prefix"] == "throw"):
             return NACTYPE.UNCN_THROW
         elif ("call instructions" in info_d["title"] or "call runtime functions" in info_d["title"]):
             return NACTYPE.CALL
@@ -105,6 +105,6 @@ class NACTYPE(BaseEnum):
 if __name__ == "__main__":
     NACTYPE.init_from_ISAyaml(os.path.join(os.path.dirname(os.path.abspath(__file__)), "isa.yaml"))
     print(f"op total count: {len(NACTYPE.isa.opstr2infod)}")
-    for inst in NACTYPE.isa.opstr2infod.keys():
+    for inst in NACTYPE.isa.opstr2infod:
         print(f"inst {inst}: {NACTYPE.get_code_name(NACTYPE.get_NAC_type(inst))}")
         assert NACTYPE.get_code_name(NACTYPE.get_NAC_type(inst)) != "UNKNOWN"
