@@ -37,10 +37,10 @@ def ModuleVarAnalysis(dis_file: DisFile):
                             var_value = None
                             if (len(tac.args) >= 4 and tac.args[3].is_specific_like()):
                                 var_value = tac.args[3].get_specific_value()
-                            dis_file.new_module_var(meth.module_name, var_name, var_value)
+                            dis_file.new_module_obj(meth.module_name, var_name, var_value)
                         # tac like this->xxx->set(v): set/add/append xxx's value
                         elif (is_func_set(tac.args[1]) and isinstance(tac.this, AsmArg)
                               and isinstance(tac.this.ref_base, AsmArg) and tac.this.ref_base.is_arg_this()):
                             if (len(tac.args) >= 4 and tac.args[3].is_specific_like()):
-                                dis_file.set_module_var(meth.module_name, tac.this.name,
+                                dis_file.set_module_obj(meth.module_name, tac.this.name,
                                                         tac.args[3].get_specific_value())

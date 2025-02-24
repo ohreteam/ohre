@@ -9,8 +9,7 @@ from ohre.misc import Log, utils
 
 
 def PeepholeOptimization(meth: AsmMethod):
-    Log.info(f"PHO-START {meth.module_method_name} inst-{meth.inst_len}", True)
-    old_inst_len = meth.inst_len
+    Log.info(f"PHO-START {meth.module_method_name} inst-{meth.inst_len}")
     for cb in meth.code_blocks:
         PHO_cb(cb)
 

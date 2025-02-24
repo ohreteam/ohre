@@ -64,32 +64,20 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
         print(f">> {asmstr}")
 
     # === reverse truly START # strip & method full name and set it to below line
-    module_method_name: str = "vulwebview.src.main.ets.pages.Index.func_main_0"
-    module_name, method_name = AsmMethod.split_to_module_method_name(module_method_name)
-    print(f">> before CF {panda_re.dis_file.methods[module_name][method_name]._debug_vstr()}")
-    panda_re.split_native_code_block(module_name, method_name)
-    print(f">> CF built {panda_re.dis_file.methods[module_name][method_name]._debug_vstr()}")
-    panda_re.trans_NAC_to_TAC(module_name, method_name)
-    print(f">> TAC built {panda_re.dis_file.methods[module_name][method_name]._debug_vstr()}")
-    # panda_re._code_lifting_algorithms(module_name, method_name)
-    cProfile.run("panda_re._code_lifting_algorithms(module_name, method_name)")
-    print(f">> after lifting {panda_re.dis_file.methods[module_name][method_name]._debug_vstr()}")
+    # module_method_name: str = "vulwebview.src.main.ets.pages.Index.func_main_0"
+    # module_name, method_name = AsmMethod.split_to_module_method_name(module_method_name)
+    # print(f">> before CF {panda_re.dis_file.methods[module_name][method_name]._debug_vstr()}")
+    # panda_re.split_native_code_block(module_name, method_name)
+    # print(f">> CF built {panda_re.dis_file.methods[module_name][method_name]._debug_vstr()}")
+    # panda_re.trans_NAC_to_TAC(module_name, method_name)
+    # print(f">> TAC built {panda_re.dis_file.methods[module_name][method_name]._debug_vstr()}")
+    # # panda_re._code_lifting_algorithms(module_name, method_name)
+    # cProfile.run("panda_re._code_lifting_algorithms(module_name, method_name)")
+    # print(f">> after lifting {panda_re.dis_file.methods[module_name][method_name]._debug_vstr()}")
 
     nac_total = panda_re.get_insts_total()
-    for module_name, name_meth_d in panda_re.dis_file.methods.items():
-        for method_name, meth in name_meth_d.items():
-            panda_re.split_native_code_block(module_name, method_name)
-            panda_re.trans_NAC_to_TAC(module_name, method_name)
-    tac_total = panda_re.get_insts_total()
-    i, total = 0, panda_re.method_len()
-    for module_name, name_meth_d in panda_re.dis_file.methods.items():
-        for method_name, meth in name_meth_d.items():
-            succ = panda_re._code_lifting_algorithms(module_name, method_name)
-            if (succ):
-                print(f">> [{i}/{total}] after lift {panda_re.get_meth(module_name, method_name)._debug_vstr()}")
-            else:
-                print(f">> [{i}/{total}] {module_name} {method_name} FAILED")
-            i += 1
+    panda_re.trans_lift_all_method()
+    tac_total = panda_re._get_tac_total()
 
     todo_tac, tac_opstr_set = panda_re.get_tac_unknown_count()
     final_tac_total = panda_re.get_insts_total()
@@ -98,17 +86,25 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     print(f"tac_opstr_set {len(tac_opstr_set)} {tac_opstr_set}")
 
     panda_re._module_analysis_algorithms()
-    print(f"\n\n panda_re.dis_file.module_obj_d {panda_re.dis_file.module_obj_d}")
+    print(f"\n\n panda_re.dis_file.module_info {len(panda_re.dis_file.module_info)}")
+    for module_name, module_info in panda_re.dis_file.module_info.items():
+        print(f"> {module_info._debug_vstr()}")
+    print("\n\n")
 
     print(f"panda_re.dis_name {panda_re.dis_name} output write to test.out")
     file = open(f"test.out", "w")
     content = panda_re.dis_name + " time: " + datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S") + "\n\n"
+    i, total = 0, panda_re.method_len()
     for module_name, name_meth_d in panda_re.dis_file.methods.items():
         for method_name, meth in name_meth_d.items():
             content += f">> after lift \n{panda_re.get_meth(module_name, method_name)._debug_vstr()}\n\n"
-    content += f"\n\n panda_re.dis_file.module_obj_d {panda_re.dis_file.module_obj_d}"
-    content += f"lifting_algorithms {final_tac_total}/{tac_total} {final_tac_total / tac_total:.4f}"
-    content += f"tac_opstr_set {len(tac_opstr_set)} {tac_opstr_set}"
+            content += f">> [{i}/{total}]after lift \n{panda_re.get_meth(module_name, method_name)._debug_vstr()}\n\n"
+            i += 1
+    content += f"\n\n panda_re.dis_file.module_info {len(panda_re.dis_file.module_info)}\n\n"
+    for module_name, module_info in panda_re.dis_file.module_info.items():
+        content += f"{module_info._debug_vstr()}\n"
+    content += f"lifting_algorithms {final_tac_total}/{tac_total} {final_tac_total / tac_total:.4f}\n"
+    content += f"tac_opstr_set {len(tac_opstr_set)} {tac_opstr_set}\n"
     file.write(content)
     file.close()
 

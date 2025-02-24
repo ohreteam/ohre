@@ -10,7 +10,7 @@ from ohre.misc import Log, utils
 
 
 def CopyPropagation(meth: AsmMethod):
-    Log.info(f"CPro-START {meth.module_method_name} inst-{meth.inst_len}", True)
+    Log.info(f"CPro-START {meth.module_method_name} inst-{meth.inst_len}")
     for cb in meth.code_blocks:
         cb.empty_var2val()
     i = 0

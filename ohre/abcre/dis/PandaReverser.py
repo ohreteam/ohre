@@ -21,31 +21,31 @@ class PandaReverser(DebugBase):
     # interface class for user
     def __init__(self, dis_file: DisFile):
         self.dis_file: DisFile = dis_file
+        self._debug_tac_total: int = 0
 
     @property
     def dis_name(self) -> str:
         return self.dis_file.dis_name
 
     def split_native_code_block(self, module_name: str = None, method_name: str = None) -> bool:
-        meth = self.dis_file.get_meth(module_name, method_name)
+        meth = self.get_meth(module_name, method_name)
         if (meth is None):
-            print(f"d3bug {self.dis_file.methods.keys()} || {self.dis_file.methods[module_name].keys()}")
             Log.error(f"split cbs paras NOT valid: module_name {module_name} method_name {method_name}")
             return False
         if (meth.level != CODE_LV.NATIVE):
-            Log.error(f"split_native_code_block: code level NOT valid, {module_name} {method_name} is {meth.level_str}")
+            Log.error(f"split cbs code level NOT valid, {module_name} {method_name} is {meth.level_str}")
             return False
         meth.split_native_code_block()
         meth.set_level(CODE_LV.NATIVE_BLOCK_SPLITED)
         return True
 
     def trans_NAC_to_TAC(self, module_name: str = None, method_name: str = None) -> bool:
-        meth = self.dis_file.get_meth(module_name, method_name)
+        meth = self.get_meth(module_name, method_name)
         if (meth is None):
             Log.error(f"to tac paras NOT valid: module_name {module_name} method_name {method_name}")
             return False
         if (meth.level != CODE_LV.NATIVE_BLOCK_SPLITED):
-            Log.error(f"trans_NAC_to_TAC: code level NOT valid, {module_name} {method_name} is {meth.level_str}")
+            Log.error(f"to tac code level NOT valid, {module_name} {method_name} is {meth.level_str}")
             return False
         NACtoTAC.trans_NAC_to_TAC(meth, self.dis_file)
         meth.set_level(CODE_LV.TAC)
@@ -70,13 +70,43 @@ class PandaReverser(DebugBase):
                 cnt += meth.get_insts_total()
         return cnt
 
-    def _code_lifting_algorithms(self, module_name: str = None, method_name: str = None) -> bool:  # method_id: int = -1
-        meth = self.dis_file.get_meth(module_name, method_name)
+    def _get_tac_total(self) -> int:  # only for debug
+        return self._debug_tac_total
+
+    def trans_lift_all_method(self):
+        for module_name, name_meth_d in self.dis_file.methods.items():
+            if ("func_main_0" in name_meth_d):
+                func_main_0 = "func_main_0"
+                self.split_native_code_block(module_name, func_main_0)
+                self.trans_NAC_to_TAC(module_name, func_main_0)
+                self._debug_tac_total += self.get_meth(module_name, func_main_0).inst_len
+                succ = self._code_lifting_algorithms(module_name, func_main_0)
+                if (succ):
+                    print(f"after lift {self.get_meth(module_name, func_main_0)._debug_vstr()}")
+                else:
+                    Log.error(f"lifting FAILED {module_name} {func_main_0}")
+                self._func_main_0_class_construct(module_name)
+            else:
+                Log.error(f"func_main_0 NOT in module {module_name}")
+            for method_name, meth in name_meth_d.items():
+                if (method_name == "func_main_0"):
+                    continue
+                self.split_native_code_block(module_name, method_name)
+                self.trans_NAC_to_TAC(module_name, method_name)
+                self._debug_tac_total += self.get_meth(module_name, method_name).inst_len
+                succ = self._code_lifting_algorithms(module_name, method_name)
+                if (succ):
+                    Log.info(f"after lift {self.get_meth(module_name, method_name)._debug_str()}")
+                else:
+                    Log.error(f"lifting FAILED {module_name} {method_name}")
+
+    def _code_lifting_algorithms(self, module_name: str = None, method_name: str = None) -> bool:
+        meth = self.get_meth(module_name, method_name)
         if (meth is None):
             Log.error(f"lifting paras NOT valid: module_name {module_name} method_name {method_name}")
             return False
         if (meth.level != CODE_LV.TAC):
-            Log.error(f"lifting: code level NOT valid, {module_name} {method_name} is {meth.level_str}")
+            Log.error(f"lifting code level NOT valid, {module_name} {method_name} is {meth.level_str}")
             return False
         meth._insert_variable_virtual_block()
         print(f"_code_lifting_algorithms START {meth.module_method_name} inst-{meth.inst_len}")
@@ -102,6 +132,9 @@ class PandaReverser(DebugBase):
         print(f"_code_lifting_algorithms END {meth.module_method_name} inst-{meth.inst_len}")
         meth.set_level(CODE_LV.IR_LIFTED)
         return True
+
+    def _func_main_0_class_construct(self, module_name: str):
+        self.dis_file._func_main_0_class_construct(module_name)
 
     def _module_analysis_algorithms(self):
         for module_name, name_meth_d in self.dis_file.methods.items():
