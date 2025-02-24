@@ -460,7 +460,7 @@ class NACtoTAC:
         if (nac.op == "ldlocalmodulevar" or nac.op == "wide.ldlocalmodulevar"
                 or nac.op == "callruntime.ldsendablevar" or nac.op == "callruntime.wideldsendablevar"):
             index = int(nac.args[0], base=16)
-            import_module = dis_file.get_local_module_name(meth.module_name, index )
+            import_module = dis_file.get_local_module_name(meth.module_name, index)
             if (import_module is not None and len(import_module) > 0):
                 return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=import_module))
             else:
@@ -468,7 +468,7 @@ class NACtoTAC:
                 return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=f"[import_module index={index}]", value=index))
         if (nac.op == "ldexternalmodulevar" or nac.op == "wide.ldexternalmodulevar"):
             index = int(nac.args[0], base=16)
-            import_module = dis_file.get_external_module_name(index, meth.module_name)
+            import_module = dis_file.get_external_module_name(meth.module_name, index)
             if (import_module is not None and len(import_module) > 0):
                 return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=import_module))
             else:

@@ -9,6 +9,7 @@ class ModuleInfo(DebugBase):
     def __init__(self, module_name: str):
         self.module_name = module_name
         # idx -> modulevar / a imported module name(str)
+        # NOTE: stmodulevar ldlocalmodulevar related
         self._var_local: Dict[int, Union[str, AsmArg]] = dict()
         # var_name -> set{potential values of var_name}
         self._obj: Dict[str, set] = dict()

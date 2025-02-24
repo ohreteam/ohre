@@ -77,6 +77,11 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
 
     nac_total = panda_re.get_insts_total()
     panda_re.trans_lift_all_method()
+    i, total = 0, panda_re.method_len()
+    for module_name, name_meth_d in panda_re.dis_file.methods.items():
+        for method_name, meth in name_meth_d.items():
+            print(f">> [{i}/{total}]after lift {panda_re.get_meth(module_name, method_name)._debug_vstr()}\n")
+            i += 1
     tac_total = panda_re._get_tac_total()
 
     todo_tac, tac_opstr_set = panda_re.get_tac_unknown_count()
@@ -97,7 +102,6 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     i, total = 0, panda_re.method_len()
     for module_name, name_meth_d in panda_re.dis_file.methods.items():
         for method_name, meth in name_meth_d.items():
-            content += f">> after lift \n{panda_re.get_meth(module_name, method_name)._debug_vstr()}\n\n"
             content += f">> [{i}/{total}]after lift \n{panda_re.get_meth(module_name, method_name)._debug_vstr()}\n\n"
             i += 1
     content += f"\n\n panda_re.dis_file.module_info {len(panda_re.dis_file.module_info)}\n\n"

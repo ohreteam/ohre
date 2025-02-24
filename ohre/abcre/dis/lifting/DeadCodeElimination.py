@@ -13,7 +13,7 @@ def DeadCodeBlockElimination(meth: AsmMethod):
     pass
 
 
-def DeadCodeElimination(meth: AsmMethod):
+def DeadCodeElimination(meth: AsmMethod, DEBUG=False):
     # eliminate the var def but not used inside that code block and the following cbs
     # 1-Delete Dead Code: 1. def in cb 2. NOT used in cb and all next cbs
     # 2-Delete Dead Code:  delete code def in the front but not used and then redef later
@@ -24,7 +24,8 @@ def DeadCodeElimination(meth: AsmMethod):
     for cb in reversed(meth.code_blocks.blocks):
         DCE_cb_reverse(cb, DEBUG_MSG=f"DCE_{i}_{len(meth.code_blocks)}")
         i += 1
-    # print(f"DCE-END {meth.name} {meth.level_str}\n\n")
+    if(DEBUG):
+        print(f"DCE-END {meth.module_method_name} {meth.level_str} {meth._debug_vstr()}\n")
 
 
 def DCE_cb_reverse(cb: CodeBlock, DEBUG_MSG: str = ""):  # DCE is short for DeadCodeElimination

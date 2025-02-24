@@ -119,7 +119,7 @@ class PandaReverser(DebugBase):
             DeadCodeElimination(meth)
             new_insts_len = meth.get_insts_total()
 
-        print(f"_code_lifting_algorithms MID {meth.module_method_name} inst-{meth.inst_len}")
+        print(f"_code_lifting_algorithms MID   {meth.module_method_name} inst-{meth.inst_len}")
 
         old_insts_len, new_insts_len = -1, -2
         while (old_insts_len > new_insts_len):
@@ -129,7 +129,7 @@ class PandaReverser(DebugBase):
             PeepholeOptimization(meth)
             new_insts_len = meth.get_insts_total()
         DeadCodeElimination(meth)
-        print(f"_code_lifting_algorithms END {meth.module_method_name} inst-{meth.inst_len}")
+        print(f"_code_lifting_algorithms END   {meth.module_method_name} inst-{meth.inst_len}")
         meth.set_level(CODE_LV.IR_LIFTED)
         return True
 
