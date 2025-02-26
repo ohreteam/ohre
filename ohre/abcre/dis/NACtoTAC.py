@@ -17,7 +17,7 @@ from ohre.misc import Log, utils
 class NACtoTAC:
     @classmethod
     def toTAC(self, nac: NAC, meth: AsmMethod, dis_file: DisFile) -> Union[TAC, List[TAC]]:
-        print(f"nac_: {nac._debug_vstr()}")  # TODO: more tac builder plz
+        # print(f"nac_: {nac._debug_vstr()}")  # TODO: more tac builder plz
         if (nac.type == NACTYPE.LABEL):
             return TAC.tac_label(AsmArg(AsmTypes.LABEL, nac.op))
 
@@ -255,7 +255,7 @@ class NACtoTAC:
         if (nac.op == "callruntime.ldsendableexternalmodulevar"
                 or nac.op == "callruntime.wideldsendableexternalmodulevar"):  # ldexternalmodulevar
             index = int(nac.args[0], base=16)
-            import_module = dis_file.get_external_module_name(index, meth.module_name)
+            import_module = dis_file.get_external_module_name(meth.module_name, index)
             if (import_module is not None and len(import_module) > 0):
                 return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=import_module))
             else:
@@ -437,9 +437,9 @@ class NACtoTAC:
             lexenv_layer = int(nac.args[0], base=16)
             slot_index = int(nac.args[1], base=16)
             return TAC.tac_call(
-                AsmArg(AsmTypes.IMM, value=2),
-                [AsmArg(AsmTypes.IMM, value=lexenv_layer), AsmArg(AsmTypes.IMM, value=slot_index)],
-                call_addr=AsmArg(AsmTypes.METHOD, name="__stlexvar"))
+                AsmArg(AsmTypes.IMM, value=3),
+                [AsmArg(AsmTypes.IMM, value=lexenv_layer), AsmArg(AsmTypes.IMM, value=slot_index), AsmArg.ACC()],
+                call_addr=AsmArg(AsmTypes.METHOD, name="__stlexvar"), ret_store_to=AsmArg.NULL())
         if (nac.op == "stmodulevar" or nac.op == "wide.stmodulevar"):  # TODO: modulevar related
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=2),
                                 [AsmArg(AsmTypes.IMM, value=int(nac.args[0], 16)), AsmArg.ACC()],
@@ -460,7 +460,7 @@ class NACtoTAC:
         if (nac.op == "ldlocalmodulevar" or nac.op == "wide.ldlocalmodulevar"
                 or nac.op == "callruntime.ldsendablevar" or nac.op == "callruntime.wideldsendablevar"):
             index = int(nac.args[0], base=16)
-            import_module = dis_file.get_local_module_name(index, meth.module_name)
+            import_module = dis_file.get_local_module_name(meth.module_name, index)
             if (import_module is not None and len(import_module) > 0):
                 return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=import_module))
             else:
@@ -468,7 +468,7 @@ class NACtoTAC:
                 return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=f"[import_module index={index}]", value=index))
         if (nac.op == "ldexternalmodulevar" or nac.op == "wide.ldexternalmodulevar"):
             index = int(nac.args[0], base=16)
-            import_module = dis_file.get_external_module_name(index, meth.module_name)
+            import_module = dis_file.get_external_module_name(meth.module_name, index)
             if (import_module is not None and len(import_module) > 0):
                 return TAC.tac_import(AsmArg(AsmTypes.MODULE, name=import_module))
             else:
@@ -549,11 +549,11 @@ class NACtoTAC:
                 if (tac_s is None):
                     continue
                 elif (isinstance(tac_s, TAC)):
-                    print(f"tac^: {tac_s._debug_vstr()}")
+                    # print(f"tac^: {tac_s._debug_vstr()}")
                     tac_inst_l.append(tac_s)
                 else:
                     for tac in tac_s:
-                        print(f"tac^: {tac._debug_vstr()}")
+                        # print(f"tac^: {tac._debug_vstr()}")
                         tac_inst_l.append(tac)
             cbs.blocks[i].replace_insts(tac_inst_l)
         return True

@@ -8,6 +8,7 @@ from ohre.abcre.dis.AsmMethod import AsmMethod
 from ohre.abcre.dis.AsmRecord import AsmRecord
 from ohre.abcre.dis.AsmString import AsmString
 from ohre.abcre.dis.DebugBase import DebugBase
+from ohre.abcre.dis.ModuleInfo import ModuleInfo
 from ohre.misc import Log, utils
 
 
@@ -38,11 +39,8 @@ class DisFile(DebugBase):
         self._debug: List = None
         self.lex_env: List = list()
         self.cur_lex_level: int = 0
-        # module_name -> dict{ var_name: set{potential values of var_name} }
-        self.module_obj_d: Dict[str, Dict[str, set]] = dict()
-        # module_name -> dict{idx -> modulevar/module}
-        self.modulevar_local: Dict[str, Dict[int, Union[str, AsmArg]]] = dict()
-
+        # module_name -> ModuleInfo
+        self.module_info: Dict[str, ModuleInfo] = dict()
         lines: List[str] = list()
         if (isinstance(value, str)):
             file = open(value, "r", encoding="utf-8", errors="ignore")
@@ -52,6 +50,14 @@ class DisFile(DebugBase):
             Log.error(f"DisFile init ERROR: value type NOT supported, {type(value)} {value}")
 
         self._dis_process_main(lines)
+        for module_name in self.methods.keys():
+            self.module_info[module_name] = ModuleInfo(module_name)
+            hit_rec: AsmRecord = self.get_record_by_module_name(module_name)
+            if (hit_rec is not None and "moduleRecordIdx" in hit_rec.fields):
+                ty, addr = hit_rec.fields["moduleRecordIdx"]
+                lit = self.get_literal_by_addr(addr)
+                if (lit is not None):
+                    self._ini_modulevar_local(module_name, lit)
 
     def _dis_process_main(self, lines: List[str]):
         l_n = 0  # line number
@@ -258,7 +264,7 @@ _debug {self._debug}"
             return self.records[module_name]
         return None
 
-    def get_external_module_name(self, idx: int, module_name: str = "") -> Union[str, None]:
+    def get_external_module_name(self, module_name: str, idx: int) -> Union[str, None]:
         hit_rec = None
         if (len(module_name) > 0):
             hit_rec = self.get_record_by_module_name(module_name)
@@ -272,32 +278,22 @@ _debug {self._debug}"
         Log.warn(f"get_external_module_name failed, module_name {module_name} hit_rec {hit_rec}", True)
         return None
 
-    def _ini_modulevar_local(self, module_name: str, lit: AsmLiteral):
+    def _ini_modulevar_local(self, module_name: str, lit: AsmLiteral) -> bool:
+        if (module_name not in self.module_info):
+            return False
         idx = 0
-        if (module_name not in self.modulevar_local):
-            self.modulevar_local[module_name] = dict()
         for d in lit.module_tags:
             if (isinstance(d, dict) and "ModuleTag" in d and d["ModuleTag"] == "LOCAL_EXPORT"):
                 if ("local_name" in d):
                     if ("export_name" in d and d["local_name"] != d["export_name"]):
                         Log.warn(f"local_module!=export_name {d['local_name']} != {d['export_name']} {module_name}")
-                    self.modulevar_local[module_name][idx] = d["local_name"]
+                    self.module_info[module_name].set_var_local(idx, d["local_name"])
                     idx += 1
+        return True
 
-    def get_local_module_name(self, idx: int, module_name: str = "") -> Union[str, None]:
-        if (len(module_name) == 0):
-            return None
-        hit_rec = None
-        if (module_name not in self.modulevar_local):
-            hit_rec = self.get_record_by_module_name(module_name)
-            if (hit_rec is not None and "moduleRecordIdx" in hit_rec.fields):
-                ty, addr = hit_rec.fields["moduleRecordIdx"]
-                lit = self.get_literal_by_addr(addr)
-                if (lit is not None):
-                    self._ini_modulevar_local(module_name, lit)
-
-        if (module_name in self.modulevar_local and idx in self.modulevar_local[module_name]):
-            return self.modulevar_local[module_name][idx]
+    def get_local_module_name(self, module_name: str, idx: int) -> Union[str, None]:
+        if (module_name in self.module_info):
+            return self.module_info[module_name].get_var_local(idx)
         return None
 
     def create_lexical_environment(
@@ -346,27 +342,25 @@ _debug {self._debug}"
             self.lex_env.pop()
             self.cur_lex_level -= 1
 
-    def _module_var_name_preprocess(self, var_name: str) -> str:
-        if (var_name.startswith("__")):
-            return var_name[2:]
-        return var_name
+    def _module_obj_name_preprocess(self, obj_name: str) -> str:
+        if (obj_name.startswith("__")):
+            return obj_name[2:]
+        return obj_name
 
-    def new_module_var(self, module_name: str, var_name: str, var_value=None):
-        var_name = self._module_var_name_preprocess(var_name)
-        if (module_name not in self.module_obj_d):
-            self.module_obj_d[module_name] = dict()
-        if (var_name not in self.module_obj_d[module_name]):
-            self.module_obj_d[module_name][var_name] = set()
-        if (var_value is not None):
-            self.module_obj_d[module_name][var_name].add(var_value)
+    def new_module_obj(self, module_name: str, obj_name: str, value=None) -> bool:
+        obj_name = self._module_obj_name_preprocess(obj_name)
+        if (module_name not in self.module_info):
+            return False
+        self.module_info[module_name].set_obj(obj_name, value)
+        return True
 
-    def set_module_var(self, module_name: str, var_name: str, var_value):
-        self.new_module_var(module_name, var_name, var_value)
+    def set_module_obj(self, module_name: str, obj_name: str, value):
+        self.new_module_obj(module_name, obj_name, value)
 
-    def get_module_var_values(self, module_name: str, var_name: str) -> Iterable:
-        var_name = self._module_var_name_preprocess(var_name)
-        if (module_name in self.module_obj_d and var_name not in self.module_obj_d[module_name]):
-            return self.module_obj_d[module_name][var_name]
+    def get_module_obj_values(self, module_name: str, obj_name: str) -> Union[set, None]:
+        obj_name = self._module_obj_name_preprocess(obj_name)
+        if (module_name in self.module_info):
+            return self.module_info[module_name].get_obj(obj_name)
         return None
 
     def get_meth(self, module_name: str = None, method_name: str = None,
@@ -378,3 +372,9 @@ _debug {self._debug}"
             module_name, method_name = AsmMethod.split_to_module_method_name(module_method_name)
             return self.get_meth(module_name, method_name)
         return None
+
+    def _func_main_0_class_construct(self, module_name: str):
+        print(f"_func_main_0_class_construct module_name {module_name}")
+        func_main_0 = "func_main_0"
+        meth = self.get_meth(module_name, func_main_0)
+        print(f"{meth._debug_vstr()}")

@@ -13,25 +13,26 @@ def DeadCodeBlockElimination(meth: AsmMethod):
     pass
 
 
-def DeadCodeElimination(meth: AsmMethod):
+def DeadCodeElimination(meth: AsmMethod, DEBUG=False):
     # eliminate the var def but not used inside that code block and the following cbs
     # 1-Delete Dead Code: 1. def in cb 2. NOT used in cb and all next cbs
     # 2-Delete Dead Code:  delete code def in the front but not used and then redef later
     # 3-Delete Dead COde: duplicate insts, like [a=a] [throw s; throw s] [v0=v0+""]
-    Log.info(f"DCE-START {meth.module_method_name} inst-{meth.inst_len}", True)
+    Log.info(f"DCE-START {meth.module_method_name} inst-{meth.inst_len}")
     _update_cbs_def_use_vars_reverse(meth)
     i = 0
     for cb in reversed(meth.code_blocks.blocks):
         DCE_cb_reverse(cb, DEBUG_MSG=f"DCE_{i}_{len(meth.code_blocks)}")
         i += 1
-    # print(f"DCE-END {meth.name} {meth.level_str}\n\n")
+    if(DEBUG):
+        print(f"DCE-END {meth.module_method_name} {meth.level_str} {meth._debug_vstr()}\n")
 
 
 def DCE_cb_reverse(cb: CodeBlock, DEBUG_MSG: str = ""):  # DCE is short for DeadCodeElimination
     # NOTE: reverse order traversal: update vars used into `used_after`
     # if a inst def a var NOT used at `used_after`, mark it as pending delete index set
     used_after: set[AsmArg] = cb.get_all_next_cbs_use_vars(get_current_cb=False)
-    Log.info(f"DCE_cb_reverse START {DEBUG_MSG} cb: {cb} used_after {len(used_after)}", True)
+    # Log.info(f"DCE_cb_reverse START {DEBUG_MSG} cb: {cb} used_after {len(used_after)}")
     insts = cb.insts
     inst_len = cb.inst_len
 

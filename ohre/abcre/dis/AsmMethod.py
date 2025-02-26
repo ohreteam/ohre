@@ -107,9 +107,9 @@ class AsmMethod(DebugBase):
     def _process_concurrent_module_reqs(self, lines: List[str]):
         for line in lines:
             if ("concurrentModuleRequestIdx" in line):
-                start = line.find('{')
-                end = line.rfind('}')
-                items = line[start + 1:end].split(',')
+                start = line.find("{")
+                end = line.rfind("}")
+                items = line[start + 1:end].split(",")
                 self.concurrentModuleRequestIdx = [int(item.strip(), 16) for item in items]
                 return
         Log.error(f"no concurrentModuleRequestIdx occur in _process_concurrent_module_reqs")

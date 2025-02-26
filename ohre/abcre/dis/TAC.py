@@ -328,7 +328,7 @@ throw {self.args[2]._debug_vstr()}"
         else:
             Log.error(f"replace_def_var ERROR, self.args len={len(self.args)} is_arg0_def {self.is_arg0_def()}")
 
-    def replace_use_var(self, old_var: AsmArg, new_var: AsmArg, include_ref: bool = True):
+    def replace_use_var(self, old_var: AsmArg, new_var: AsmArg, include_ref: bool = True, DEBUG=False):
         # if arg==old_var or arg.ref==old_var, change it to new_var
         if (self.is_arg0_def()):
             i = 1
@@ -337,14 +337,17 @@ throw {self.args[2]._debug_vstr()}"
         while (i < self.args_len):
             if (self.args[i] == old_var):
                 self.args[i] = new_var
-                print(f"replace_use_var i={i} old_var {old_var} new_var {new_var}")
+                if (DEBUG):
+                    print(f"replace_use_var i={i} old_var {old_var} new_var {new_var}")
             elif (include_ref and self.args[i].has_ref() and self.args[i].ref_base == old_var):
                 self.args[i].set_ref(new_var)
-                print(f"replace_use_var-ref i={i} old_var {old_var._debug_vstr()} new_var {new_var}")
+                if (DEBUG):
+                    print(f"replace_use_var-ref i={i} old_var {old_var._debug_vstr()} new_var {new_var}")
             i += 1
         if (self.type == TACTYPE.CALL and self.this is not None):
             if (self.this == old_var):
-                print(f"replace_use_var-this old_var {self.this} new_var {new_var}; {self._debug_str()}")
+                if (DEBUG):
+                    print(f"replace_use_var-this old_var {self.this} new_var {new_var}; {self._debug_str()}")
                 self.this = new_var
 
     def is_arg0_def(self) -> bool:
@@ -366,7 +369,7 @@ throw {self.args[2]._debug_vstr()}"
                 return True
         return False
 
-    def copy_propagation(self, v2v: Dict[AsmArg, AsmArg], include_ref: bool = True):
+    def copy_propagation(self, v2v: Dict[AsmArg, AsmArg], include_ref: bool = True, DEBUG=False):
         args = self.args
         start_idx = 1 if self.is_arg0_def() else 0
         # v1["xx"] = v2 # v1=this in v2v
@@ -375,15 +378,19 @@ throw {self.args[2]._debug_vstr()}"
                 self.args[0].ref_base = v2v[args[0].ref_base]
 
         for i in range(start_idx, len(args)):
-            print(f"CP-TAC-START i={i} inst {self._debug_vstr()} v2v {v2v}")
+            if (DEBUG):
+                print(f"CP-TAC-START i={i} inst {self._debug_vstr()} v2v {v2v}")
             arg_i = args[i]
             if (in_and_not_None(arg_i, v2v)):
-                print(f"CP-replace  {arg_i} => {v2v[arg_i]}; {self._debug_str()}")
+                if (DEBUG):
+                    print(f"CP-replace  {arg_i} => {v2v[arg_i]}; {self._debug_str()}")
                 self.args[i] = v2v[arg_i]
             elif (include_ref and arg_i.has_ref() and in_and_not_None(arg_i.ref_base, v2v)):
-                print(f"CP-ref {arg_i.ref_base._debug_vstr()} => {v2v[arg_i.ref_base]._debug_vstr()}; {self}")
+                if (DEBUG):
+                    print(f"CP-ref {arg_i.ref_base._debug_vstr()} => {v2v[arg_i.ref_base]._debug_vstr()}; {self}")
                 self.args[i].set_ref(v2v[arg_i.ref_base])
         if (self.type == TACTYPE.CALL and self.this is not None):
             if (in_and_not_None(self.this, v2v)):
-                print(f"CP-this  {self.this} => {v2v[self.this]}; {self._debug_str()}")
+                if (DEBUG):
+                    print(f"CP-this  {self.this} => {v2v[self.this]}; {self._debug_str()}")
                 self.this = v2v[self.this]
