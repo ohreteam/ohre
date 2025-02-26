@@ -225,17 +225,6 @@ class AsmLiteral(DebugBase):
                 name = "\\n"
             return i + 2, name, AsmArg.build_with_type(value_ty, value_v)
 
-        def process_a_method_lit(i: int, matches: List[Dict[str, Any]], in_s: str) -> Tuple[int, str, AsmArg]:
-            if (i + 2 != len(matches) - 1):
-                end_idx = matches[i + 3]["start"]
-            else:
-                end_idx = len(in_s)
-            name = utils.strip_sted_str(in_s[matches[i]["end"]: matches[i + 1]["start"]].strip(), None, ",")
-            name = utils.strip_sted_str(name, "\"", "\"")
-            method = utils.strip_sted_str(in_s[matches[i + 1]["end"]: matches[i + 2]["start"]].strip(), None, ",")
-            method_affiliate = utils.strip_sted_str(in_s[matches[i + 2]["end"]: end_idx].strip(), None, ",")
-            method_affiliate = int(method_affiliate)
-            return i + 3, name, AsmArg(AsmTypes.METHOD, name=method, paras_len=method_affiliate + 3)
         ret: Dict[str, AsmArg] = dict()
         i = 0
         while (i < ele_cnt):
@@ -251,6 +240,32 @@ class AsmLiteral(DebugBase):
                 Log.error(f"lit_get_key_value else hit {ele_cnt} matches {len(matches)} {matches} // {in_s}")
         if (len(ret) != ele_cnt / 2 and len(ret) != ele_cnt / 3):
             Log.warn(f"lit_get_key_value: {len(ret)} {ret} ele_cnt {ele_cnt} // {in_s}")
+        return ret
+
+    @classmethod
+    def lit_get_class_method(cls, in_s: str) -> Union[Dict[str, AsmArg], None]:
+        ele_cnt, in_s = lit_preprocess_and_get_ele_cnt(in_s)
+        if (ele_cnt % 3 != 1):
+            Log.error(f"lit_get_class_method: ele_cnt {ele_cnt} % 3 != 1 in_s {in_s}")
+        matches = lit_get_matches(in_s, ele_cnt)
+        ret: Dict[str, AsmArg] = dict()
+        for i in range(0, ele_cnt, 3):
+            if (i + 2 >= ele_cnt):
+                continue
+            if ("method_affiliate" in matches[i + 2]["text"]):
+                i, name, asm_arg = process_a_method_lit(i, matches, in_s)
+                ret[name] = asm_arg
+        if (len(matches)):
+            method_cnt = in_s[matches[-1]["end"]:]
+            method_cnt = utils.strip_sted_str(method_cnt.strip(), ",", ",")
+            if (method_cnt.isdigit()):
+                method_cnt = int(method_cnt)
+                if (method_cnt != len(ret)):
+                    Log.error(f"lit_get_class_method: method_cnt {method_cnt} != len(ret) {len(ret)}")
+            else:
+                Log.error(f"lit_get_class_method: method_cnt is not digit, method_cnt {method_cnt}")
+        if (len(ret) == 0):
+            return None
         return ret
 
 
@@ -282,3 +297,16 @@ def lit_get_matches(in_s: str, ele_cnt: int) -> List[Dict[str, Any]]:
     if (len(matches) == 0):
         Log.error(f"lit_get_matches matches=0: matches {matches} != {ele_cnt} // {in_s}")
     return matches
+
+
+def process_a_method_lit(i: int, matches: List[Dict[str, Any]], in_s: str) -> Tuple[int, str, AsmArg]:
+    if (i + 2 != len(matches) - 1):
+        end_idx = matches[i + 3]["start"]
+    else:
+        end_idx = len(in_s)
+    name = utils.strip_sted_str(in_s[matches[i]["end"]: matches[i + 1]["start"]].strip(), None, ",")
+    name = utils.strip_sted_str(name, "\"", "\"")
+    method = utils.strip_sted_str(in_s[matches[i + 1]["end"]: matches[i + 2]["start"]].strip(), None, ",")
+    method_affiliate = utils.strip_sted_str(in_s[matches[i + 2]["end"]: end_idx].strip(), None, ",")
+    method_affiliate = int(method_affiliate)
+    return i + 3, name, AsmArg(AsmTypes.METHOD_OBJ, name=method, paras_len=method_affiliate + 3)

@@ -43,13 +43,16 @@ def var2val_assign(var2val: Dict, var, val):
 def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
     var2val: Dict[AsmArg, AsmArg] = cb.get_all_prev_cbs_var2val(get_current_cb=False, definite_flag=True)
     Log.info(f"CPro-START-cb {DEBUG_MSG} cb: {cb._debug_str()} var2val {len(var2val)}")
-    for i in range(cb.get_insts_len()):
+    inst_len = cb.get_insts_len()
+    delete_idx_mask = [False] * inst_len
+    for i in range(inst_len):
         inst = cb.insts[i]
-        # print(f"CPro_cb inst START {i}/{cb.get_insts_len()} {inst} {inst._debug_vstr()} var2val {var2val}")
+        print(f"CPro_cb inst START {i}/{inst_len} {inst} // var2val {var2val}")
         inst.copy_propagation(var2val)
         if (not inst.is_arg0_def()):  # NOTE: skip a inst that not assign any arg (if assigned, must be arg0)
             continue
         if ((inst.is_simplest_assgin() and inst.args[0].is_no_ref()) or inst.type == TACTYPE.IMPORT):
+            # v0 = v1 or import: acc = @a_module
             var2val_assign(var2val, inst.args[0], inst.args[1])
         elif (inst.args[0].has_ref() and (inst.args[0].is_field() or inst.args[0].is_obj())
                 and in_and_not_None(inst.args[0].ref_base, var2val)
@@ -60,12 +63,40 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
             if (ret == False):
                 Log.error(f"set_object_key_value False {DEBUG_MSG}, name {inst.args[0].name} value {inst.args[1]}")
             print(f"after  {var2val[inst.args[0].ref_base]} {ret} inst: {inst}")
-        elif (inst.args_len == 2 and inst.rop == "-" and inst.args[1].is_imm()):  # a = - imm(xxx)
+        elif (inst.is_simplest_assgin() and inst.args[0].has_ref() and inst.args[0].ref_base in var2val
+              and var2val[inst.args[0].ref_base].is_class_prototype()
+              and inst.args[1].is_method_obj()):
+            # v1[method_name] = METHOD_OBJ v1: class.prototype
+            # do: set class.method[method_name] = METHOD_OBJ, and delete this inst
+            arg_class = var2val[inst.args[0].ref_base].ref_base
+            name = inst.args[0].get_field_or_obj_name()
+            if (len(name)):
+                succ = arg_class.set_class_method(name, inst.args[1])
+                if (succ):
+                    delete_idx_mask[i] = True
+                else:
+                    Log.error(f"CPro_cb set_class_method failed name {name} inst.args[1] {inst.args[1]}")
+        elif (inst.is_simplest_assgin() and inst.args[0].has_ref() and inst.args[0].ref_base in var2val
+              and var2val[inst.args[0].ref_base].is_class()
+              and inst.args[1].is_method_obj()):
+            # v1[method_name] = METHOD_OBJ v1: class
+            # do: set class.method[method_name] = METHOD_OBJ, and delete this inst
+            arg_class = var2val[inst.args[0].ref_base]
+            name = inst.args[0].get_field_or_obj_name()
+            if (len(name)):
+                succ = arg_class.set_class_method(name, inst.args[1])
+                if (succ):
+                    delete_idx_mask[i] = True
+                else:
+                    Log.error(f"CPro_cb set_class_method failed name {name} inst.args[1] {inst.args[1]}")
+        elif (inst.args_len == 2 and inst.rop == "-" and inst.args[1].is_imm()):
             if (inst.args[1].is_imm()):
+                # a = - imm(xxx)
                 inst.rop = ""
                 inst.args[1].value = - inst.args[1].value
                 var2val_assign(var2val, inst.args[0], inst.args[1])
-            elif (in_and_not_None(inst.args[1], var2val) and var2val[inst.args[1]].is_imm()):  # a = - b
+            elif (in_and_not_None(inst.args[1], var2val) and var2val[inst.args[1]].is_imm()):
+                # a = - b
                 inst.args[1] = copy.deepcopy(var2val[inst.args[1]])
                 inst.args[1].value = - var2val[inst.args[1]].value
                 var2val_assign(var2val, inst.args[0], inst.args[1])
@@ -87,6 +118,7 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
             if (inst.args[0] in var2val):
                 var2val_assign(var2val, inst.args[0], None)
             Log.warn(f"ERROR-CPro_cb! else hit, inst {inst} is_arg0_def {inst.is_arg0_def()}", False)
-        # print(f"CPro_cb inst END {i}/{cb.get_insts_len()} {inst} {inst._debug_vstr()} var2val {var2val}")
+        # print(f"CPro_cb inst END {i}/{inst_len} {inst} {inst._debug_vstr()} var2val {var2val}")
     # print(f"\n >>>> CPro_cb END {DEBUG_MSG} // var2val {var2val}")
+    cb.replace_insts([inst for i, inst in enumerate(cb.insts) if not delete_idx_mask[i]])
     return var2val

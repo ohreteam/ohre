@@ -245,13 +245,15 @@ class NACtoTAC:
         if (nac.op == "callruntime.callinit"):
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=0), [], this=AsmArg.build_arg(nac.args[1]))
         if (nac.op == "callruntime.definesendableclass"):  # defineclasswithbuffer
-            constructor_str = AsmArg(AsmTypes.STR, value=nac.args[1])
-            class_lit = AsmArg(AsmTypes.STR, value=nac.args[2])
-            class_para_len = AsmArg(AsmTypes.IMM, value=int(nac.args[3], 16))
-            parent_class = AsmArg.build_arg(nac.args[4])
-            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=4),
-                                [constructor_str, class_lit, class_para_len, parent_class],
-                                call_addr=AsmArg(AsmTypes.METHOD, name="__callruntime__defineclasswithbuffer"))
+            parts = nac.args[1].split(":(")
+            ctor_name = parts[0].strip()  # constructor_name
+            args_str = utils.strip_sted_str(parts[1].strip(), "(", ")")
+            ctor_arg_len = len(args_str.split(","))
+            constructor_method = AsmArg(AsmTypes.METHOD, name=ctor_name, paras_len=ctor_arg_len)
+            name2mthod_d = AsmLiteral.lit_get_class_method(nac.args[2])
+            asm_arg_class = AsmArg(AsmTypes.CLASS, constructor_method, name2mthod_d,
+                                   ref_base=AsmArg.build_arg(nac.args[4]), paras_len=int(nac.args[3], 16))
+            return TAC.tac_assign(AsmArg.ACC(), asm_arg_class, log="__callruntime__definesendableclass")
         if (nac.op == "callruntime.ldsendableexternalmodulevar"
                 or nac.op == "callruntime.wideldsendableexternalmodulevar"):  # ldexternalmodulevar
             index = int(nac.args[0], base=16)
@@ -491,26 +493,24 @@ class NACtoTAC:
             return TAC.tac_call(AsmArg(AsmTypes.IMM, value=5),
                                 [AsmArg.ACC(), AsmArg.build_arg(nac.args[0]), AsmArg.build_arg(nac.args[1]),
                                  AsmArg.build_arg(nac.args[2]), AsmArg.build_arg(nac.args[3])],
-                                call_addr=AsmArg(AsmTypes.METHOD, name="__definegettersetterbyvalue"))
+                                call_addr=AsmArg(AsmTypes.METHOD_OBJ, name="__definegettersetterbyvalue"))
         if (nac.op == "definefunc"):
-            return TAC.tac_assign(
-                AsmArg.ACC(),
-                AsmArg(AsmTypes.METHOD_OBJ, value=nac.args[1], paras_len=int(nac.args[2], 16)))
+            return TAC.tac_assign(AsmArg.ACC(), AsmArg.build_method_obj(nac.args[1], int(nac.args[2], 16) + 3))
         if (nac.op == "definemethod"):
-            paras_len = int(nac.args[2], 16)
-            method_obj = AsmArg(AsmTypes.METHOD_OBJ, value=nac.args[1], paras_len=paras_len)
+            method_obj = AsmArg.build_method_obj(nac.args[1], int(nac.args[2], 16) + 3)
             inst0 = TAC.tac_assign(AsmArg(AsmTypes.FIELD, name="HomeObject", ref_base=method_obj), AsmArg.ACC())
-            inst1 = TAC.tac_assign(AsmArg.ACC(),
-                                   AsmArg(AsmTypes.METHOD_OBJ, value=nac.args[1], paras_len=paras_len))
+            inst1 = TAC.tac_assign(AsmArg.ACC(), method_obj)
             return [inst0, inst1]
         if (nac.op == "defineclasswithbuffer"):
-            constructor_str = AsmArg(AsmTypes.STR, value=nac.args[1])
-            class_lit = AsmArg(AsmTypes.STR, value=nac.args[2])
-            class_para_len = AsmArg(AsmTypes.IMM, value=int(nac.args[3], 16))
-            parent_class = AsmArg.build_arg(nac.args[4])
-            return TAC.tac_call(AsmArg(AsmTypes.IMM, value=4),
-                                [constructor_str, class_lit, class_para_len, parent_class],
-                                call_addr=AsmArg(AsmTypes.METHOD, name="__defineclasswithbuffer"))
+            parts = nac.args[1].split(":(")
+            ctor_name = parts[0].strip()  # constructor_name
+            args_str = utils.strip_sted_str(parts[1].strip(), "(", ")")
+            ctor_arg_len = len(args_str.split(","))
+            constructor_method = AsmArg(AsmTypes.METHOD, name=ctor_name, paras_len=ctor_arg_len)
+            name2mthod_d = AsmLiteral.lit_get_class_method(nac.args[2])
+            asm_arg_class = AsmArg(AsmTypes.CLASS, constructor_method, name2mthod_d,
+                                   ref_base=AsmArg.build_arg(nac.args[4]), paras_len=int(nac.args[3], 16))
+            return TAC.tac_assign(AsmArg.ACC(), asm_arg_class, log="defineclasswithbuffer")
         # === inst: definition instuctions # END
 
         # === inst: iterator instructions # START

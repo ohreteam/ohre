@@ -50,10 +50,11 @@ class ModuleInfo(DebugBase):
         return None
 
     def _debug_str(self) -> str:
-        out = f"ModuleInfo {self.module_name}: var_local({len(self._var_local)}) obj({len(self._obj)})"
+        out = f"ModuleInfo {self.module_name}: var_local({len(self._var_local)}) obj({len(self._obj)}) \
+method_name_d({len(self._method_name_d)})"
         return out
 
     def _debug_vstr(self) -> str:
         out = self._debug_str() + ": "
-        out += f"var_local {self._var_local}; obj {self._obj}"
+        out += f"var_local: {self._var_local}; obj: {self._obj};"
         return out

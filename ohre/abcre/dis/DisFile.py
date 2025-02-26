@@ -225,7 +225,7 @@ class DisFile(DebugBase):
     def _debug_str(self) -> str:
         out = f"DisFile: {self.source_binary_name} language {self.language} \
 literals({len(self.literals)}) records({len(self.records)}) methods({self.method_len()}) asmstrs({len(self.asmstrs)}) \
-_debug {self._debug}"
+module_info({len(self.module_info)}) _debug {self._debug}"
         return out
 
     def _debug_vstr(self) -> str:
@@ -239,6 +239,8 @@ _debug {self._debug}"
                 out += f">> {meth._debug_vstr()}\n"
         for asmstr in self.asmstrs:
             out += f">> {asmstr._debug_vstr()}\n"
+        for module_name, mi in self.module_info.items():
+            out += f">> {mi._debug_vstr()}\n"
         return out
 
     @property
@@ -369,7 +371,7 @@ _debug {self._debug}"
             if (module_name in self.methods and method_name in self.methods[module_name]):
                 return self.methods[module_name][method_name]
         elif (module_method_name is not None and len(module_method_name) > 0):
-            module_name, method_name = AsmMethod.split_to_module_method_name(module_method_name)
+            module_name, method_name = utils.split_to_module_method_name(module_method_name)
             return self.get_meth(module_name, method_name)
         return None
 
@@ -377,4 +379,4 @@ _debug {self._debug}"
         print(f"_func_main_0_class_construct module_name {module_name}")
         func_main_0 = "func_main_0"
         meth = self.get_meth(module_name, func_main_0)
-        print(f"{meth._debug_vstr()}")
+        # TODO: special logic for main_0
