@@ -11,7 +11,7 @@ from ohre.abcre.dis.AsmMethod import AsmMethod
 from ohre.abcre.dis.DisFile import DisFile
 from ohre.abcre.dis.PandaReverser import PandaReverser
 from ohre.core import oh_app, oh_hap
-from ohre.misc import Log
+from ohre.misc import Log, utils
 
 
 def save_object(obj, filename):
@@ -65,7 +65,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
 
     # === reverse truly START # strip & method full name and set it to below line
     # module_method_name: str = "vulwebview.src.main.ets.pages.Index.func_main_0"
-    # module_name, method_name = AsmMethod.split_to_module_method_name(module_method_name)
+    # module_name, method_name = utils.split_to_module_method_name(module_method_name)
     # print(f">> before CF {panda_re.dis_file.methods[module_name][method_name]._debug_vstr()}")
     # panda_re.split_native_code_block(module_name, method_name)
     # print(f">> CF built {panda_re.dis_file.methods[module_name][method_name]._debug_vstr()}")
@@ -91,7 +91,7 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
     print(f"tac_opstr_set {len(tac_opstr_set)} {tac_opstr_set}")
 
     panda_re._module_analysis_algorithms()
-    print(f"\n\n panda_re.dis_file.module_info {len(panda_re.dis_file.module_info)}")
+    print(f"\n\n panda_re.dis_file.module_info {len(panda_re.dis_file.module_info)} {panda_re}")
     for module_name, module_info in panda_re.dis_file.module_info.items():
         print(f"> {module_info._debug_vstr()}")
     print("\n\n")

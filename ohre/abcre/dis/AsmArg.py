@@ -10,12 +10,15 @@ class AsmArg(DebugBase):
                  name="", value=None, ref_base=None, paras_len: int = None):
         self.type = arg_type
         # name: e.g. for v0, type is VAR, name is v0(stored without truncating the prefix v)
-        # type is FIELD/OBJECT: name maybe str or AsmArg
+        # FIELD/OBJECT type: name maybe str or AsmArg
+        # CLASS type: name is constructor AsmArg(METHOD_OBJ)
         self.name: Union[str, AsmArg] = name
         # value: may be set in the subsequent analysis
-        # type is ARRAY: value is list[AsmArg]
-        # type is OBJECT: value is dict str->AsmArg: key: str, value: AsmArg
+        # ARRAY type: value is list[AsmArg]
+        # OBJECT type: value: dict str(key/field name) -> AsmArg(corressponding value)
+        # CLASS type: value: dict str(display method name) -> AsmArg(METHOD_OBJ)
         self.value: Union[int, float, str, List[AsmArg], Dict[str, AsmArg]] = value
+        # CLASS type: ref_base is parent class (AsmArg) of this class
         self.ref_base = ref_base  # AsmArg
         self.paras_len: Union[int, None] = paras_len  # for method object, store paras len here
         if (self.is_value_valid() == False):
@@ -43,8 +46,7 @@ class AsmArg(DebugBase):
                 and self.name == rhs.name
                 and self.value == rhs.value
                 and self.ref_base == rhs.ref_base
-                and self.paras_len == rhs.paras_len
-                )
+                and self.paras_len == rhs.paras_len)
 
     def __ne__(self, other):
         return not self.__eq__(other)
@@ -86,6 +88,17 @@ class AsmArg(DebugBase):
             self.value[key] = value_arg
             return True
         return False
+
+    def set_class_method(self, name: str, meth) -> bool:
+        # meth: a AsmArg
+        if (not isinstance(name, str) or not isinstance(meth, AsmArg) or not meth.is_method_obj()):
+            Log.error(f"set_class_method para invalid: meth {type(meth)} {meth} name {type(name)} {name}")
+            return False
+        if (not self.is_class()):
+            Log.error(f"set_class_method self invalid: self.type {self.type} {self.type_str}")
+            return False
+        self.value[name] = meth
+        return True
 
     def set_ref(self, ref_ed_arg) -> bool:
         if (isinstance(ref_ed_arg, AsmArg)):
@@ -198,6 +211,17 @@ class AsmArg(DebugBase):
             return AsmArg(AsmTypes.NULL)
         return AsmArg(AsmTypes.UNKNOWN, value=value)
 
+    @classmethod
+    def build_method_obj(cls, s: str, args_len: int = None):
+        parts = s.split(":")
+        if (len(parts) == 2):
+            # module_name, method_name = utils.split_to_module_method_name(parts[0])
+            actual_arg_len = len(parts[1].split(","))
+            if (not isinstance(args_len, int)):
+                args_len = actual_arg_len
+            return AsmArg(AsmTypes.METHOD_OBJ, name=parts[0], paras_len=args_len)
+        return AsmArg(AsmTypes.METHOD_OBJ, name="INI_ERROR")
+
     def is_arg_this(self) -> bool:
         if (self.type == AsmTypes.ARG and self.name == "this"):
             return True
@@ -249,6 +273,10 @@ class AsmArg(DebugBase):
             if (isinstance(self.value, int)):
                 return True
             return False
+        if (self.type == AsmTypes.CLASS):
+            if (self.value is None or isinstance(self.value, dict)):
+                return True
+            return False
         if (self.type != AsmTypes.UNKNOWN):
             Log.error(f"is_value_valid NOT supported logic type {self.type_str} value {type(self.value)} {self.value}")
         return True
@@ -278,6 +306,13 @@ class AsmArg(DebugBase):
             return True
         return False
 
+    def get_field_or_obj_name(self) -> str:
+        if (self.type == AsmTypes.FIELD and isinstance(self.name, str)):
+            return self.name
+        if (self.type == AsmTypes.OBJECT and isinstance(self.name, str)):
+            return self.name
+        return ""
+
     def is_obj(self) -> bool:
         if (self.type == AsmTypes.OBJECT):
             return True
@@ -296,6 +331,24 @@ class AsmArg(DebugBase):
     def is_unknown(self) -> bool:
         if (self.type == AsmTypes.UNKNOWN):
             return True
+        return False
+
+    def is_method_obj(self) -> bool:
+        if (self.type == AsmTypes.METHOD_OBJ):
+            return True
+        return False
+
+    def is_class(self) -> bool:
+        if (self.type == AsmTypes.CLASS):
+            return True
+        return False
+
+    def is_class_prototype(self) -> bool:
+        if (self.has_ref() and self.ref_base.is_class()):
+            if (self.type == AsmTypes.FIELD and isinstance(self.name, str) and self.name == "prototype"):
+                return True
+            if (self.type == AsmTypes.OBJECT and isinstance(self.name, str) and self.name == "prototype"):
+                return True
         return False
 
     def is_temp_var_like(self) -> bool:
@@ -350,12 +403,20 @@ class AsmArg(DebugBase):
         if (self.type == AsmTypes.METHOD):
             if (len(self.name) == 0):
                 Log.error(f"[ArgCC] A method without name: len {len(self.name)}")
+        if (self.type == AsmTypes.METHOD_OBJ):
+            if (not isinstance(self.name, str) or len(self.name) == 0):
+                Log.error(f"[ArgCC] method_obj name: {type(self.name)} {self.name}")
         if (self.type == AsmTypes.LABEL):
             if (len(self.name) == 0):
                 Log.error(f"[ArgCC] A label without name: len {len(self.name)}")
         if (self.type == AsmTypes.STR):
             if (len(self.name) != 0 or (not isinstance(self.value, str))):
                 Log.error(f"[ArgCC] A str with name: {self.name} or value not str: {type(self.value)} {self.value}")
+        if (self.type == AsmTypes.CLASS):
+            if (not isinstance(self.name, AsmArg)):
+                Log.error(f"[ArgCC] A CLASS with not AsmArg name: {type(self.name)} {self.name}")
+            if (self.value is not None and not isinstance(self.value, dict)):
+                Log.error(f"[ArgCC] A CLASS with value: {type(self.value)} {self.value}")
 
     def _debug_str_obj(self, detail: bool = False, print_ref: bool = True, visited=None) -> str:
         visited = visited or set()
@@ -388,6 +449,21 @@ class AsmArg(DebugBase):
                 out += "{" + self.value + "}"
         return out
 
+    def _debug_str_class(self, detail: bool = False) -> str:
+        out = ""
+        if (isinstance(self.name, AsmArg)):
+            out += f"ctr:{self.name} "
+        if (self.paras_len is not None):
+            out += f"(ctr_pl={self.paras_len}) "
+
+        if (self.ref_base is not None and detail is True):
+            out += f"parent:{self.ref_base} "
+        elif (self.ref_base is not None and detail is False):
+            out += f"p-[{self.ref_base}] "
+        if (isinstance(self.value, dict)):
+            out += f"meths-({len(self.value)}):{self.value}"
+        return out
+
     def _debug_str(self, print_ref: bool = True) -> str:
         self._common_error_check()
 
@@ -395,6 +471,8 @@ class AsmArg(DebugBase):
             return self._debug_str_obj(detail=False, print_ref=print_ref)
         if (self.type == AsmTypes.STR and self.value is not None):
             return f"\"{self.value}\""
+        if (self.type == AsmTypes.CLASS):
+            return self._debug_str_class(detail=False)
 
         out = ""
         if (self.type == AsmTypes.FIELD):
@@ -411,7 +489,7 @@ class AsmArg(DebugBase):
         if (self.value is not None):
             out += f"({self.value})"
         if (self.paras_len is not None):
-            out += f"(paras_len={self.paras_len})"
+            out += f" /(pl={self.paras_len})"
         return out
 
     def _debug_vstr(self, print_ref: bool = True) -> str:
@@ -419,6 +497,8 @@ class AsmArg(DebugBase):
         out = ""
         if (self.type == AsmTypes.OBJECT):
             return self._debug_str_obj(detail=True)
+        if (self.type == AsmTypes.CLASS):
+            return self._debug_str_class(detail=True)
         if (self.type == AsmTypes.FIELD):
             if (print_ref and self.ref_base is not None):
                 out += f"{self.ref_base}[{AsmTypes.get_code_name(self.type)}-{self.name}]"
@@ -431,5 +511,5 @@ class AsmArg(DebugBase):
         if (self.value is not None):
             out += f"({self.value})"
         if (self.paras_len is not None):
-            out += f"(paras_len={self.paras_len})"
+            out += f" /(pl={self.paras_len})"
         return out

@@ -82,12 +82,13 @@ class PandaReverser(DebugBase):
                 self._debug_tac_total += self.get_meth(module_name, func_main_0).inst_len
                 succ = self._code_lifting_algorithms(module_name, func_main_0)
                 if (succ):
-                    print(f"after lift {self.get_meth(module_name, func_main_0)._debug_vstr()}")
+                    print(f"after lift-func_main_0 {self.get_meth(module_name, func_main_0)._debug_vstr()}")
                 else:
                     Log.error(f"lifting FAILED {module_name} {func_main_0}")
                 self._func_main_0_class_construct(module_name)
             else:
                 Log.error(f"func_main_0 NOT in module {module_name}")
+            exit()  # TODO:
             for method_name, meth in name_meth_d.items():
                 if (method_name == "func_main_0"):
                     continue
@@ -100,7 +101,7 @@ class PandaReverser(DebugBase):
                 else:
                     Log.error(f"lifting FAILED {module_name} {method_name}")
 
-    def _code_lifting_algorithms(self, module_name: str = None, method_name: str = None) -> bool:
+    def _code_lifting_algorithms(self, module_name: str = None, method_name: str = None, DEBUG=False) -> bool:
         meth = self.get_meth(module_name, method_name)
         if (meth is None):
             Log.error(f"lifting paras NOT valid: module_name {module_name} method_name {method_name}")
@@ -109,7 +110,9 @@ class PandaReverser(DebugBase):
             Log.error(f"lifting code level NOT valid, {module_name} {method_name} is {meth.level_str}")
             return False
         meth._insert_variable_virtual_block()
-        print(f"_code_lifting_algorithms START {meth.module_method_name} inst-{meth.inst_len}")
+        if (DEBUG):
+            print(f"_code_lifting_algorithms START {meth.name} inst-{meth.inst_len} {meth._debug_vstr()}")
+
         old_insts_len, new_insts_len = -1, -2
         while (old_insts_len > new_insts_len):
             old_insts_len = meth.get_insts_total()
@@ -118,8 +121,8 @@ class PandaReverser(DebugBase):
                 break
             DeadCodeElimination(meth)
             new_insts_len = meth.get_insts_total()
-
-        print(f"_code_lifting_algorithms MID   {meth.module_method_name} inst-{meth.inst_len}")
+        if (DEBUG):
+            print(f"_code_lifting_algorithms MID   {meth.name} inst-{meth.inst_len} {meth._debug_vstr()}")
 
         old_insts_len, new_insts_len = -1, -2
         while (old_insts_len > new_insts_len):
@@ -129,7 +132,9 @@ class PandaReverser(DebugBase):
             PeepholeOptimization(meth)
             new_insts_len = meth.get_insts_total()
         DeadCodeElimination(meth)
-        print(f"_code_lifting_algorithms END   {meth.module_method_name} inst-{meth.inst_len}")
+        if (DEBUG):
+            print(f"_code_lifting_algorithms END   {meth.name} inst-{meth.inst_len} {meth._debug_vstr()}")
+
         meth.set_level(CODE_LV.IR_LIFTED)
         return True
 
@@ -154,10 +159,13 @@ class PandaReverser(DebugBase):
                  module_method_name: str = None) -> Union[AsmMethod, None]:
         return self.dis_file.get_meth(module_name, method_name, module_method_name)
 
-    def _debug_str(self) -> str:
-        out = f"PandaReverser: {self.dis_file}"
+    def _debug_str(self, detail=False) -> str:
+        if (detail is False):
+            out = f"PandaReverser: {self.dis_file}"
+        else:
+            out = f"PandaReverser: {self.dis_file._debug_vstr()}"
         return out
 
     def _debug_vstr(self) -> str:
-        out = f"{self._debug_str()}\n"
+        out = f"{self._debug_str(True)}\n"
         return out

@@ -164,6 +164,14 @@ def strip_sted_str(in_str: str, start_str: str = "\"", end_str: str = "\""):
     return out
 
 
+def split_to_module_method_name(module_method_name: str) -> Tuple[str, str]:
+    func_st_idx = module_method_name.rfind(".")
+    method_name = module_method_name[func_st_idx + 1:]
+    module_name = module_method_name[:func_st_idx]
+    module_name = strip_sted_str(module_name, "&", "&")
+    return module_name, method_name
+
+
 if __name__ == "__main__":
     temp = """newlexenvwithname 0x2, { 5 [ i32:2, string:"4newTarget", i32:0, string:"this", i32:1, ]}"""
     idx = find_next_delimiter_single_line(temp, 17)

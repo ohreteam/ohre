@@ -79,6 +79,10 @@ class AsmMethod(DebugBase):
         assert self.code_blocks is not None
 
     @property
+    def name(self):
+        return self.module_method_name
+
+    @property
     def level(self):
         return self.code_blocks.level
 
@@ -129,8 +133,8 @@ class AsmMethod(DebugBase):
                 break
             else:
                 i -= 1
-        # split func name and module name
-        self.module_name, self.method_name = self.split_to_module_method_name(self.module_method_name)
+        # split method name and module name
+        self.module_name, self.method_name = utils.split_to_module_method_name(self.module_method_name)
         # process args now
         parts = line.split("(")
         parts = parts[1].split(")")[0]
@@ -254,14 +258,6 @@ args({len(self.args)}) {args_out} cbs({len(self.code_blocks)}) {self.level_str} 
             ty, name = self.args[i]
             ret.append(AsmArg.build_arg(name))
         return ret
-
-    @classmethod
-    def split_to_module_method_name(self, module_method_name: str) -> Tuple[str, str]:
-        func_st_idx = module_method_name.rfind(".")
-        method_name = module_method_name[func_st_idx + 1:]
-        module_name = module_method_name[:func_st_idx]
-        module_name = utils.strip_sted_str(module_name, "&", "&")
-        return module_name, method_name
 
 
 if __name__ == "__main__":
