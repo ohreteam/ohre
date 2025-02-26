@@ -6,7 +6,11 @@ rules_local/
 *.zip
 *.out
 *.dis
-*.log
+*.log.*
+*.txt
+*.exe
+*.pkl
+*.pickle
 isa.yaml
 tmp/
 temp/
@@ -21,6 +25,7 @@ poetry.lock
 diff.diff
 bin/
 pyvenv.cfg
+test.py
 
 
 # Byte-compiled / optimized / DLL files

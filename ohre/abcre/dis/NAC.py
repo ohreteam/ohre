@@ -1,7 +1,7 @@
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.DebugBase import DebugBase
-from ohre.abcre.dis.NACTYPE import NACTYPE
+from ohre.abcre.dis.enum.NACTYPE import NACTYPE
 
 
 class NAC(DebugBase):  # N Address Code
@@ -10,15 +10,18 @@ class NAC(DebugBase):  # N Address Code
 
     def __init__(self, op_args: List[str]):
         assert len(op_args) > 0
-        self.op = op_args[0]
+        self.op: str = op_args[0]
         self.type = NACTYPE.get_NAC_type(self.op)
         if (self.type == NACTYPE.LABEL and self.op.endswith(":")):
             self.op = self.op[:-1]
-        self.args: list = list()
+        if (self.type == NACTYPE.TRYCATCH and self.op.endswith("catchall")):
+            # fetch catchall sutition, then need to get try_begin_label_0 and try_end_label_0
+            self.op = self.op[1:]
+        self.args: List[str] = list()
         for i in range(1, len(op_args)):
             self.args.append(op_args[i])
 
-    def _debug_str(self):
+    def _debug_str(self) -> str:
         out = f"{self.op} "
         for i in range(len(self.args)):
             if (i == len(self.args) - 1):
@@ -27,8 +30,8 @@ class NAC(DebugBase):  # N Address Code
                 out += f"{self.args[i]}, "
         return out
 
-    def _debug_vstr(self):
-        out = f"({NACTYPE.get_code_name(self.type)}) {self.op} "
+    def _debug_vstr(self) -> str:
+        out = f"({NACTYPE.get_code_name(self.type)})".ljust(12, " ") + f"{self.op} "
         for i in range(len(self.args)):
             if (i == len(self.args) - 1):
                 out += f"{self.args[i]}"
