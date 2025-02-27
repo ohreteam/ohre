@@ -49,19 +49,21 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
         result = subprocess.run([ARK_DISASM, abc_file, dis_file], capture_output=True, text=True)
         dis_file: DisFile = DisFile(dis_file)
     panda_re: PandaReverser = PandaReverser(dis_file)
-    Log.info(f"> panda_re: {panda_re}")
+
     save_object(panda_re, "temp.pkl")
     panda_re: PandaReverser = load_object("temp.pkl")
 
-    for addr, lit in panda_re.dis_file.literals.items():
-        print(f">> {lit._debug_vstr()}")
-    for module_name, name_meth_d in panda_re.dis_file.methods.items():
-        for methd_name, meth in name_meth_d.items():
-            print(f">> {meth._debug_vstr()}")
-    for module_name, record in panda_re.dis_file.records.items():
-        print(f">> {record._debug_vstr()}")
-    for asmstr in panda_re.dis_file.asmstrs:
-        print(f">> {asmstr}")
+    Log.info(f"> panda_re: {panda_re}")
+
+    # for addr, lit in panda_re.dis_file.literals.items():
+    #     print(f">> {lit._debug_vstr()}")
+    # for module_name, name_meth_d in panda_re.dis_file.methods.items():
+    #     for methd_name, meth in name_meth_d.items():
+    #         print(f">> {meth._debug_vstr()}")
+    # for module_name, record in panda_re.dis_file.records.items():
+    #     print(f">> {record._debug_vstr()}")
+    # for asmstr in panda_re.dis_file.asmstrs:
+    #     print(f">> {asmstr}")
 
     # === reverse truly START # strip & method full name and set it to below line
     # module_method_name: str = "vulwebview.src.main.ets.pages.Index.func_main_0"
@@ -82,8 +84,8 @@ if __name__ == "__main__":  # clear; pip install -e .; python3 examples/dis_demo
         for method_name, meth in name_meth_d.items():
             print(f">> [{i}/{total}]after lift {panda_re.get_meth(module_name, method_name)._debug_vstr()}\n")
             i += 1
-    tac_total = panda_re._get_tac_total()
 
+    tac_total = panda_re._get_tac_total()
     todo_tac, tac_opstr_set = panda_re.get_tac_unknown_count()
     final_tac_total = panda_re.get_insts_total()
     print(f"todo_tac {todo_tac}/{tac_total} {todo_tac / tac_total:.4f} /nac /{nac_total} {todo_tac / nac_total:.4f}")

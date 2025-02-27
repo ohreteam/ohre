@@ -380,3 +380,11 @@ module_info({len(self.module_info)}) _debug {self._debug}"
         func_main_0 = "func_main_0"
         meth = self.get_meth(module_name, func_main_0)
         # TODO: special logic for main_0
+
+    def _set_HomeObject(self, module_name: str, module_method_name: str) -> bool:
+        if (module_name in self.module_info):
+            self.module_info[module_name].set_HomeObject_method(module_method_name)
+            return True
+        else:
+            Log.error(f"_set_HomeObject failed, module_name {module_name} not in self.module_info")
+            return False

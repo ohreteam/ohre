@@ -1,3 +1,4 @@
+import copy
 from typing import Any, Dict, Iterable, List, Tuple, Union
 
 from ohre.abcre.dis.AsmArg import AsmArg
@@ -16,6 +17,9 @@ class ModuleInfo(DebugBase):
         self.constructor_name: str = ""
         # display name to the actual method name in dis
         self._method_name_d: Dict[str, AsmArg] = dict()
+        self._module_class: AsmArg = None
+        # METHOD_OBJ[HomeObject] = CLASS , store method name of METHOD_OBJ
+        self._HomeObject_method: set[str] = set()
 
     def set_var_local(self, idx: int, value: Union[str, AsmArg], force=True) -> bool:
         if (idx in self._var_local and force is False):
@@ -49,12 +53,36 @@ class ModuleInfo(DebugBase):
         Log.warn(f"get_var_local Failed, obj_name {obj_name}")
         return None
 
+    def get_module_class(self) -> AsmArg:
+        return self._module_class
+
+    def set_module_class(self, module_class: AsmArg) -> bool:
+        if (self._module_class is None):
+            self._module_class = copy.deepcopy(module_class)
+            return True
+        else:
+            print(f"set_module_class old: {self._module_class} new: {module_class}")
+
+    def set_HomeObject_method(self, module_method_name: str) -> bool:
+        self._HomeObject_method.add(module_method_name)
+
+    def _common_error_check(self):
+        debug_module_name = set()
+        for meth_name in self._HomeObject_method:
+            module_name, method_name = utils.split_to_module_method_name(meth_name)
+            debug_module_name.add(module_name)
+        if (len(debug_module_name) > 1):
+            Log.error(f"ERROR: more then 1 module name {len(self._HomeObject_method)} {self._HomeObject_method}")
+
     def _debug_str(self) -> str:
+        self._common_error_check()
         out = f"ModuleInfo {self.module_name}: var_local({len(self._var_local)}) obj({len(self._obj)}) \
-method_name_d({len(self._method_name_d)})"
+method_name_d({len(self._method_name_d)}) HomeObject_method({len(self._HomeObject_method)})"
         return out
 
     def _debug_vstr(self) -> str:
+        self._common_error_check()
         out = self._debug_str() + ": "
-        out += f"var_local: {self._var_local}; obj: {self._obj};"
+        out += f"var_local: {self._var_local}; obj: {self._obj}; method_name_d: {self._method_name_d}; \
+HomeObject_method: {self._HomeObject_method};"
         return out

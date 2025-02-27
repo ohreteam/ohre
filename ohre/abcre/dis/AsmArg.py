@@ -14,10 +14,10 @@ class AsmArg(DebugBase):
         # CLASS type: name is constructor AsmArg(METHOD_OBJ)
         self.name: Union[str, AsmArg] = name
         # value: may be set in the subsequent analysis
-        # ARRAY type: value is list[AsmArg]
+        # ARRAY type: value: dict str(key/index) -> AsmArg
         # OBJECT type: value: dict str(key/field name) -> AsmArg(corressponding value)
         # CLASS type: value: dict str(display method name) -> AsmArg(METHOD_OBJ)
-        self.value: Union[int, float, str, List[AsmArg], Dict[str, AsmArg]] = value
+        self.value: Union[int, float, str, Dict[Union[int, str], AsmArg]] = value
         # CLASS type: ref_base is parent class (AsmArg) of this class
         self.ref_base = ref_base  # AsmArg
         self.paras_len: Union[int, None] = paras_len  # for method object, store paras len here
@@ -145,8 +145,14 @@ class AsmArg(DebugBase):
         return AsmArg(AsmTypes.NULL)
 
     @classmethod
-    def build_arr(cls, args: List, name: str = ""):  # element of args should be AsmArg
-        return AsmArg(AsmTypes.ARRAY, name=name, value=list(args))
+    def build_arr(cls, args: Union[List, Dict], name: str = ""):  # element of args should be AsmArg
+        value_d = dict()
+        if (isinstance(args, list)):
+            for i in range(len(args)):
+                value_d[i] = args[i]
+        elif (isinstance(args, Dict)):
+            value_d = args
+        return AsmArg(AsmTypes.ARRAY, name=name, value=value_d)
 
     @classmethod
     def build_object(cls, in_kv: Dict = None, name: str = "", ref_base=None):
@@ -263,7 +269,7 @@ class AsmArg(DebugBase):
                 return True
             return False
         if (self.type == AsmTypes.ARRAY):
-            if (isinstance(self.value, list)):
+            if (isinstance(self.value, dict)):
                 return True
             return False
         if (self.type == AsmTypes.NULL or self.type == AsmTypes.INF or self.type == AsmTypes.NAN
@@ -394,6 +400,9 @@ class AsmArg(DebugBase):
         return out
 
     def _common_error_check(self):
+        if (self.is_value_valid() == False):
+            Log.error(f"[ArgCC] value is NOT valid, type {self.type_str} value {type(self.value)} {self.value}")
+
         if (self.type == AsmTypes.FIELD):
             if (isinstance(self.name, str) and len(self.name) == 0):
                 Log.error(f"[ArgCC] A filed name len==0: name {self.name} len {len(self.name)}")
@@ -451,6 +460,8 @@ class AsmArg(DebugBase):
 
     def _debug_str_class(self, detail: bool = False) -> str:
         out = ""
+        if (detail is True):
+            out += "CLASS:"
         if (isinstance(self.name, AsmArg)):
             out += f"ctr:{self.name} "
         if (self.paras_len is not None):

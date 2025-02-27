@@ -264,8 +264,6 @@ class AsmLiteral(DebugBase):
                     Log.error(f"lit_get_class_method: method_cnt {method_cnt} != len(ret) {len(ret)}")
             else:
                 Log.error(f"lit_get_class_method: method_cnt is not digit, method_cnt {method_cnt}")
-        if (len(ret) == 0):
-            return None
         return ret
 
 

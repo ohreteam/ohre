@@ -9,16 +9,16 @@ from ohre.abcre.dis.TAC import TAC, in_and_not_None
 from ohre.misc import Log, utils
 
 
-def CopyPropagation(meth: AsmMethod):
+def CopyPropagation(meth: AsmMethod, panda_re):
     Log.info(f"CPro-START {meth.module_method_name} inst-{meth.inst_len}")
     for cb in meth.code_blocks:
         cb.empty_var2val()
     i = 0
     for cb in meth.code_blocks:
-        var2val = CPro_cb(cb, DEBUG_MSG=f"CPro_{i}_{len(meth.code_blocks)} Round0")
+        var2val = CPro_cb(cb, panda_re, DEBUG_MSG=f"CPro_{i}_{len(meth.code_blocks)} Round0")
         cb.set_var2val(var2val)
         # now var2val in cb updated, CPro it again
-        CPro_cb(cb, DEBUG_MSG=f"CPro_{i}_{len(meth.code_blocks)} Round1")
+        CPro_cb(cb, panda_re, DEBUG_MSG=f"CPro_{i}_{len(meth.code_blocks)} Round1")
         i += 1
     # print(f">>> CPro-END {meth.name} {meth._debug_vstr()}")
 
@@ -40,7 +40,9 @@ def var2val_assign(var2val: Dict, var, val):
         var2val[var] = val
 
 
-def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
+def CPro_cb(cb: CodeBlock, panda_re, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
+    from ohre.abcre.dis.PandaReverser import PandaReverser
+    panda_re: PandaReverser = panda_re
     var2val: Dict[AsmArg, AsmArg] = cb.get_all_prev_cbs_var2val(get_current_cb=False, definite_flag=True)
     Log.info(f"CPro-START-cb {DEBUG_MSG} cb: {cb._debug_str()} var2val {len(var2val)}")
     inst_len = cb.get_insts_len()
@@ -63,10 +65,10 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
             if (ret == False):
                 Log.error(f"set_object_key_value False {DEBUG_MSG}, name {inst.args[0].name} value {inst.args[1]}")
             print(f"after  {var2val[inst.args[0].ref_base]} {ret} inst: {inst}")
-        elif (inst.is_simplest_assgin() and inst.args[0].has_ref() and inst.args[0].ref_base in var2val
+        elif (inst.is_simplest_assgin() and inst.args[0].has_ref() and in_and_not_None(inst.args[0].ref_base, var2val)
               and var2val[inst.args[0].ref_base].is_class_prototype()
               and inst.args[1].is_method_obj()):
-            # v1[method_name] = METHOD_OBJ v1: class.prototype
+            # NOTE: v1[method_name] = METHOD_OBJ v1: class.prototype # class method binding, prototype version
             # do: set class.method[method_name] = METHOD_OBJ, and delete this inst
             arg_class = var2val[inst.args[0].ref_base].ref_base
             name = inst.args[0].get_field_or_obj_name()
@@ -76,10 +78,10 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
                     delete_idx_mask[i] = True
                 else:
                     Log.error(f"CPro_cb set_class_method failed name {name} inst.args[1] {inst.args[1]}")
-        elif (inst.is_simplest_assgin() and inst.args[0].has_ref() and inst.args[0].ref_base in var2val
+        elif (inst.is_simplest_assgin() and inst.args[0].has_ref() and in_and_not_None(inst.args[0].ref_base, var2val)
               and var2val[inst.args[0].ref_base].is_class()
               and inst.args[1].is_method_obj()):
-            # v1[method_name] = METHOD_OBJ v1: class
+            # NOTE: v1[method_name] = METHOD_OBJ v1: class # class method binding, direct version
             # do: set class.method[method_name] = METHOD_OBJ, and delete this inst
             arg_class = var2val[inst.args[0].ref_base]
             name = inst.args[0].get_field_or_obj_name()
@@ -89,7 +91,42 @@ def CPro_cb(cb: CodeBlock, DEBUG_MSG: str = "") -> Dict[AsmArg, AsmArg]:
                     delete_idx_mask[i] = True
                 else:
                     Log.error(f"CPro_cb set_class_method failed name {name} inst.args[1] {inst.args[1]}")
-        elif (inst.args_len == 2 and inst.rop == "-" and inst.args[1].is_imm()):
+        elif (inst.is_simplest_assgin() and inst.args[0].is_field() and inst.args[0].name == "HomeObject"
+              and inst.args[0].has_ref() and inst.args[0].ref_base.is_method_obj()
+              and (inst.args[1].is_class() or
+                   (in_and_not_None(inst.args[1], var2val) and var2val[inst.args[1]].is_class()))):
+            # NOTE: METHOD_OBJ[HomeObject] = class # class maybe in var2val
+            rhs_class: AsmArg = None
+            if (inst.args[1].is_class()):
+                rhs_class = inst.args[1]
+            else:
+                rhs_class = var2val[inst.args[1]]
+            module_method_name = inst.args[0].ref_base.name
+            module_name, method_name = utils.split_to_module_method_name(module_method_name)
+            succ = panda_re._set_HomeObject(module_name, module_method_name)
+            if (succ):
+                delete_idx_mask[i] = True
+            else:
+                Log.error(f"CPro_cb _set_HomeObject inst {inst} inst.args[0] {inst.args[0]}")
+        elif (inst.is_simplest_assgin() and inst.args[0].is_field() and inst.args[0].name == "HomeObject"
+              and inst.args[0].has_ref() and inst.args[0].ref_base.is_method_obj()
+              and (inst.args[1].is_class_prototype() or
+                   (in_and_not_None(inst.args[1], var2val) and var2val[inst.args[1]].is_class_prototype()))):
+            # NOTE: METHOD_OBJ[HomeObject] = class.prototype # class.prototype maybe in var2val
+            rhs_class: AsmArg = None
+            if (inst.args[1].is_class_prototype()):
+                rhs_class = inst.args[1].ref_base
+            else:
+                rhs_class = var2val[inst.args[1]].ref_base
+            module_method_name = inst.args[0].ref_base.name
+            module_name, method_name = utils.split_to_module_method_name(module_method_name)
+            succ = panda_re._set_HomeObject(module_name, module_method_name)
+            if (succ):
+                delete_idx_mask[i] = True
+            else:
+                Log.error(f"CPro_cb _set_HomeObject inst {inst} inst.args[0] {inst.args[0]}")
+        elif (inst.args_len == 2 and inst.rop == "-"):
+            # NOTE: - minus related
             if (inst.args[1].is_imm()):
                 # a = - imm(xxx)
                 inst.rop = ""

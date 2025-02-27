@@ -344,7 +344,7 @@ class NACtoTAC:
                     arg = arg.build_next_arg()
             inst_call = TAC.tac_call(AsmArg(AsmTypes.IMM, value=arg_len), paras,
                                      call_addr=AsmArg(AsmTypes.METHOD, name="__super"), ret_store_to=AsmArg.NULL())
-            inst_ret = TAC.tac_assign(AsmArg.ACC(), AsmArg.build_this())  # TODO: __super return ptr this?
+            inst_ret = TAC.tac_assign(AsmArg.ACC(), AsmArg.build_this())  # NOTE: maybe __super return ptr this
             return [inst_call, inst_ret]
         if (nac.op == "supercallarrowrange" or nac.op == "wide.supercallarrowrange"):
             arg_len_idx = 1 if nac.op == "supercallarrowrange" else 0

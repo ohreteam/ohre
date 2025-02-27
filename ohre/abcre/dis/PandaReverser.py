@@ -88,7 +88,6 @@ class PandaReverser(DebugBase):
                 self._func_main_0_class_construct(module_name)
             else:
                 Log.error(f"func_main_0 NOT in module {module_name}")
-            exit()  # TODO:
             for method_name, meth in name_meth_d.items():
                 if (method_name == "func_main_0"):
                     continue
@@ -127,7 +126,7 @@ class PandaReverser(DebugBase):
         old_insts_len, new_insts_len = -1, -2
         while (old_insts_len > new_insts_len):
             old_insts_len = meth.get_insts_total()
-            CopyPropagation(meth)
+            CopyPropagation(meth, self)
             DeadCodeElimination(meth)
             PeepholeOptimization(meth)
             new_insts_len = meth.get_insts_total()
@@ -151,6 +150,9 @@ class PandaReverser(DebugBase):
                 if (meth.level == CODE_LV.TAC):
                     self._code_lifting_algorithms(module_name, method_name)
         ModuleVarAnalysis(self.dis_file)
+
+    def _set_HomeObject(self, module_name: str, module_method_name: str) -> bool:
+        return self.dis_file._set_HomeObject(module_name, module_method_name)
 
     def method_len(self) -> int:
         return self.dis_file.method_len()
